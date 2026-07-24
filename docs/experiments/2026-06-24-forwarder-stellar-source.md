@@ -3,8 +3,9 @@
 Date: 2026-06-24 (resolved 2026-07-09)
 Branch: `experiment/forwarder-stellar-source`
 Status: **RESOLVED** — Circle enabled Stellar-source forwarding; verified working
-end-to-end on 2026-07-09. See [Resolution](#resolution-2026-07-09). Our
-implementation was correct throughout; the gap was entirely Circle-side.
+end-to-end on 2026-07-09 (EVM destinations) and 2026-07-24 (Solana destination).
+See [Resolution](#resolution-2026-07-09). Our implementation was correct
+throughout; the gap was entirely Circle-side.
 
 ## Verified forwarding transfers (testnet)
 
@@ -33,6 +34,15 @@ collector `0xc17d06b66fb2f308bb3af99231a45380a28563a2`.
 - **Stellar → Base** (domain 6), 2.8 USDC, minted 2.595982 (fee 0.204018) — _1-tx wrapper forwarder_
     - burn (`approve_and_deposit_with_hook` on wrapper `CDC4EGIJSQU4I7LBER3CRMSTBAVR6JMCQXKJHZZU7WB2R32WQJDGKTN6`): `b22f1c922c43bf725bc295c701aaa867129f9eab0b68b555786b8cbcd1b2d98a`
     - forward mint (Base Sepolia): `0x514e161eec728a0c6e4ce8f64f9bf0b2b1b2144b9da6bb50224c52c71f7483bb`
+
+**Run 3 — 2026-07-24 (Solana destination — first non-EVM forward)**
+
+- **Stellar → Solana** (domain 5), 3.0 USDC, `maxFee` 128946, `feeExecuted` 128946
+    - burn (Stellar testnet): `0d4fcd21ce8cfbe98f3e2bc9441a472c7cf9e28e886e516fbabfd696dc0b09aa`
+    - nonce: `0x6ba6ec6938fdd4241513ba6c00f8df18456b20ea8b199e031f9eb46d8d7633d0`
+    - `forwardState` COMPLETE; forward mint (Solana devnet, `finalized`, `err: null`): `3WertUfbKQA22CobQ7uh3mKDQegfw5ZKGKPsdpk45gRPq8PCiGZddfkgiKtpLFrkvcoYye9jnf5awRevKqfj1xqF`
+    - `destinationCaller` zero (all-1s system pubkey), `finalityThresholdExecuted` 2000
+    - Iris surfaces the message-envelope recipient as the Solana TokenMessengerMinter program (`CCTPV2vP…gUMQe`), _not_ the end ATA — the real `mintRecipient` (the recipient's USDC ATA, set by `runStellarToSolanaForwarded` via `solanaAtaToBytes32`) rides in the burn-message body, and the relayer delivered there (recipient balance rose, no user tx)
 
 ## Goal
 
@@ -303,3 +313,38 @@ Same invariants held on both: `hookData` = `cctp-forward`, `destinationCaller`
 zero, `feeExecuted` == `maxFee`, `delayReason` null.
 
 Follow-up: report the confirmed fix back to Circle in Discord (pending).
+
+### Solana destination forwarding (2026-07-24)
+
+Extended the forwarder past EVM to a **Solana devnet** destination — worth
+checking explicitly because Circle's published forwarding-destination list
+doesn't (yet) name Solana. It works: the sandbox relayer services
+Stellar→Solana exactly as it does Stellar→EVM.
+
+- **Stellar → Solana** (27 → 5), 3.0 USDC.
+    - burn (Stellar testnet):
+      `0d4fcd21ce8cfbe98f3e2bc9441a472c7cf9e28e886e516fbabfd696dc0b09aa`
+    - `GET /v2/messages/27?transactionHash=0d4fcd21…dc0b09aa` → `status`
+      complete, `forwardState` **COMPLETE**, `feeExecuted` = `maxFee` (128946),
+      `finalityThresholdExecuted` 2000, `delayReason` null.
+    - forward mint (Solana devnet):
+      `3WertUfbKQA22CobQ7uh3mKDQegfw5ZKGKPsdpk45gRPq8PCiGZddfkgiKtpLFrkvcoYye9jnf5awRevKqfj1xqF`
+      — `getSignatureStatuses` → `confirmationStatus: finalized`, `err: null`,
+      `status: Ok`. No user `receiveMessage`.
+
+Same invariants as the EVM legs (`cctp-forward` hookData, `destinationCaller`
+zero, `feeExecuted` == `maxFee`), and the economics carry over — the full
+`maxFee` was consumed.
+
+One Solana-specific _reporting_ wrinkle (not a bug): Iris's decoded message
+shows the envelope `recipient` / `mintRecipient` as the Solana
+**TokenMessengerMinter program** (`CCTPV2vPZJS2u2BBsUoscuikbYjnpFmbFsvVuJdgUMQe`),
+not the recipient's ATA. That's the message-level recipient — a CCTP token
+message is always addressed to the destination TokenMessenger — while the real
+`mintRecipient` (the recipient's USDC ATA, set by `runStellarToSolanaForwarded`
+via `solanaAtaToBytes32`) lives in the burn-message body. The relayer delivered
+there (the recipient's USDC balance rose with no user tx). Consistent with
+Circle's decoder historically not fully parsing non-EVM message bodies.
+
+**Upshot:** forwarding _out of_ Stellar is confirmed to both EVM and Solana
+destinations. The only unsupported direction remains forwarding _into_ Stellar.
