@@ -25,8 +25,8 @@ impl CctpWrapperContract {
         caller.require_auth();
 
         // approve an allowance so the TokenMessengerMinter contract can `transfer_from` our caller address
-        let expiration_ledger = (env.ledger().sequence() + 50).next_multiple_of(50);
-        token::Client::new(&env, &usdc).approve(&caller, &tmm, &amount, &expiration_ledger);
+        let live_until_ledger = (env.ledger().sequence() + 50).next_multiple_of(50);
+        token::Client::new(&env, &usdc).approve(&caller, &tmm, &amount, &live_until_ledger);
 
         let tmm_client = TmmClient::new(&env, &tmm);
         tmm_client.deposit_for_burn(
@@ -57,8 +57,8 @@ impl CctpWrapperContract {
         caller.require_auth();
 
         // approve an allowance so the TokenMessengerMinter contract can `transfer_from` our caller address
-        let expiration_ledger = (env.ledger().sequence() + 50).next_multiple_of(50);
-        token::Client::new(&env, &usdc).approve(&caller, &tmm, &amount, &expiration_ledger);
+        let live_until_ledger = (env.ledger().sequence() + 50).next_multiple_of(50);
+        token::Client::new(&env, &usdc).approve(&caller, &tmm, &amount, &live_until_ledger);
 
         let tmm_client = TmmClient::new(&env, &tmm);
         tmm_client.deposit_for_burn_with_hook(
