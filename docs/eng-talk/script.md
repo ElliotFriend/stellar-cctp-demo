@@ -63,25 +63,28 @@ the wrapper concept on Stellar in §5b/§5c._
 liquidity pools. CCTP does it with a _burn-and-mint_ model. That means there is
 no wrapper asset, no pool, no bridge TVL to get drained.
 
-Talking points:
+(SLIDE) Three ways to move a dollar.
 
-- "You've got USDC on chain A. You want USDC on chain B. Today the common answer
-  is a bridge: lock your USDC on A, mint a _wrapped_ representation on B, and
-  hope the bridge's liquidity and multisig hold up. That's where most of the big
-  bridge hacks came from."
+- Let's say You've got some USDC on chain A. You want USDC on chain B.
+- Today the common answer is a bridge: lock your USDC on A, mint a _wrapped_
+  representation on B. This is how Wormhole's portal bridge works.
+- Another option: you put your USDC into a liquidity pool on A, and you withdraw
+  USDC from a corresponding LP on B. That's how Allbridge Core works.
+- In both cases, there's a big pile of USDC sitting idle. This can grow to a
+  very large honeypot, and can attract big exploits.
 - CCTP's model: **burn** the real USDC on the source chain, and Circle
   authorizes a **mint** of _native, canonical_ USDC on the destination. Same
-  issuer, same asset, both sides. No wrapped-USDC.dead-end token, no pool that
+  issuer, same asset, on both sides. No wrapped-USDC.dead-end token, no pool that
   can run dry or be compromised.
-- Why this room cares: as of **September 2025**, Stellar is _finally_ a CCTP V2
-  destination _and_ source (domain 27) — [Circle CCTP went live on
-  Stellar](https://stellar.org/blog/foundation-news/circle-cctp-is-live-on-stellar)
-  on Sept 18, 2025. This is how canonical USDC moves on and off Stellar to the
-  rest of the stablecoin world — EVM chains, Solana — without an anchor or a
-  third-party bridge in the middle.
-- (SLIDE) One line: **"Burn here. Mint there. Same asset."**
+- I'm happy to say that as of **May 2026**, Stellar is _finally_ a CCTP V2
+  destination _and_ source. This is the preferred path for canonical USDC to
+  move on and off Stellar to the rest of the stablecoin world (EVM chains,
+  Solana, etc.). And there's no anchor or a third-party bridge sitting in the
+  middle of your transfer, either.
 
-Transition: "So how does chain B know it's allowed to mint? That's the whole
+(SLIDE) **"Burn here. Mint there. Same asset."**
+
+**Transition:** "So how does chain B know it's allowed to mint? That's the whole
 trick, and it's three moving parts."
 
 ## 2. CCTP mental model: burn → attest → mint (6 min)
@@ -96,25 +99,26 @@ chain**, with the message + attestation flowing across.
 The three steps:
 
 1. **Burn.** On the source chain you call `depositForBurn` (EVM/Solana) /
-   `deposit_for_burn` (Stellar) on the **TokenMessengerMinter**. It burns your
-   USDC and emits a structured **message** into the **MessageTransmitter** —
-   think of it as a generic cross-chain message bus. The message says, in
-   effect: _"N units were burned on domain X, destined for recipient R on domain
-   Y."_
+   `deposit_for_burn` (Stellar) on the **TokenMessengerV2** contract. It `burn`s
+   your USDC and emits a structured **message** into the
+   **MessageTransmitterV2** contract. Think of it as a generic cross-chain
+   message bus. Basically, the message says: _"N units were burned on domain X,
+   destined for recipient R on domain Y."_
 2. **Attest.** Circle's off-chain service (its API is called **Iris**) watches
-   for that burn, waits for the source chain to reach the required finality, and
-   then issues a signed **attestation** — Circle's cryptographic say-so that the
-   burn really happened and is final. You poll for it. On Arc that's _seconds_;
-   on Base Sepolia Standard transfers it's ~15 minutes (finality wait, not
-   Circle being slow).
+   for that burn message, waits for the source chain to reach the required
+   finality, and then issues a signed **attestation** (Circle's cryptographic
+   permission slip that the burn really happened and is final). You poll for it.
+   It can take anywhere from _seconds_ (on Arc) ; or up to _~20 minutes_ (on
+   Ethereum and most of its L2s). You're waiting on finality, not Circle here.
+   My favorite is StarkNet which takes _4-8 **hours**_ to reach finality!
 3. **Mint.** You hand the `(message, attestation)` pair to the
-   **MessageTransmitter** on the _destination chain_, which verifies Circle's
-   signature and calls into the local TokenMessengerMinter to **mint** native
-   USDC to the recipient.
+   **MessageTransmitterV2** contract on the _destination chain_. The contract
+   verifies Circle's signature and calls into the local **TokenMinterV2**
+   contract to `mint` native USDC to the recipient.
 
 (SLIDE) **The two burn entrypoints — `deposit_for_burn` vs
 `deposit_for_burn_with_hook`.** They're identical except the hook variant takes
-one extra trailing field (Soroban signatures shown):
+one extra trailing field (Soroban function signatures shown):
 
 ```rust
 // TokenMessengerMinter — the plain burn
@@ -143,52 +147,61 @@ fn deposit_for_burn_with_hook(
 );
 ```
 
-- "The hook variant is a strict superset — same eight args, plus `hook_data`.
-  That payload is how you say something to the destination: it's what carries a
-  Stellar recipient, or the `cctp-forward` flag we'll see later. Hold onto this;
-  on Stellar it turns out to be mandatory, not optional." (The contract even
-  _rejects_ empty hook data on this path — a `HookDataEmpty` error — so you
-  reach for it precisely when you have something to deliver.)
+- The hook variant is a strict superset: same arguments, plus `hook_data`.
+- That payload is how you say something to the destination chain: it's what
+  carries a Stellar recipient, or other Circle instructions we'll see later.
+- Hold onto this; on Stellar-inbound transfers it turns out to be mandatory, not
+  optional.
 
-(SLIDE) **The mint side is the same shape everywhere: `(message,
-attestation)`.**
+(SLIDE) **The mint side is same shape everywhere: `(message, attestation)`.**
 
 ```text
 EVM      MessageTransmitterV2.receiveMessage(bytes message, bytes attestation)
 Solana   MessageTransmitterV2.receiveMessage(...)   // CPIs into TMM to release funds
 Stellar  MessageTransmitter.receive_message(caller, message, attestation) -> bool
 
-// ...but INTO Stellar we don't call receive_message directly. We call our
+// ...but INTO Stellar we don't call receive_message directly! We call our
 // forwarder, which calls it for us and pays out to the G-account:
 Stellar  CctpForwarder.mint_and_forward(message, attestation)
 ```
 
-- "Every destination takes the message plus Circle's attestation, verifies the
-  signature, and mints. The only twist is Stellar inbound, where we wrap that in
-  `mint_and_forward` so the same call also does the last hop to a G-account —
-  which is the next section."
+- Every destination chain takes the message plus Circle's attestation, verifies
+  the signature, and `mint`s.
+- The only twist is Stellar inbound, where we wrap that in `mint_and_forward`
+  invocation so the same call also does the last hop to the _actual_ recipient.
 
 Two vocabulary items that might help us, because they can trip up developers:
 
-- (SLIDE) **Domains, not chain IDs.** CCTP has its own address space for chains
-  called _domains_. Ethereum is 0, Solana is 5, Base is 6, Arc is 26, **Stellar
-  is 27.** A domain is _not_ an EVM chainId (Arc's chainId is 5,042,002; its
-  domain is 26). Every "which chain" field in a CCTP message is a domain.
-- (SLIDE) **Fast vs Standard.** CCTP V2 lets you trade finality for speed via a
-  `minFinalityThreshold`: **2000 = Standard** (wait for hard finality), **1000 =
-  Fast** (Circle attests earlier, for a small fee, backed by Circle's
-  guarantee). We'll see the actual number go over the wire in the demos.
-  (CAVEAT) Fast is only meaningful when the _source_ is a slow-finality chain —
+(SLIDE) **Domains, not chain IDs.**
+
+- CCTP has its own address space for chains called _domains_.
+  - Ethereum is `0`
+  - Solana is `5`
+  - Base is `6`
+  - Arc is `26`
+  - **Stellar is `27`**
+- A domain is _not_ an EVM `chainId` (Arc's chainId is `5,042,002`; its
+  domain is `26`). Every "which chain" field in a CCTP message is a domain.
+
+(SLIDE) **Fast vs Standard.**
+
+- CCTP V2 lets you trade finality for speed via a `minFinalityThreshold`:
+  - **2000 = Standard** (wait for hard finality)
+  - **1000 = Fast** (Circle attests earlier, for a small fee, backed by Circle's
+    guarantee).
+- We'll see this play out in the demos.
+- (CAVEAT) Fast is only meaningful when the _source_ is a slow-finality chain —
   hold that thought for the Solana demo.
 
-Transition: "That's the protocol in the abstract. The moment you point it at
-Stellar, two Stellar-specific realities show up that you _have_ to design around
-— and one of them will happily torch your funds if you get it wrong."
+**Transition:** That's the protocol from a high-level. The moment you point it
+at Stellar, though, two Stellar-specific realities show up that you _have_ to
+design around (and one of them will happily torch your funds if you get it
+wrong).
 
 ## 3. Stellar realities: the Forwarder & hook data (6 min)
 
 **Point:** Two things could bite you on Stellar specifically: (1) a CCTP mint
-can't safely target a G address directly, so inbound transfers route through a
+can't safely target any Stellar address directly, so inbound transfers route through a
 **Forwarder contract**; (2) the recipient's real address rides in **hook data**,
 and its byte layout is unforgiving.
 
@@ -196,7 +209,7 @@ and its byte layout is unforgiving.
 
 - On EVM chains, a mint recipient is just a 20-byte address — could be an EOA or
   a contract, the mint doesn't care. On Stellar, CCTP's contracts mint to a
-  **contract address (C...)**, and the `mintRecipient` field is a raw 32-byte
+  **contract address (`C...`)**, and the `mintRecipient` field is a raw 32-byte
   key.
 - The problem: a CCTP message **can't distinguish a G address from a C
   address**, and the mint path expects a contract it can call into. If you
@@ -282,7 +295,7 @@ Stellar audience:
   from your wallet + the mint. The burn's recipient must be that **ATA**, not
   the wallet. We'll see that later on.
 
-Transition: "There's one more piece Circle offers that makes the destination
+**Transition:** "There's one more piece Circle offers that makes the destination
 side transaction disappear entirely — the forwarding service — and it's the
 thing I spent a week bugging Circle support about."
 
@@ -347,7 +360,7 @@ Talking points:
   admitted it. So trust an end-to-end test over the published table — and the
   one direction that genuinely doesn't work is forwarding _into_ Stellar.
 
-Transition: "Enough concept. Let's make money move. First one: Stellar out to
+**Transition:** "Enough concept. Let's make money move. First one: Stellar out to
 Arc — the plain, unbundled version, so we can read the actual burn arguments."
 
 ## 5. Demo A — Stellar ↔ Arc: raw, walkthrough, wrapper (12 min)
@@ -405,7 +418,7 @@ tmm.deposit_for_burn(
   hash_, not a nonce) → **`receiveMessage`** on Arc's MessageTransmitter → USDC
   lands. On Arc this is seconds.
 
-Transition: "That was two prompts. To get it down to one, I lean on a wrapper
+**Transition:** "That was two prompts. To get it down to one, I lean on a wrapper
 contract — and it's only ~40 lines of Rust, so before we run the one-prompt
 version, let's actually read it."
 
@@ -494,7 +507,7 @@ Walk it line by line (this is where the room's Stellar fluency pays off):
   `permit` only works because USDC implements EIP-2612. Not every ERC-20 token
   does."
 
-Transition: "So that's the contract. Now watch what those ~40 lines do to the
+**Transition:** "So that's the contract. Now watch what those ~40 lines do to the
 user experience — same burn, one prompt."
 
 ### 5c. The wrapper path — "1 tx (wrapper)"
@@ -518,7 +531,7 @@ of what Soroban's auth model buys you.
 - (DEMO) The destination side is identical to 5a — attest, then `receiveMessage`
   on Arc. Nothing new here; the whole delta was the burn.
 
-Transition: "So that's the outbound-from-Stellar story. Let's turn it around —
+**Transition:** "So that's the outbound-from-Stellar story. Let's turn it around —
 come _into_ Stellar from EVM — where we get to see the Forwarder do its job and
 see three different ways to make one burn happen."
 
@@ -586,7 +599,7 @@ burnArgs = [
   your G address. "No `receiveMessage` for me to call by hand — the Forwarder
   contract is the thing that mints and pays out, in one Soroban call."
 
-Transition: "Two chains down. Let's add the weird one — Solana — because it
+**Transition:** "Two chains down. Let's add the weird one — Solana — because it
 breaks one of the assumptions I've been repeating this whole talk."
 
 ## 7. Demo C — Solana both ways + the custody twist (5 min)
@@ -651,7 +664,7 @@ Fast-vs-Standard actually _doesn't_ do what you'd expect from a Stellar source.
   in so the parameter is _visible_, but I'd be lying if I said it changed the
   Stellar-origin timing."
 
-Transition: "Last one, quick — the forwarding service we talked about, live, so
+**Transition:** "Last one, quick — the forwarding service we talked about, live, so
 you can see the destination step _disappear_."
 
 ## 8. Demo D — forwarding live (Stellar → EVM) (2 min)
@@ -676,7 +689,7 @@ Circle's relayer mints, and we just watch the balance change.
   direction that still refuses is forwarding _into_ Stellar — that half isn't
   shipped."
 
-Transition: "Let me bring it back together."
+**Transition:** "Let me bring it back together."
 
 ## 9. Recap + honest limitations (1 min)
 
