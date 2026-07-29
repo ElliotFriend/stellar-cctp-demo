@@ -119,17 +119,27 @@ one extra trailing field (Soroban signatures shown):
 ```rust
 // TokenMessengerMinter — the plain burn
 fn deposit_for_burn(
-    caller: Address, amount: i128, destination_domain: u32,
-    mint_recipient: BytesN<32>, burn_token: Address,
-    destination_caller: BytesN<32>, max_fee: i128, min_finality_threshold: u32,
+    caller: Address,
+    amount: i128,
+    destination_domain: u32,
+    mint_recipient: BytesN<32>,
+    burn_token: Address,
+    destination_caller: BytesN<32>,
+    max_fee: i128,
+    min_finality_threshold: u32,
 );
 
 // ...and the burn that carries a payload to the destination
 fn deposit_for_burn_with_hook(
-    caller: Address, amount: i128, destination_domain: u32,
-    mint_recipient: BytesN<32>, burn_token: Address,
-    destination_caller: BytesN<32>, max_fee: i128, min_finality_threshold: u32,
-    hook_data: Bytes,   // ← arbitrary bytes delivered alongside the mint
+    caller: Address,
+    amount: i128,
+    destination_domain: u32,
+    mint_recipient: BytesN<32>,
+    burn_token: Address,
+    destination_caller: BytesN<32>,
+    max_fee: i128,
+    min_finality_threshold: u32,
+    hook_data: Bytes,   // <- bytes delivered alongside the mint
 );
 ```
 
