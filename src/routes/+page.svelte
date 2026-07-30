@@ -261,13 +261,13 @@
         <a
             href="https://developers.circle.com/cctp/references/stellar"
             target="_blank"
-            rel="noreferrer">Circle CCTP on Stellar</a
+            rel="noreferrer">Circle Docs</a
         >
         ·
         <a href="https://faucet.circle.com" target="_blank" rel="noreferrer">USDC faucet</a>
         ·
-        <a href="https://lab.stellar.org/account/fund" target="_blank" rel="noreferrer"
-            >XLM faucet</a
+        <a href="https://github.com/ElliotFriend/stellar-cctp-demo" target="_blank" rel="noreferrer"
+            >Project Source Code</a
         >
     </footer>
 </main>
