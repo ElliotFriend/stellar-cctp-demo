@@ -165,7 +165,7 @@ Layout invariants worth not breaking:
   measure `.body` / `.code` / `.tablewrap` for `scrollHeight > clientHeight` and
   overflow past the slide box.
 
-  **Audit against the footer, not the slide box.** The `.foot` bar sits *inside*
+  **Audit against the footer, not the slide box.** The `.foot` bar sits _inside_
   `.slide`, so content can stay within the slide box and still land underneath the
   section label and the nav buttons. Measure every `.body` descendant's `bottom`
   against `.foot`'s `top`. An earlier version of this note said to ignore
