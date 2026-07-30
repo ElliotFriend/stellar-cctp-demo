@@ -9,9 +9,13 @@ context needed to build it without re-deriving decisions.
 | Deliverable | State | File |
 | ----------- | ----- | ---- |
 | Speaker script | **done** (committed `02bb695`) | `docs/eng-talk/script.md` |
+| Slide deck | **done** (31 slides) | `docs/eng-talk/deck.html` |
 | Demo runbook | todo | `docs/eng-talk/runbook.md` |
 | Q&A prep | todo | `docs/eng-talk/qa.md` |
-| Slide deck | todo (build **after** script is final) | HTML artifact (self-contained) |
+
+Deck artifact URL (private):
+<https://claude.ai/code/artifact/8f7d4ba8-8b3b-4593-a3b7-20451c5e3b00> Republish
+by passing that `url` to the Artifact tool to keep the same link.
 
 ## Talk parameters (locked)
 
@@ -37,34 +41,38 @@ Choreography + safety net for driving the demos live. The script says what to
 _say_; the runbook says what to _click_ and what to do when it breaks.
 
 Contents:
+
 - **Pre-flight checklist (morning-of):**
-  - Freighter on **Stellar Testnet**, funded XLM + USDC, **USDC trustline added**.
-  - MetaMask with **Arc Testnet** (chainId 5042002) + USDC; Base Sepolia + a little
-    ETH for the recording.
-  - Phantom (or Wallet-Standard Solana wallet) on **devnet**, funded devnet USDC +
-    SOL; recipient **USDC ATA** exists (or first-transfer will create it).
-  - Faucets: XLM `lab.stellar.org/account/fund`; USDC `faucet.circle.com` (Stellar
-    Testnet / Arc Testnet / Base Sepolia); Base ETH `alchemy.com/faucets/base-sepolia`.
+  - Freighter on **Stellar Testnet**, funded XLM + USDC, **USDC trustline
+    added**.
+  - MetaMask with **Arc Testnet** (chainId 5042002) + USDC; Base Sepolia + a
+    little ETH for the recording.
+  - Phantom (or Wallet-Standard Solana wallet) on **devnet**, funded devnet USDC
+    and SOL; recipient **USDC ATA** exists (or first-transfer will create it).
+  - Faucets: XLM `lab.stellar.org/account/fund`; USDC `faucet.circle.com`
+    (Stellar Testnet / Arc Testnet / Base Sepolia); Base ETH
+    `alchemy.com/faucets/base-sepolia`.
   - Pre-quote/pre-check custody: a Solana receive can fail if Circle's devnet
     custody is underfunded — do a dry-run transfer the day before.
-- **Per-demo click paths** (Demo A/B/C/D): direction picker → flow chip →
-  amount → which wallet prompts appear → what to point at on screen (tie to the
+- **Per-demo click paths** (Demo A/B/C/D): direction picker → flow chip → amount
+  → which wallet prompts appear → what to point at on screen (tie to the
   `(SLIDE)` arg tables in the script) → "done" signal.
 - **Fallbacks:**
   - **Resume-by-burn-hash** — the app's resume flow (`ResumeForm`,
-    `transfer.svelte.ts:resume()`) skips to attest+mint given a burn hash. Keep a
-    few known-good burn hashes on hand to resume if a live burn stalls.
+    `transfer.svelte.ts:resume()`) skips to attest+mint given a burn hash. Keep
+    a few known-good burn hashes on hand to resume if a live burn stalls.
   - **Pre-recorded clips** for every flow; cut to the clip if a live attestation
     hangs (esp. anything Base).
   - Arc = seconds; Base Standard = ~15 min (never do Base live).
-- **Reset between runs:** transfer history is in-memory (refresh wipes it);
-  note starting balances so the "balance went up" beat reads clearly.
+- **Reset between runs:** transfer history is in-memory (refresh wipes it); note
+  starting balances so the "balance went up" beat reads clearly.
 - **Timing cues:** target minutes per demo from the script's budget table.
 
 ## Deliverable 2 — Q&A prep (`qa.md`)
 
 Likely audience questions + starter answers, grouped. Seed list (expand each
 with a 2–4 sentence starter answer, honest about unknowns):
+
 - **Trust model:** Is Circle a trusted third party? What if the attester(s) or
   Iris lie/go down? Can funds be stuck if Circle disappears?
 - **vs anchors / classic USDC:** How is this different from a SEP-24 anchor or
@@ -83,31 +91,68 @@ with a 2–4 sentence starter answer, honest about unknowns):
 - **Assets/chains:** EURC? Which chains are live? Mainnet readiness?
 - **Why Arc** as the default demo chain.
 
-## Deliverable 3 — Slide deck (HTML artifact)
+## Deliverable 3: Slide deck (`deck.html`), DONE
 
-- Build **after** the script is final — slides derive directly from the
-  `(SLIDE)` cues already marked throughout `script.md` (diagrams, arg tables,
-  code snippets, the domains table, the three-encodings table, the flow
-  comparison tables).
-- **Before writing the page, load the `artifact-design` skill** (required by the
-  Artifact tool) to calibrate design effort; it's a technical talk deck, so lean
-  legible/high-contrast, code-friendly monospace, dark-mode aware.
-- Self-contained (inline CSS/JS, no external fetches). Theme-aware. Wide code
-  blocks/tables scroll in their own container.
-- Suggested slide count ≈ one per `(SLIDE)` cue (~18–22), plus section dividers.
+31 slides, one per `(SLIDE)` cue plus a title, running order, four demo
+dividers, and a Q&A/references closer. Self-contained; no external fetches.
 
-## Grounded facts to reuse (already verified — don't re-fetch)
+**Presentation medium is Google Meet screenshare, not a projector.** That drove
+several build decisions, so keep them in mind before editing:
 
-- **CCTP V2 live on Stellar:** 2025-09-18 (`stellar.org/blog/foundation-news/circle-cctp-is-live-on-stellar`).
-- **Domains:** Ethereum 0, Solana 5, Base 6, Arc 26, **Stellar 27**. (Arc chainId
-  5042002 ≠ its domain 26.)
+- Hairlines and low-contrast greys mush under VP9 compression. Rules are 2 to
+  6px, ground-vs-panel luma separation is wide, `--muted` is lifted.
+- Smallest type is the risk, not the largest. Nothing is below ~1.3cqi, and
+  code-dense slides carry `class="slide--code"` to trade title size for content
+  room.
+- No per-slide entrance animation, because each advance would cost the encoder a
+  keyframe and smear text. Only two motion moments remain (the cover rule and
+  the attest crossing).
+- Share **the tab**, window near 16:9, so the fixed 16:9 stage fills the frame
+  without double letterboxing.
+
+Driving it: `→`/`space` next, `←` prev, `home`/`end`, `n` speaker notes, `o`
+jump list, `?` keys, `f` fullscreen. Deep links are `#/N`. **Speaker notes live
+in the same tab, so they're shared if you share the deck.** Keep them off while
+presenting and read from `script.md` on a second screen.
+
+Layout invariants worth not breaking:
+
+- Never put `display: grid` on an `li` or any element with mixed inline children
+  (it promotes each `<strong>`, `<em>`, or `<code>` to its own grid item and
+  shreds the text). `ul.points` and the notes drawer use `position: relative` +
+  absolutely positioned `::before` markers for this reason.
+- Every slide must fit the stage with no clipping. There's an audit harness for
+  this: build a probe wrapper around `deck.html`, force each slide current, and
+  measure `.body` / `.code` / `.tablewrap` for `scrollHeight > clientHeight` and
+  overflow past the slide box. Last run: 31 slides, 0 failures at 1100×900,
+  1440×810, and 1920×1080, both themes.
+- Type sizes are all `cqi` against a `container-type: inline-size` stage, so the
+  deck scales identically at any window size. Don't introduce `px` type.
+
+## Grounded facts to reuse
+
+Treat these as a cache, not as gospel. Each one names how it was established. If
+a fact matters to something public-facing, re-check it against the source rather
+than trusting this list. (An earlier version of this file asserted these were
+"already verified, don't re-fetch", and that framing propagated a wrong launch
+date into the deck. See the CCTP-live entry below.)
+
+- **CCTP V2 live on Stellar:** **May 2026**, per Elliot (2026-07-29), which is
+  the publish date of
+  `stellar.org/blog/foundation-news/circle-cctp-is-live-on-stellar`. This file
+  previously claimed 2025-09-18, which was wrong and unsourced. Note that the
+  blog page itself renders **no visible date**, so the date can't be confirmed
+  by fetching that URL. Get it from the CMS or a dated announcement if you ever
+  need to cite it precisely.
+- **Domains:** Ethereum 0, Solana 5, Base 6, Arc 26, **Stellar 27**. (Arc
+  chainId 5042002 ≠ its domain 26.)
 - **Finality thresholds:** Standard 2000, Fast 1000. Stellar-source always
   attests at 2000 (Fast is N/A for a fast-finality chain).
-- **Forwarding status:** works **out of** Stellar to EVM (Arc, Base) _and_ Solana
-  (all verified end-to-end); **blocked into** Stellar ("destination does not
-  support forwarding"). Circle's published destination list omits Solana but the
-  sandbox relayer services it — docs lag reality. `destinationCaller` must be 0
-  for forwarding; relayer consumes ~full `maxFee`.
+- **Forwarding status:** works **out of** Stellar to EVM (Arc, Base) _and_
+  Solana (all verified end-to-end); **blocked into** Stellar ("destination does
+  not support forwarding"). Circle's published destination list omits Solana but
+  the sandbox relayer services it — docs lag reality. `destinationCaller` must
+  be 0 for forwarding; relayer consumes ~full `maxFee`.
 - **Verified Stellar→Solana forward (2026-07-24):** burn (Stellar testnet)
   `0d4fcd21ce8cfbe98f3e2bc9441a472c7cf9e28e886e516fbabfd696dc0b09aa` → Iris
   `forwardState COMPLETE` → Solana devnet mint
@@ -116,28 +161,31 @@ with a 2–4 sentence starter answer, honest about unknowns):
   `docs/experiments/2026-06-24-forwarder-stellar-source.md`.
 - **Solana custody twist:** inbound receive is _not_ `mint_to` —
   `handle_receive_finalized_message` transfers from a shared
-  `custody_token_account` (seed `["custody", mint]`, **one per USDC mint**, shared
-  across all source domains). `token_pair(27,…)` / `remote_token_messenger(27)`
-  are the per-domain registrations.
-- **Stellar-destination requires `depositForBurnWithHook`:** G-address rides only
-  in hook data; plain `deposit_for_burn` strands funds (TMM errors `HookDataEmpty`
-  on empty hook). Muxed `M` addresses are G-flavored — can't be a direct
-  `mintRecipient` either.
+  `custody_token_account` (seed `["custody", mint]`, **one per USDC mint**,
+  shared across all source domains). `token_pair(27,…)` /
+  `remote_token_messenger(27)` are the per-domain registrations.
+- **Stellar-destination requires `depositForBurnWithHook`:** G-address rides
+  only in hook data; plain `deposit_for_burn` strands funds (TMM errors
+  `HookDataEmpty` on empty hook). Muxed `M` addresses are G-flavored — can't be
+  a direct `mintRecipient` either.
 - **Hook layouts:** forwarder-recipient = 24 zero bytes + u32 version(0) + u32
   strkey-length + UTF-8 strkey; `cctp-forward` flag = 24-byte region with ASCII
   `cctp-forward` + version 0 + length 0.
-- **Circle docs:** Stellar reference `developers.circle.com/cctp/references/stellar`;
-  forwarding `developers.circle.com/cctp/concepts/forwarding-service`.
-- **Iris:** sandbox `iris-api-sandbox.circle.com`; messages keyed by source domain
-  + burn tx hash: `GET /v2/messages/{srcDomain}?transactionHash={hash}`; fee
-  `GET /v2/burn/USDC/fees/{src}/{dst}` (+`?forward=true`).
+- **Circle docs:** Stellar reference
+  `developers.circle.com/cctp/references/stellar`; forwarding
+  `developers.circle.com/cctp/concepts/forwarding-service`.
+- **Iris:** sandbox `iris-api-sandbox.circle.com`; messages keyed by source
+  domain + burn tx hash: `GET /v2/messages/{srcDomain}?transactionHash={hash}`;
+  fee `GET /v2/burn/USDC/fees/{src}/{dst}` (+`?forward=true`).
 
 ## Key repo references (for snippets in runbook/deck)
 
 - Soroban wrapper: `contracts/stellar/cctp-wrapper/src/lib.rs`
   (`approve_and_deposit`, `approve_and_deposit_with_hook`).
-- EVM wrapper: `contracts/evm/cctp-wrapper/src/CctpWrapper.sol` (`bridgeWithPermit`).
-- TMM/MT interfaces (exact sigs): `contracts/stellar/cctp-wrapper/src/{tmm,mtv2}_interface.rs`.
+- EVM wrapper: `contracts/evm/cctp-wrapper/src/CctpWrapper.sol`
+  (`bridgeWithPermit`).
+- TMM/MT interfaces (exact sigs):
+  `contracts/stellar/cctp-wrapper/src/{tmm,mtv2}_interface.rs`.
 - Burn/mint call sites: `src/lib/stellar/cctp.ts`, `src/lib/evm/cctp.ts`,
   `src/lib/solana/cctp.ts`, `src/lib/solana/mint.ts`.
 - Hook + recipient encoding: `src/lib/stellar/recipient.ts`.
@@ -149,8 +197,9 @@ with a 2–4 sentence starter answer, honest about unknowns):
 
 - Script may still get wording tweaks — re-read it before building the deck so
   slides match. Deck slides map 1:1 to `(SLIDE)` cues.
-- TOC in `script.md` is auto-generated (Markdown All-in-One `<!-- omit in toc -->`
-  markers); regenerate after any heading edits. `pnpm format` reflows prose.
+- TOC in `script.md` is auto-generated (Markdown All-in-One `<!-- omit in toc
+  -->` markers); regenerate after any heading edits. `pnpm format` reflows
+  prose.
 - Voice: warm, second person, caveats-as-credibility (see script's "Voice
-  reminders"). This is DevRel content — the `stellar-devrel-context` skill has the
-  full voice spec.
+  reminders"). This is DevRel content — the `stellar-devrel-context` skill has
+  the full voice spec.
