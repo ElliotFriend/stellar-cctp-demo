@@ -1,0 +1,2171 @@
+<title>CCTP on Stellar: eng talk</title>
+
+<style>
+  /* ── tokens ───────────────────────────────────────────────────────── */
+  :root {
+    --ink: #fbfbfd;
+    --panel: #f1f1f6;
+    --panel-2: #e7e8f0;
+    --fg: #14161f;
+    --fg-dim: #3e4252;
+    --muted: #5b6072;
+    --rule: rgba(20, 22, 31, 0.22);
+    --rule-strong: rgba(20, 22, 31, 0.46);
+    --accent: #4351e0;
+    --accent-soft: rgba(67, 81, 224, 0.1);
+    --warn: #9c5604;
+    --warn-soft: rgba(156, 86, 4, 0.1);
+    --danger: #bd3325;
+    --danger-soft: rgba(189, 51, 37, 0.09);
+    --good: #0c7a5a;
+    --iris: linear-gradient(90deg, #4351e0, #1e86c9, #0e9b72);
+    --serif: Charter, "Iowan Old Style", "Palatino Linotype", Palatino, Georgia, serif;
+    --mono: ui-monospace, "SF Mono", SFMono-Regular, Menlo, "JetBrains Mono", Consolas, monospace;
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --ink: #0d0f15;
+      --panel: #1e2432;
+      --panel-2: #262d3d;
+      --fg: #eef0f6;
+      --fg-dim: #b6bacb;
+      --muted: #8f95a8;
+      --rule: rgba(238, 240, 246, 0.2);
+      --rule-strong: rgba(238, 240, 246, 0.42);
+      --accent: #6e7cff;
+      --accent-soft: rgba(110, 124, 255, 0.16);
+      --warn: #f0a63c;
+      --warn-soft: rgba(240, 166, 60, 0.13);
+      --danger: #f0604a;
+      --danger-soft: rgba(240, 96, 74, 0.13);
+      --good: #4fd1a5;
+      --iris: linear-gradient(90deg, #6e7cff, #59b7f0, #4fd1a5);
+    }
+  }
+
+  :root[data-theme="light"] {
+    --ink: #fbfbfd;
+    --panel: #f1f1f6;
+    --panel-2: #e7e8f0;
+    --fg: #14161f;
+    --fg-dim: #3e4252;
+    --muted: #5b6072;
+    --rule: rgba(20, 22, 31, 0.22);
+    --rule-strong: rgba(20, 22, 31, 0.46);
+    --accent: #4351e0;
+    --accent-soft: rgba(67, 81, 224, 0.1);
+    --warn: #9c5604;
+    --warn-soft: rgba(156, 86, 4, 0.1);
+    --danger: #bd3325;
+    --danger-soft: rgba(189, 51, 37, 0.09);
+    --good: #0c7a5a;
+    --iris: linear-gradient(90deg, #4351e0, #1e86c9, #0e9b72);
+  }
+
+  :root[data-theme="dark"] {
+    --ink: #0d0f15;
+    --panel: #1e2432;
+    --panel-2: #262d3d;
+    --fg: #eef0f6;
+    --fg-dim: #b6bacb;
+    --muted: #8f95a8;
+    --rule: rgba(238, 240, 246, 0.2);
+    --rule-strong: rgba(238, 240, 246, 0.42);
+    --accent: #6e7cff;
+    --accent-soft: rgba(110, 124, 255, 0.16);
+    --warn: #f0a63c;
+    --warn-soft: rgba(240, 166, 60, 0.13);
+    --danger: #f0604a;
+    --danger-soft: rgba(240, 96, 74, 0.13);
+    --good: #4fd1a5;
+    --iris: linear-gradient(90deg, #6e7cff, #59b7f0, #4fd1a5);
+  }
+
+  /* ── frame ────────────────────────────────────────────────────────── */
+  .deck {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 100svh;
+    background: var(--ink);
+    color: var(--fg);
+    font-family: var(--serif);
+    overflow-x: hidden;
+  }
+
+  .stage {
+    container-type: inline-size;
+    position: relative;
+    width: min(100vw, calc((100svh - 0px) * 16 / 9));
+    aspect-ratio: 16 / 9;
+    background: var(--ink);
+    overflow: hidden;
+  }
+
+  /* left rail: section position indicator */
+  .rail {
+    position: absolute;
+    inset: 0 auto 0 0;
+    width: 7.4cqi;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1.6cqi;
+    padding: 3.4cqi 0 3.4cqi;
+    border-right: 1px solid var(--rule);
+  }
+  .rail__num {
+    font-family: var(--mono);
+    font-size: 1.62cqi;
+    letter-spacing: 0.08em;
+    color: var(--fg-dim);
+    font-variant-numeric: tabular-nums;
+  }
+  .rail__ticks {
+    display: flex;
+    flex-direction: column;
+    gap: 0.9cqi;
+    align-items: center;
+  }
+  .rail__tick {
+    width: 1.6cqi;
+    height: 3px;
+    background: var(--rule-strong);
+  }
+  .rail__tick[data-on="1"] {
+    background: var(--accent);
+    width: 3.2cqi;
+    height: 4px;
+  }
+  .rail__tick[data-past="1"] {
+    background: var(--fg-dim);
+  }
+
+  /* slides */
+  .slides {
+    position: absolute;
+    inset: 0 0 0 7.4cqi;
+  }
+  .slide {
+    position: absolute;
+    inset: 0;
+    display: none;
+    flex-direction: column;
+    padding: 3.4cqi 4.4cqi 7.2cqi;
+  }
+  .slide.is-current {
+    display: flex;
+  }
+
+  .eyebrow {
+    font-family: var(--mono);
+    font-size: 1.4cqi;
+    font-weight: 500;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--muted);
+    display: flex;
+    align-items: baseline;
+    gap: 0.9cqi;
+  }
+  .eyebrow b {
+    color: var(--accent);
+    font-weight: 700;
+  }
+  .title {
+    font-family: var(--serif);
+    font-size: 3.7cqi;
+    font-weight: 700;
+    line-height: 1.06;
+    letter-spacing: -0.012em;
+    text-wrap: balance;
+    margin-top: 0.7cqi;
+    max-width: 40ch;
+  }
+  .sub {
+    font-size: 1.95cqi;
+    line-height: 1.4;
+    color: var(--fg-dim);
+    max-width: 58ch;
+    margin-top: 1.3cqi;
+    text-wrap: pretty;
+  }
+  .body {
+    flex: 1;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 1.4cqi;
+    margin-top: 1.7cqi;
+  }
+  /* a closing caveat anchors to the bottom of the content area */
+  .body > .flag:last-child {
+    margin-top: auto;
+  }
+  /* No per-slide entrance animation: every advance would cost the screenshare
+     encoder a keyframe and smear the text for ~300ms. */
+
+  /* Code-dense slides trade title size for content room. */
+  .slide--code {
+    padding-top: 2.8cqi;
+  }
+  .slide--code .title {
+    font-size: 3.1cqi;
+  }
+  .slide--code .body {
+    margin-top: 1.8cqi;
+    gap: 1.4cqi;
+  }
+
+  /* ── content primitives ───────────────────────────────────────────── */
+  .statement {
+    font-family: var(--serif);
+    font-size: 6.1cqi;
+    font-weight: 700;
+    line-height: 1.05;
+    letter-spacing: -0.018em;
+    text-wrap: balance;
+  }
+  .statement em {
+    font-style: normal;
+    color: var(--accent);
+  }
+
+  ul.points {
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: 1.0cqi;
+    font-size: 1.72cqi;
+    line-height: 1.32;
+    max-width: 68ch;
+  }
+  /* padding + absolute marker, NOT grid: a grid li would split inline
+     children (<strong>, <em>, <code>) into separate grid items. */
+  ul.points > li {
+    position: relative;
+    padding-left: 2.8cqi;
+    text-wrap: pretty;
+  }
+  ul.points > li::before {
+    content: "—";
+    position: absolute;
+    left: 0;
+    top: 0;
+    font-family: var(--mono);
+    color: var(--accent);
+    font-size: 1.6cqi;
+    line-height: 1.4;
+  }
+  ul.points strong {
+    font-weight: 700;
+  }
+  ul.points code,
+  .sub code,
+  p code,
+  td code,
+  li code {
+    font-family: var(--mono);
+    font-size: 0.86em;
+    background: var(--panel);
+    padding: 0.08em 0.34em;
+    color: var(--fg);
+  }
+
+  .cols {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 2.1cqi;
+    align-items: stretch;
+  }
+  .cols--wide {
+    grid-template-columns: 1.15fr 0.85fr;
+  }
+
+  .card {
+    background: var(--panel);
+    border: 1px solid var(--rule);
+    padding: 1.5cqi 1.8cqi;
+    display: flex;
+    flex-direction: column;
+    gap: 0.8cqi;
+  }
+  .card__label {
+    font-family: var(--mono);
+    font-size: 1.36cqi;
+    font-weight: 500;
+    letter-spacing: 0.11em;
+    text-transform: uppercase;
+    color: var(--fg-dim);
+  }
+  .card p {
+    font-size: 1.68cqi;
+    line-height: 1.34;
+    color: var(--fg-dim);
+    text-wrap: pretty;
+    overflow-wrap: anywhere;
+  }
+  .card--bad .card__label {
+    color: var(--danger);
+  }
+  .card--good .card__label {
+    color: var(--good);
+  }
+
+  /* two code blocks side by side, so a long signature pair needs no scroll */
+  .codecols {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1.6cqi;
+    align-items: stretch;
+    min-height: 0;
+  }
+
+  /* reference list: a mono key column, then the link itself */
+  ul.links {
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: 1.5cqi;
+    margin-top: 1cqi;
+  }
+  ul.links > li {
+    display: grid;
+    grid-template-columns: 7.5cqi 1fr;
+    align-items: baseline;
+    gap: 1.6cqi;
+  }
+  .links__k {
+    font-family: var(--mono);
+    font-size: 1.34cqi;
+    letter-spacing: 0.11em;
+    text-transform: uppercase;
+    color: var(--muted);
+  }
+  ul.links a {
+    justify-self: start;
+    font-family: var(--mono);
+    font-size: 2.1cqi;
+    color: var(--fg);
+    text-decoration: none;
+    border-bottom: 2px solid var(--accent);
+    padding-bottom: 0.25cqi;
+    transition: color 120ms linear, border-color 120ms linear;
+  }
+  ul.links a:hover {
+    color: var(--accent);
+    border-bottom-color: var(--fg);
+  }
+  ul.links a:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 3px;
+  }
+
+  .chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1cqi;
+  }
+  .chip {
+    font-family: var(--mono);
+    font-size: 1.4cqi;
+    line-height: 1.35;
+    padding: 0.6cqi 1cqi;
+    background: var(--panel);
+    border: 1px solid var(--rule);
+    color: var(--fg-dim);
+  }
+  .chip b {
+    color: var(--fg);
+    font-weight: 500;
+  }
+
+  /* callouts: two tiers, because the content has two tiers */
+  .flag {
+    display: grid;
+    grid-template-columns: max-content 1fr;
+    gap: 1.2cqi;
+    align-items: start;
+    padding: 1.0cqi 1.4cqi;
+    border-left: 5px solid var(--warn);
+    background: var(--warn-soft);
+    font-size: 1.62cqi;
+    line-height: 1.32;
+    text-wrap: pretty;
+  }
+  .flag__tag {
+    font-family: var(--mono);
+    font-size: 1.36cqi;
+    font-weight: 500;
+    letter-spacing: 0.11em;
+    text-transform: uppercase;
+    color: var(--warn);
+    padding-top: 0.3cqi;
+    white-space: nowrap;
+  }
+  .flag--danger {
+    border-left-color: var(--danger);
+    background: var(--danger-soft);
+  }
+  .flag--danger .flag__tag {
+    color: var(--danger);
+  }
+  .flag--stack {
+    grid-template-columns: 1fr;
+    gap: 0.5cqi;
+  }
+  .flag--plain {
+    border-left-color: var(--accent);
+    background: var(--accent-soft);
+  }
+  .flag--plain .flag__tag {
+    color: var(--accent);
+  }
+
+  /* code */
+  .code {
+    font-family: var(--mono);
+    font-size: 1.5cqi;
+    line-height: 1.5;
+    background: var(--panel);
+    border: 1px solid var(--rule);
+    padding: 1.6cqi 1.9cqi;
+    overflow-x: auto;
+    white-space: pre;
+    tab-size: 4;
+  }
+  .code--sm {
+    font-size: 1.34cqi;
+    line-height: 1.46;
+  }
+  .code--xs {
+    font-size: 1.3cqi;
+    line-height: 1.34;
+    padding: 1.0cqi 1.3cqi;
+  }
+  .code .c {
+    color: var(--muted);
+    font-style: normal;
+  }
+  .code .k {
+    color: var(--fg);
+    font-weight: 600;
+  }
+  .code .t {
+    color: var(--fg-dim);
+  }
+  .code .n {
+    color: var(--accent);
+  }
+  .code .hl {
+    color: var(--accent);
+    font-weight: 600;
+  }
+  .code .warnt {
+    color: var(--warn);
+  }
+  .code .badt {
+    color: var(--danger);
+  }
+
+  /* tables */
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    font-family: var(--mono);
+    font-size: 1.62cqi;
+    font-variant-numeric: tabular-nums;
+  }
+  .tablewrap {
+    overflow-x: auto;
+  }
+  thead th {
+    text-align: left;
+    font-weight: 500;
+    font-size: 1.34cqi;
+    letter-spacing: 0.11em;
+    text-transform: uppercase;
+    color: var(--fg-dim);
+    padding: 0 1.2cqi 0.7cqi 0;
+    border-bottom: 2px solid var(--rule-strong);
+  }
+  tbody td {
+    padding: 0.7cqi 1.2cqi 0.7cqi 0;
+    border-bottom: 1px solid var(--rule);
+    color: var(--fg-dim);
+    vertical-align: top;
+  }
+  tbody td:first-child {
+    color: var(--fg);
+  }
+  tbody tr[data-mark="1"] td {
+    color: var(--fg);
+  }
+  tbody tr[data-mark="1"] td:first-child {
+    color: var(--accent);
+    font-weight: 600;
+  }
+  table .num {
+    color: var(--accent);
+  }
+  td .c {
+    color: var(--muted);
+    font-size: 0.92em;
+  }
+  table.compact tbody td {
+    padding-block: 0.62cqi;
+  }
+
+  /* ── burn, attest, mint diagram ─────────────────────────────────── */
+  .flow {
+    display: grid;
+    grid-template-columns: 1fr 1.35fr 1fr;
+    align-items: center;
+    gap: 1.6cqi;
+  }
+  .node {
+    background: var(--panel);
+    border: 1px solid var(--rule);
+    padding: 1.4cqi 1.5cqi;
+    display: flex;
+    flex-direction: column;
+    gap: 0.7cqi;
+    text-align: center;
+  }
+  .node__k {
+    font-family: var(--mono);
+    font-size: 1.36cqi;
+    font-weight: 500;
+    letter-spacing: 0.11em;
+    text-transform: uppercase;
+    color: var(--accent);
+  }
+  .node__v {
+    font-size: 2.35cqi;
+    font-weight: 700;
+    line-height: 1.15;
+  }
+  .node__m {
+    font-family: var(--mono);
+    font-size: 1.36cqi;
+    line-height: 1.45;
+    color: var(--fg-dim);
+  }
+  .span {
+    display: flex;
+    flex-direction: column;
+    gap: 0.9cqi;
+    align-items: center;
+  }
+  .span__line {
+    width: 100%;
+    height: 6px;
+    background: var(--iris);
+    transform-origin: left center;
+  }
+  .is-current .span__line {
+    animation: cross 0.6s 0.15s cubic-bezier(0.35, 0.05, 0.2, 1) both;
+  }
+  @keyframes cross {
+    from {
+      transform: scaleX(0);
+    }
+  }
+  .span__pills {
+    display: flex;
+    gap: 0.8cqi;
+    font-family: var(--mono);
+    font-size: 1.4cqi;
+  }
+  .span__pills span {
+    border: 2px solid var(--rule-strong);
+    padding: 0.45cqi 0.9cqi;
+    color: var(--fg);
+  }
+  .span__cap {
+    font-family: var(--mono);
+    font-size: 1.38cqi;
+    font-weight: 500;
+    letter-spacing: 0.11em;
+    text-transform: uppercase;
+    color: var(--accent);
+  }
+
+  /* ── byte-layout ruler, the deck's signature graphic ─────────────── */
+  .bytes {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5cqi;
+  }
+  .bytes__label {
+    font-family: var(--mono);
+    font-size: 1.4cqi;
+    font-weight: 500;
+    letter-spacing: 0.11em;
+    text-transform: uppercase;
+    color: var(--fg-dim);
+    margin-bottom: 0.2cqi;
+  }
+  .ruler {
+    display: grid;
+    height: 1.9cqi;
+    align-items: end;
+  }
+  .ruler span {
+    position: relative;
+    border-left: 2px solid var(--rule-strong);
+    height: 0.8cqi;
+  }
+  .ruler span::after {
+    content: attr(data-at);
+    position: absolute;
+    left: 0;
+    bottom: 1.05cqi;
+    font-family: var(--mono);
+    font-size: 1.3cqi;
+    color: var(--muted);
+    font-variant-numeric: tabular-nums;
+  }
+  .fields {
+    display: grid;
+    gap: 2px;
+  }
+  .field {
+    background: var(--panel);
+    border: 1px solid var(--rule);
+    border-top: 4px solid var(--rule-strong);
+    padding: 0.8cqi 1.1cqi;
+    display: flex;
+    flex-direction: column;
+    gap: 0.45cqi;
+    min-width: 0;
+  }
+  .field__n {
+    font-family: var(--mono);
+    font-size: 1.58cqi;
+    color: var(--fg);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .field__d {
+    font-family: var(--mono);
+    font-size: 1.36cqi;
+    color: var(--muted);
+  }
+  .field--key {
+    border-top-color: var(--accent);
+  }
+  .field--key .field__n {
+    color: var(--accent);
+  }
+  .bytes__note {
+    font-family: var(--mono);
+    font-size: 1.3cqi;
+    color: var(--muted);
+    margin-top: 0.3cqi;
+  }
+
+  /* ── cover + demo divider slides ──────────────────────────────────── */
+  .slide--cover {
+    justify-content: center;
+    gap: 0;
+  }
+  .cover__meta {
+    font-family: var(--mono);
+    font-size: 1.52cqi;
+    letter-spacing: 0.08em;
+    color: var(--muted);
+    display: flex;
+    gap: 1.5cqi;
+    flex-wrap: wrap;
+    margin-top: 3.4cqi;
+  }
+  .cover__meta > span + span::before {
+    content: "·";
+    color: var(--rule-strong);
+    margin-right: 1.5cqi;
+  }
+  .cover__meta b {
+    color: var(--fg);
+    font-weight: 400;
+  }
+  .cover__rule {
+    height: 7px;
+    width: 26cqi;
+    background: var(--iris);
+    margin-bottom: 3.2cqi;
+  }
+  .is-current .cover__rule {
+    animation: cross 0.7s 0.1s cubic-bezier(0.35, 0.05, 0.2, 1) both;
+  }
+
+  .slide--demo {
+    justify-content: center;
+    background: var(--panel);
+  }
+  .demo__tag {
+    font-family: var(--mono);
+    font-size: 1.52cqi;
+    font-weight: 500;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--accent);
+  }
+  .demo__h {
+    font-size: 5.4cqi;
+    font-weight: 700;
+    line-height: 1.06;
+    letter-spacing: -0.016em;
+    margin-top: 1.2cqi;
+  }
+  .demo__grid {
+    display: grid;
+    grid-template-columns: repeat(3, max-content);
+    grid-template-columns: repeat(3, minmax(0, max-content));
+    gap: 0 2.8cqi;
+    margin-top: 3.2cqi;
+    font-family: var(--mono);
+    font-size: 1.56cqi;
+  }
+  .demo__grid dd {
+    overflow-wrap: anywhere;
+  }
+  .demo__grid dt {
+    font-size: 1.36cqi;
+    font-weight: 500;
+    letter-spacing: 0.11em;
+    text-transform: uppercase;
+    color: var(--muted);
+    padding-bottom: 0.7cqi;
+  }
+  .demo__grid dd {
+    color: var(--fg);
+  }
+
+  /* ── footer chrome ────────────────────────────────────────────────── */
+  .foot {
+    position: absolute;
+    inset: auto 0 0 7.4cqi;
+    display: flex;
+    align-items: center;
+    gap: 1.6cqi;
+    padding: 0 4.4cqi 2.2cqi;
+    font-family: var(--mono);
+    font-size: 1.36cqi;
+    color: var(--muted);
+    letter-spacing: 0.05em;
+  }
+  .foot__sec {
+    flex: 1;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .foot__count {
+    font-variant-numeric: tabular-nums;
+    color: var(--fg-dim);
+  }
+  .progress {
+    position: absolute;
+    inset: auto 0 0 0;
+    height: 6px;
+    background: var(--rule);
+  }
+  .progress__bar {
+    height: 100%;
+    width: 0;
+    background: var(--iris);
+    transition: width 0.28s ease;
+  }
+
+  .nav {
+    display: flex;
+    gap: 0.5cqi;
+  }
+  .nav button {
+    font: inherit;
+    font-size: 1.4cqi;
+    line-height: 1;
+    background: transparent;
+    color: var(--muted);
+    border: 2px solid var(--rule);
+    padding: 0.5cqi 0.9cqi;
+    cursor: pointer;
+  }
+  .nav button:hover {
+    color: var(--fg);
+    border-color: var(--rule-strong);
+  }
+  .nav button:focus-visible,
+  .ovlist button:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 2px;
+  }
+
+  /* ── notes drawer ─────────────────────────────────────────────────── */
+  .notes {
+    display: none;
+  }
+  .drawer {
+    position: fixed;
+    inset: auto 0 0 0;
+    max-height: 42svh;
+    overflow-y: auto;
+    background: var(--panel-2);
+    border-top: 1px solid var(--rule-strong);
+    padding: 18px 24px 22px;
+    font-family: var(--serif);
+    font-size: 15px;
+    line-height: 1.5;
+    color: var(--fg);
+    display: none;
+    z-index: 6;
+  }
+  .drawer[data-open="1"] {
+    display: block;
+  }
+  .drawer h3 {
+    font-family: var(--mono);
+    font-size: 11px;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: var(--accent);
+    margin-bottom: 10px;
+    display: flex;
+    gap: 14px;
+    flex-wrap: wrap;
+    align-items: baseline;
+  }
+  .drawer h3 .warnnote {
+    color: var(--warn);
+    letter-spacing: 0.1em;
+  }
+  .drawer ul {
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: 7px;
+    max-width: 100ch;
+  }
+  .drawer li {
+    position: relative;
+    padding-left: 16px;
+  }
+  .drawer li::before {
+    content: "·";
+    position: absolute;
+    left: 2px;
+    top: 0;
+    font-family: var(--mono);
+    color: var(--muted);
+  }
+  .drawer code {
+    font-family: var(--mono);
+    font-size: 0.88em;
+    background: var(--panel);
+    padding: 0.05em 0.3em;
+  }
+  .drawer .say {
+    color: var(--fg-dim);
+    font-style: italic;
+  }
+
+  /* ── overview ─────────────────────────────────────────────────────── */
+  .overview {
+    position: fixed;
+    inset: 0;
+    background: var(--ink);
+    z-index: 8;
+    display: none;
+    flex-direction: column;
+    padding: 26px 30px;
+    overflow-y: auto;
+  }
+  .overview[data-open="1"] {
+    display: flex;
+  }
+  .overview h2 {
+    font-family: var(--mono);
+    font-size: 11px;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 16px;
+  }
+  .ovlist {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 2px 20px;
+  }
+  .ovlist button {
+    all: unset;
+    cursor: pointer;
+    display: grid;
+    grid-template-columns: 30px 34px 1fr;
+    gap: 10px;
+    align-items: baseline;
+    padding: 7px 8px;
+    border-bottom: 1px solid var(--rule);
+    font-family: var(--mono);
+    font-size: 13px;
+    color: var(--fg-dim);
+  }
+  .ovlist button:hover {
+    background: var(--panel);
+    color: var(--fg);
+  }
+  .ovlist button[data-on="1"] {
+    color: var(--accent);
+  }
+  .ovlist .i {
+    color: var(--muted);
+    font-variant-numeric: tabular-nums;
+  }
+  .ovlist .s {
+    color: var(--muted);
+  }
+
+  .help {
+    position: fixed;
+    inset: 0;
+    background: var(--ink);
+    z-index: 9;
+    display: none;
+    align-items: center;
+    justify-content: center;
+  }
+  .help[data-open="1"] {
+    display: flex;
+  }
+  .helpbox {
+    background: var(--panel);
+    border: 1px solid var(--rule-strong);
+    padding: 26px 30px;
+    font-family: var(--mono);
+    font-size: 14px;
+    line-height: 2;
+    color: var(--fg-dim);
+  }
+  .helpbox b {
+    color: var(--fg);
+    display: inline-block;
+    min-width: 9ch;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .is-current .span__line,
+    .is-current .cover__rule {
+      animation: none;
+    }
+    .progress__bar {
+      transition: none;
+    }
+  }
+</style>
+
+<div class="deck">
+  <div class="stage" id="stage">
+    <div class="rail" aria-hidden="true">
+      <div class="rail__num" id="railNum">—</div>
+      <div class="rail__ticks" id="railTicks"></div>
+    </div>
+
+    <div class="slides" id="slides">
+      <!-- 01 ─ cover ────────────────────────────────────────────────── -->
+      <section class="slide slide--cover" data-sec="0" data-title="Title">
+        <div class="cover__rule"></div>
+        <h1 class="statement">Burn here.<br />Mint there.<br /><em>Same asset.</em></h1>
+        <p class="sub">
+          Circle's Cross-Chain Transfer Protocol (CCTP V2), between Stellar and everywhere else.
+        </p>
+        <div class="cover__meta">
+          <span><b>Elliot Voris</b></span>
+          <span>Project demo</span>
+          <span>Stellar = CCTP domain <b>27</b></span>
+        </div>
+        <aside class="notes">
+          <li class="say">"You've got USDC on chain A. You want USDC on chain B."</li>
+          <li>45 min + 15 Q&amp;A. Demos are live on testnet (Arc, Solana devnet). Base is recording-only.</li>
+          <li>Keys: <code>o</code> for the slide list, <code>?</code> for the full list, <code>n</code> toggles these notes (there's no notes button in the footer).</li>
+          <li><strong>Meet:</strong> share <em>this tab</em> and keep the window near 16:9 so the deck fills the frame with no double letterboxing. Notes live in the same tab, so keep them <em>off</em> while presenting and read from <code>outline.md</code> on your other screen.</li>
+        </aside>
+      </section>
+
+      <!-- 02 ─ running order ───────────────────────────────────────── -->
+      <section class="slide" data-sec="0" data-title="Running order">
+        <p class="eyebrow"><b>Plan</b> <span>~45 min + 15 Q&amp;A</span></p>
+        <h2 class="title">Where we're going</h2>
+        <div class="body">
+          <div class="tablewrap">
+            <table class="compact">
+              <thead>
+                <tr>
+                  <th>&#8470;</th>
+                  <th>Section</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr><td>1</td><td>Cold open: the problem</td></tr>
+                <tr><td>2</td><td>Mental model: burn, attest, mint</td></tr>
+                <tr><td>3</td><td>Stellar realities: Forwarder &amp; hook data</td></tr>
+                <tr><td>4</td><td>The forwarding service</td></tr>
+                <tr data-mark="1"><td>5</td><td>Demo A: Stellar and Arc, raw and wrapper</td></tr>
+                <tr data-mark="1"><td>6</td><td>Demo B: EVM to Stellar, three flows</td></tr>
+                <tr data-mark="1"><td>7</td><td>Demo C: Solana, both ways</td></tr>
+                <tr data-mark="1"><td>8</td><td>Demo D: forwarding live</td></tr>
+                <tr><td>9</td><td>Recap + honest limitations</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+        <aside class="notes">
+          <li>Four live demos, roughly half the time. Everything is recorded as backup.</li>
+          <li>These boxes add to 46 against a ~45 min budget and haven't been rehearsed against a clock, so treat the column as provisional.</li>
+          <li>Safe cuts if running long: the EVM-wrapper aside in §5b, and Demo D.</li>
+        </aside>
+      </section>
+
+      <!-- 03 ─ §1 the problem ──────────────────────────────────────── -->
+      <section class="slide" data-sec="1" data-title="The old answer vs. burn-and-mint">
+        <p class="eyebrow"><b>&sect;1</b> <span>Cold open</span></p>
+        <h2 class="title">Three ways to move a dollar</h2>
+        <div class="body">
+          <div class="cols" style="grid-template-columns: 1fr 1fr 1fr">
+            <div class="card card--bad">
+              <p class="card__label">Lock &amp; wrap</p>
+              <p>
+                Lock on A, mint a <em>wrapped</em> token on B. Wormhole's portal bridge.
+              </p>
+            </div>
+            <div class="card card--bad">
+              <p class="card__label">Liquidity pool</p>
+              <p>
+                Deposit to an LP on A, withdraw from the matching LP on B. Allbridge Core.
+              </p>
+            </div>
+            <div class="card card--good">
+              <p class="card__label">Burn &amp; mint</p>
+              <p>
+                Burn the real USDC on A. Circle authorizes a mint of <em>native, canonical</em>
+                USDC on B.
+              </p>
+            </div>
+          </div>
+          <div class="flag flag--plain">
+            <span class="flag__tag">Why us</span>
+            <span>
+              As of <strong>May 2026</strong>, Stellar is a CCTP V2 destination <em>and</em> source
+              (<code>domain 27</code>).
+            </span>
+          </div>
+        </div>
+        <aside class="notes">
+          <li>Both of the first two leave a big pile of USDC sitting idle. That pile grows into a honeypot, and honeypots attract exploits.</li>
+          <li>No wrapped-USDC dead-end token. No pool that can run dry or get compromised.</li>
+          <li>Say <em>finally</em> a CCTP V2 destination and source: it was a long wait.</li>
+          <li class="say">"So how does chain B know it's allowed to mint? That's the whole trick, and it's three moving parts."</li>
+        </aside>
+      </section>
+
+      <!-- 04 ─ §2 diagram ──────────────────────────────────────────── -->
+      <section class="slide" data-sec="2" data-title="Burn, attest, mint">
+        <p class="eyebrow"><b>&sect;2</b> <span>Mental model</span></p>
+        <h2 class="title">Three actors, three steps</h2>
+        <div class="body">
+          <div class="flow">
+            <div class="node">
+              <span class="node__k">1 · Burn</span>
+              <span class="node__v">Source chain</span>
+              <span class="node__m">deposit_for_burn<br />&rarr; TokenMessengerMinter</span>
+            </div>
+            <div class="span">
+              <span class="span__cap">2 · Attest &nbsp;·&nbsp; Circle (Iris)</span>
+              <span class="span__line"></span>
+              <span class="span__pills"><span>message</span><span>attestation</span></span>
+            </div>
+            <div class="node">
+              <span class="node__k">3 · Mint</span>
+              <span class="node__v">Destination</span>
+              <span class="node__m">receive_message<br />&rarr; native USDC</span>
+            </div>
+          </div>
+          <ul class="points">
+            <li>
+              The burn emits a structured <strong>message</strong> into the MessageTransmitter, a
+              generic cross-chain bus: <em>N units burned on domain X, for recipient R on domain Y.</em>
+            </li>
+            <li>
+              Circle waits for source finality, then signs an <strong>attestation</strong>. Arc:
+              seconds. Ethereum and its L2s: up to ~20 min. Finality, not Circle being slow.
+            </li>
+            <li>
+              <strong>Anyone</strong> can carry <code>(message, attestation)</code> to the
+              destination and trigger the mint.
+            </li>
+          </ul>
+        </div>
+        <aside class="notes">
+          <li>Iris = the name of Circle's off-chain attestation API.</li>
+          <li>Favourite outlier: StarkNet takes <strong>4 to 8 hours</strong> to reach finality. You're always waiting on the source chain, not on Circle.</li>
+          <li>One breath on naming: the same contract is <code>TokenMessengerMinter</code> on Stellar, <code>TokenMessengerV2</code> on EVM, and <code>TokenMessengerMinterV2</code> on Solana. Use each chain's own spelling when you're looking at that chain's code.</li>
+          <li>On EVM the minting is a separate <code>TokenMinterV2</code>; on Stellar the one contract does both burn and mint.</li>
+          <li>Emphasize permissionless: the mint isn't Circle's job unless you ask it to be (§4).</li>
+        </aside>
+      </section>
+
+      <!-- 05 ─ §2 two entrypoints ──────────────────────────────────── -->
+      <section class="slide slide--code" data-sec="2" data-title="The two burn entrypoints">
+        <p class="eyebrow"><b>&sect;2</b> <span>Mental model</span></p>
+        <h2 class="title">The hook variant is a strict superset</h2>
+        <div class="body">
+          <div class="codecols">
+            <pre class="code code--xs"><span class="k">fn</span> deposit_for_burn(
+    caller: <span class="t">Address</span>,
+    amount: <span class="t">i128</span>,
+    destination_domain: <span class="t">u32</span>,
+    mint_recipient: <span class="t">BytesN&lt;32&gt;</span>,
+    burn_token: <span class="t">Address</span>,
+    destination_caller: <span class="t">BytesN&lt;32&gt;</span>,
+    max_fee: <span class="t">i128</span>,
+    min_finality_threshold: <span class="t">u32</span>,
+);</pre>
+            <pre class="code code--xs"><span class="k">fn</span> deposit_for_burn_with_hook(
+    caller: <span class="t">Address</span>,
+    amount: <span class="t">i128</span>,
+    destination_domain: <span class="t">u32</span>,
+    mint_recipient: <span class="t">BytesN&lt;32&gt;</span>,
+    burn_token: <span class="t">Address</span>,
+    destination_caller: <span class="t">BytesN&lt;32&gt;</span>,
+    max_fee: <span class="t">i128</span>,
+    min_finality_threshold: <span class="t">u32</span>,
+    <span class="hl">hook_data: Bytes</span>,
+);</pre>
+          </div>
+          <div class="chips">
+            <span class="chip">carries a <b>Stellar recipient</b></span>
+            <span class="chip">or the <b>cctp-forward</b> flag</span>
+            <span class="chip">empty hook on this path &rarr; <b>HookDataEmpty</b></span>
+          </div>
+        </div>
+        <aside class="notes">
+          <li class="say">"Hold onto this. On Stellar it turns out to be mandatory, not optional."</li>
+          <li>The contract rejects empty hook data on the hook path, so you reach for it precisely when you have something to deliver.</li>
+        </aside>
+      </section>
+
+      <!-- 06 ─ §2 mint side ────────────────────────────────────────── -->
+      <section class="slide slide--code" data-sec="2" data-title="The mint side, everywhere">
+        <p class="eyebrow"><b>&sect;2</b> <span>Mental model</span></p>
+        <h2 class="title">Every destination takes the same pair</h2>
+        <div class="body">
+          <pre class="code"><span class="t">EVM</span>      MessageTransmitterV2.receiveMessage(bytes message, bytes attestation)
+<span class="t">Solana</span>   MessageTransmitterV2.receiveMessage(...)  <span class="c">// CPIs into TMM</span>
+<span class="t">Stellar</span>  MessageTransmitter.receive_message(caller, message, attestation)
+
+<span class="c">// ...but INTO Stellar we never call receive_message directly:</span>
+<span class="t">Stellar</span>  <span class="hl">CctpForwarder.mint_and_forward(message, attestation)</span></pre>
+          <p class="sub">
+            Verify Circle's signature, mint. The only twist is Stellar inbound, where the same call
+            also does the last hop to a G&#8209;account, which is the next section.
+          </p>
+        </div>
+        <aside class="notes">
+          <li>Set up §3 here: the shape is boring everywhere except into Stellar.</li>
+        </aside>
+      </section>
+
+      <!-- 07 ─ §2 domains ──────────────────────────────────────────── -->
+      <section class="slide" data-sec="2" data-title="Domains, not chain IDs">
+        <p class="eyebrow"><b>&sect;2</b> <span>Vocabulary</span></p>
+        <h2 class="title">Domains, not chain IDs</h2>
+        <div class="body">
+          <div class="cols cols--wide">
+            <div class="tablewrap">
+              <table>
+                <thead>
+                  <tr><th>Chain</th><th>CCTP domain</th></tr>
+                </thead>
+                <tbody>
+                  <tr><td>Ethereum</td><td class="num">0</td></tr>
+                  <tr><td>Solana</td><td class="num">5</td></tr>
+                  <tr><td>Base</td><td class="num">6</td></tr>
+                  <tr><td>Arc</td><td class="num">26</td></tr>
+                  <tr data-mark="1"><td>Stellar</td><td class="num">27</td></tr>
+                </tbody>
+              </table>
+            </div>
+            <div class="flag flag--stack">
+              <span class="flag__tag">Not the same</span>
+              <span>
+                Arc's EVM <code>chainId</code> is <strong>5,042,002</strong>. Its CCTP domain is
+                <strong>26</strong>. Every "which chain" field in a CCTP message is a
+                <em>domain</em>, its own address space for chains.
+              </span>
+            </div>
+          </div>
+        </div>
+        <aside class="notes">
+          <li>Cheap slide, but domain/chainId confusion is a classic first-day integration bug.</li>
+        </aside>
+      </section>
+
+      <!-- 08 ─ §2 fast vs standard ─────────────────────────────────── -->
+      <section class="slide" data-sec="2" data-title="Fast vs Standard">
+        <p class="eyebrow"><b>&sect;2</b> <span>Vocabulary</span></p>
+        <h2 class="title">Fast vs Standard is one integer</h2>
+        <div class="body">
+          <div class="cols">
+            <div class="card">
+              <p class="card__label">min_finality_threshold = 2000</p>
+              <p><strong>Standard.</strong> Wait for hard finality on the source chain. No extra fee.</p>
+            </div>
+            <div class="card">
+              <p class="card__label">min_finality_threshold = 1000</p>
+              <p>
+                <strong>Fast.</strong> Circle attests earlier for a small fee, backed by its own
+                guarantee. You'll see the number go over the wire in the demos.
+              </p>
+            </div>
+          </div>
+          <div class="flag">
+            <span class="flag__tag">Caveat</span>
+            <span>
+              Fast only means something when the <em>source</em> is a slow-finality chain. Hold that
+              thought until Solana.
+            </span>
+          </div>
+        </div>
+        <aside class="notes">
+          <li>Payoff lands in §7c: from a Stellar source, the toggle is effectively cosmetic.</li>
+        </aside>
+      </section>
+
+      <!-- 09 ─ §3a forwarder ───────────────────────────────────────── -->
+      <section class="slide" data-sec="3" data-title="Why inbound needs a Forwarder">
+        <p class="eyebrow"><b>&sect;3a</b> <span>Stellar realities</span></p>
+        <h2 class="title">A CCTP mint can't safely target a G&#8209;account</h2>
+        <div class="body">
+          <ul class="points">
+            <li>
+              On EVM, a mint recipient is a 20-byte address. EOA or contract, the mint doesn't
+              care. On Stellar, CCTP mints to a <strong>contract address (C…)</strong> and
+              <code>mintRecipient</code> is a raw 32-byte key.
+            </li>
+            <li>
+              A CCTP message <strong>cannot distinguish a G address from a C address</strong>, and
+              the mint path expects a contract it can call into.
+            </li>
+            <li>
+              The fix: inbound mints to a <strong><code>CctpForwarder</code></strong>
+              (<code>CA66…4VSZ</code>). The real G address travels in hook data. The Forwarder mints
+              to itself, then pays out, atomically and permissionlessly, in one call.
+            </li>
+          </ul>
+          <div class="flag flag--danger">
+            <span class="flag__tag">Lose funds</span>
+            <span>
+              Put a bare <strong>G address</strong> in <code>mintRecipient</code> and the funds land
+              somewhere that can't receive them. <strong>You brick the transfer.</strong> Single most
+              dangerous mistake in the integration.
+            </span>
+          </div>
+        </div>
+        <aside class="notes">
+          <li>Analogy for this room: same reason you can't <code>payment</code> an asset to a G account with no trustline. The destination has to be <em>prepared</em> to receive.</li>
+          <li>The Forwarder is the thing that's already prepared, and it does the last hop for you. Caller just pays the Stellar tx fee.</li>
+        </aside>
+      </section>
+
+      <!-- 10 ─ §3b byte layout ─────────────────────────────────────── -->
+      <section class="slide" data-sec="3" data-title="Hook data: the byte layout">
+        <p class="eyebrow"><b>&sect;3b</b> <span>The most important bytes in the repo</span></p>
+        <h2 class="title">Where the recipient actually rides</h2>
+        <div class="body">
+          <div class="bytes">
+            <p class="bytes__label">mint_recipient &nbsp;&middot; 32 bytes</p>
+            <div class="fields" style="grid-template-columns: 1fr">
+              <div class="field">
+                <span class="field__n">CctpForwarder contract &nbsp;<span class="field__d">CA66…4VSZ</span></span>
+              </div>
+            </div>
+          </div>
+          <div class="bytes">
+            <p class="bytes__label">hook_data</p>
+            <div class="ruler" style="grid-template-columns: 19fr 10fr 10fr 31fr">
+              <span data-at="0"></span><span data-at="24"></span><span data-at="28"></span><span data-at="32"></span>
+            </div>
+            <div class="fields" style="grid-template-columns: 19fr 10fr 10fr 31fr">
+              <div class="field">
+                <span class="field__n">reserved</span>
+                <span class="field__d">24 bytes, zeros</span>
+              </div>
+              <div class="field">
+                <span class="field__n">version</span>
+                <span class="field__d">u32 · 0</span>
+              </div>
+              <div class="field">
+                <span class="field__n">length</span>
+                <span class="field__d">u32</span>
+              </div>
+              <div class="field field--key">
+                <span class="field__n">"GB…" strkey</span>
+                <span class="field__d">UTF&#8209;8 text, 56 bytes</span>
+              </div>
+            </div>
+          </div>
+          <div class="flag flag--danger">
+            <span class="flag__tag">Lose funds</span>
+            <span>
+              The strkey as <strong>UTF&#8209;8 text</strong> (the literal <code>GB…</code> string),
+              <em>not</em> the decoded 32-byte key. Send decoded bytes and funds are stuck.
+            </span>
+          </div>
+        </div>
+        <aside class="notes">
+          <li class="say">"That surprised me. It's Circle's chosen convention for Stellar."</li>
+          <li>Field widths on the diagram are not to scale: the strkey is 56 of the bytes.</li>
+          <li>I validate the strkey <em>before</em> building the burn, because there's no undo.</li>
+        </aside>
+      </section>
+
+      <!-- 11 ─ §3b encoder ─────────────────────────────────────────── -->
+      <section class="slide slide--code" data-sec="3" data-title="encodeStellarForwarderHookData()">
+        <p class="eyebrow"><b>&sect;3b</b> <span>src/lib/stellar/recipient.ts</span></p>
+        <h2 class="title">Twelve lines between you and stuck funds</h2>
+        <div class="body">
+          <pre class="code code--sm"><span class="k">export function</span> encodeStellarForwarderHookData(stellarStrkey: <span class="t">string</span>): <span class="t">Hex</span> {
+    <span class="k">if</span> (!StrKey.isValidEd25519PublicKey(stellarStrkey)) {
+        <span class="k">throw new</span> Error(`Invalid Stellar account: ${stellarStrkey}`);
+    }
+    <span class="k">const</span> magic       = pad(<span class="n">'0x'</span>, { size: <span class="n">24</span> });
+    <span class="k">const</span> version     = pad(toHex(<span class="n">0</span>), { size: <span class="n">4</span> });
+    <span class="k">const</span> recipientHex = stringToHex(stellarStrkey);  <span class="c">// the "GB..." strkey, as UTF-8</span>
+    <span class="k">const</span> lengthField = pad(toHex((recipientHex.length - <span class="n">2</span>) / <span class="n">2</span>), { size: <span class="n">4</span> });
+    <span class="k">return</span> concatHex([magic, version, lengthField, recipientHex]);
+}</pre>
+        </div>
+        <aside class="notes">
+          <li>Circle's own writeup: <code>developers.circle.com/cctp/references/stellar</code>. Their docs carry the same warning: set <code>mintRecipient</code> to a user account and funds are permanently stuck.</li>
+          <li>Muxed <strong>M</strong> addresses are G-flavored, so the same rule applies.</li>
+        </aside>
+      </section>
+
+      <!-- 12 ─ §3b always with-hook ────────────────────────────────── -->
+      <section class="slide" data-sec="3" data-title="Into Stellar, always with-hook">
+        <p class="eyebrow"><b>&sect;3b</b> <span>The rule</span></p>
+        <h2 class="title">Into Stellar: always <code>depositForBurnWithHook</code></h2>
+        <div class="body">
+          <p class="sub">
+            The G address exists <em>only</em> in the hook, and both hookless options lose money.
+          </p>
+          <div class="cols">
+            <div class="card card--bad">
+              <p class="card__label">G address in mintRecipient</p>
+              <p>Bricks. Nothing there can receive it. (&sect;3a)</p>
+            </div>
+            <div class="card card--bad">
+              <p class="card__label">Forwarder, no hook</p>
+              <p>No recipient to pay out to. Errors <code>HookDataEmpty</code>.</p>
+            </div>
+          </div>
+        </div>
+        <aside class="notes">
+          <li>This is the one slide to repeat if the room takes nothing else away.</li>
+          <li>Holds for both sources we're about to demo: EVM <em>and</em> Solana.</li>
+        </aside>
+      </section>
+
+      <!-- 13 ─ §3c three encodings ─────────────────────────────────── -->
+      <section class="slide" data-sec="3" data-title="Three encodings, one 32-byte slot">
+        <p class="eyebrow"><b>&sect;3c</b> <span>Stellar realities</span></p>
+        <h2 class="title">One field, three opinions</h2>
+        <div class="body">
+          <div class="tablewrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>Destination</th>
+                  <th>What goes in mintRecipient</th>
+                  <th>Encoding</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>EVM</td>
+                  <td>the 20-byte EOA / contract address</td>
+                  <td><strong>right-aligned</strong> in 32 bytes<br /><span class="c">leftPad32FromHex</span></td>
+                </tr>
+                <tr>
+                  <td>Solana</td>
+                  <td>the recipient's <strong>USDC ATA</strong>, not the wallet</td>
+                  <td>raw 32 bytes, <strong>left-aligned</strong><br /><span class="c">a pubkey already fills 32</span></td>
+                </tr>
+                <tr data-mark="1">
+                  <td>Stellar</td>
+                  <td><strong>always</strong> the Forwarder's <code>C…</code> id; real recipient in hook data</td>
+                  <td>decoded to raw 32 bytes<br /><span class="c">strkeyToBytes32, not 3b's UTF-8</span></td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+          <div class="flag flag--plain">
+            <span class="flag__tag">New vocab</span>
+            <span>
+              On Solana you don't hold USDC at your wallet address. You hold it in an
+              <strong>Associated Token Account</strong> derived from wallet + mint. The burn's
+              recipient must be that ATA.
+            </span>
+          </div>
+        </div>
+        <aside class="notes">
+          <li class="say">"Every chain has a 32-byte slot and its own opinion about how to fill it."</li>
+          <li><strong>Two fields, two opposite conventions.</strong> A message slot (<code>mintRecipient</code>, <code>destinationCaller</code>) takes the <em>decoded</em> bytes of the Forwarder's <code>C…</code> id. Hook data sends the recipient strkey as <em>UTF-8 text</em>. Easy to conflate, and either mistake loses funds.</li>
+        </aside>
+      </section>
+
+      <!-- 14 ─ §4 forwarding service ───────────────────────────────── -->
+      <section class="slide" data-sec="4" data-title="The forwarding service">
+        <p class="eyebrow"><b>&sect;4</b> <span>developers.circle.com/cctp/concepts/forwarding-service</span></p>
+        <h2 class="title">Make the destination transaction disappear</h2>
+        <div class="body">
+          <ul class="points">
+            <li>
+              Normally <em>someone</em> pays to submit the mint. For a recipient with no gas token
+              on the destination, that's an onboarding wall.
+            </li>
+            <li>
+              Circle's <strong>Crosschain Forwarding Service</strong> is a relayer: set a small
+              forward fee, tag the burn with a <code>cctp-forward</code> marker in hook data, and
+              Circle submits the mint itself. USDC just <em>appears</em>.
+            </li>
+            <li>
+              <strong>Who receives it doesn't change.</strong> Still the ordinary
+              <code>mint_recipient</code> from the burn args. The flag carries no address.
+            </li>
+          </ul>
+          <div class="flag">
+            <span class="flag__tag">Two gotchas</span>
+            <span>
+              The relayer consumes ~the <strong>full <code>maxFee</code></strong>, so size it to the
+              <code>?forward=true</code> quote. And <code>destinationCaller</code>
+              <strong>must be zero</strong>; setting it disables forwarding.
+            </span>
+          </div>
+        </div>
+        <aside class="notes">
+          <li>In code: <code>encodeCctpForwardHookData()</code>: a 24-byte reserved region carrying ASCII <code>cctp-forward</code>, version 0, length 0.</li>
+          <li>App side has no destination step at all. Poll the recipient's balance until the relayer's mint lands.</li>
+          <li>The flag only says "please forward this," and padding on <code>maxFee</code> is paid, not refunded.</li>
+        </aside>
+      </section>
+
+      <!-- 15 ─ §4 honest status ────────────────────────────────────── -->
+      <section class="slide" data-sec="4" data-title="Forwarding: the honest status">
+        <p class="eyebrow"><b>&sect;4</b> <span>The part I spent a week on</span></p>
+        <h2 class="title">Forwarding works one direction</h2>
+        <div class="body">
+          <div class="cols">
+            <div class="card card--good">
+              <p class="card__label">Out of Stellar &nbsp;· verified</p>
+              <p>
+                Stellar&rarr;Arc, Stellar&rarr;Base (raw <em>and</em> wrapper paths), and
+                Stellar&rarr;Solana. All landed end&#8209;to&#8209;end.
+              </p>
+            </div>
+            <div class="card card--bad">
+              <p class="card__label">Into Stellar &nbsp;· blocked</p>
+              <p>
+                Still returns <em>"destination does not support forwarding."</em> Inbound always goes
+                through the <code>CctpForwarder</code> and its <code>mint_and_forward</code>, the way
+                we saw in &sect;3a.
+              </p>
+            </div>
+          </div>
+          <div class="flag flag--plain">
+            <span class="flag__tag">Two "forwarders"</span>
+            <span>
+              Both are Circle's and they're unrelated: the hosted <strong>relayer service</strong>
+              (this section) and the on-chain <strong>Soroban <code>CctpForwarder</code></strong>
+              (the inbound last hop). I wrote neither.
+            </span>
+          </div>
+        </div>
+        <aside class="notes">
+          <li>The one direction that genuinely doesn't work is forwarding <em>into</em> Stellar.</li>
+          <li>Verified out of Stellar end to end, which is the piece that had to get fixed.</li>
+        </aside>
+      </section>
+
+      <!-- 16 ─ DEMO A ──────────────────────────────────────────────── -->
+      <section class="slide slide--demo" data-sec="5" data-title="DEMO A: Stellar and Arc">
+        <p class="demo__tag">Demo A &nbsp;·&nbsp; 12 min &nbsp;·&nbsp; &sect;5</p>
+        <h2 class="demo__h">Stellar and Arc</h2>
+        <dl class="demo__grid">
+          <dt>Direction</dt>
+          <dt>Flow</dt>
+          <dt>Watch for</dt>
+          <dd>Stellar &rarr; Arc</dd>
+          <dd>2 tx (direct), then 1 tx (wrapper)</dd>
+          <dd>the prompt count</dd>
+        </dl>
+        <aside class="notes">
+          <li>Click-by-click and fallbacks: <code>runbook.md</code>. Keep known-good burn hashes handy for resume-by-burn-hash.</li>
+          <li>Arc attests in seconds. Note starting balances out loud so the "balance went up" beat reads.</li>
+          <li>Arc: raw args, then read the contract, then the same burn with one prompt.</li>
+          <li>Narrating the args off the live UI: <code>amount</code> is 7 decimals on Stellar but 6 on EVM and Solana, <code>destination_domain</code> 26 is Arc (not chainId 5_042_002), <code>destination_caller</code> zero keeps the mint permissionless.</li>
+        </aside>
+      </section>
+
+      <!-- 17 ─ §5b the wrapper ─────────────────────────────────────── -->
+      <section class="slide slide--code" data-sec="5" data-title="approve_and_deposit: the whole contract">
+        <p class="eyebrow"><b>&sect;5b</b> <span>contracts/stellar/cctp-wrapper/src/lib.rs</span></p>
+        <h2 class="title">Forty lines of Rust, one signature</h2>
+        <div class="body">
+          <pre class="code code--xs"><span class="k">pub fn</span> approve_and_deposit(
+    env: <span class="t">Env</span>, caller: <span class="t">Address</span>, usdc: <span class="t">Address</span>, tmm: <span class="t">Address</span>, amount: <span class="t">i128</span>,
+    destination_domain: <span class="t">u32</span>, mint_recipient: <span class="t">BytesN&lt;32&gt;</span>,
+    destination_caller: <span class="t">BytesN&lt;32&gt;</span>, max_fee: <span class="t">i128</span>, min_finality_threshold: <span class="t">u32</span>,
+) {
+    <span class="hl">caller.require_auth();</span>
+
+    <span class="c">// approve an allowance so the TokenMessengerMinter can transfer_from our caller</span>
+    <span class="k">let</span> live_until_ledger = (env.ledger().sequence() + <span class="n">50</span>).next_multiple_of(<span class="n">50</span>);
+    token::Client::new(&amp;env, &amp;usdc).approve(&amp;caller, &amp;tmm, &amp;amount, &amp;live_until_ledger);
+
+    TmmClient::new(&amp;env, &amp;tmm).deposit_for_burn(
+        &amp;caller, &amp;amount, &amp;destination_domain, &amp;mint_recipient,
+        &amp;usdc, &amp;destination_caller, &amp;max_fee, &amp;min_finality_threshold,
+    );
+}</pre>
+        </div>
+        <aside class="notes">
+          <li><code>require_auth</code>: both inner calls act on behalf of <code>caller</code>, so Soroban's auth framework needs one signature covering the tree, and Freighter collects it in one prompt. On EVM there is no equivalent.</li>
+          <li><code>live_until_ledger</code> rounded to the next multiple of 50 to avoid simulate-vs-submit ledger mismatches. The allowance is fully consumed by the burn anyway.</li>
+          <li><code>TmmClient</code> is a typed Rust-to-Rust interface, generated with <code>stellar contract bindings rust</code>.</li>
+          <li><code>usdc</code> is an arg because the TMM itself takes it that way; <code>tmm</code> is an arg because I don't know how permanent Circle's addresses are. Flip side: the frontend must supply trusted addresses, so for mainnet you'd pin or govern these.</li>
+          <li>There's a twin, <code>approve_and_deposit_with_hook</code>, identical plus a trailing <code>hook_data: Bytes</code>, and that's what Demo D uses.</li>
+        </aside>
+      </section>
+
+      <!-- 18 ─ §5b EVM comparison (safe cut) ───────────────────────── -->
+      <section class="slide" data-sec="5" data-title="Soroban auth tree vs EVM permit">
+        <p class="eyebrow"><b>&sect;5b</b> <span>If time</span></p>
+        <h2 class="title">Same UX goal, very different price</h2>
+        <div class="body">
+          <div class="cols">
+            <div class="card card--good">
+              <p class="card__label">Soroban</p>
+              <p>
+                One signature authorizes a sub-tree. <code>approve</code> + <code>deposit_for_burn</code>
+                become inner calls of one invocation. No extra primitive needed.
+              </p>
+            </div>
+            <div class="card">
+              <p class="card__label">EVM: bridgeWithPermit()</p>
+              <p>
+                Four calls bundled: <code>usdc.permit</code> &rarr; <code>transferFrom</code> &rarr;
+                <code>approve</code> &rarr; <code>depositForBurnWithHook</code>. The user signs an
+                <strong>EIP&#8209;2612</strong> typed message off-chain; the contract redeems it.
+              </p>
+            </div>
+          </div>
+          <div class="flag">
+            <span class="flag__tag">Caveat</span>
+            <span>
+              <code>permit</code> only works because USDC implements EIP&#8209;2612. Not every ERC&#8209;20 does.
+            </span>
+          </div>
+        </div>
+        <aside class="notes">
+          <li>Safe cut #1. You'll have shown the wrapper concept already in §5b/§5c.</li>
+          <li>On a plain EOA, <code>approve</code> and the burn are two transactions, full stop, unless you add a contract or wallet batching.</li>
+        </aside>
+      </section>
+
+      <!-- 19 ─ §5c the payoff ──────────────────────────────────────── -->
+      <section class="slide" data-sec="5" data-title="One prompt: the payoff">
+        <p class="eyebrow"><b>&sect;5c</b> <span>"1 tx (wrapper)" &nbsp;·&nbsp; demo</span></p>
+        <h2 class="title">Same burn. Same args. One prompt.</h2>
+        <div class="body">
+          <div class="cols">
+            <div class="card">
+              <p class="card__label">On-chain</p>
+              <p>
+                Nothing changed. The <code>approve</code> <em>and</em> the
+                <code>deposit_for_burn</code> both still happen, now as inner calls inside one
+                invocation of <code>approve_and_deposit</code>.
+              </p>
+            </div>
+            <div class="card">
+              <p class="card__label">In the wallet</p>
+              <p>
+                Two Freighter prompts become <strong>one</strong>. One signature, one network fee.
+                Destination side is byte-for-byte the same as &sect;5a.
+              </p>
+            </div>
+          </div>
+          <div class="flag">
+            <span class="flag__tag">Be precise</span>
+            <span>
+              This isn't cheaper gas and it isn't cryptographically clever. It's bundling. But one
+              prompt vs two is the difference between <em>"this feels like an app"</em> and
+              <em>"this feels like a blockchain."</em>
+            </span>
+          </div>
+        </div>
+        <aside class="notes">
+          <li>Flip the flow chip on the same direction and same amount. Say "watch the prompt count" before you click.</li>
+        </aside>
+      </section>
+
+      <!-- 20 ─ DEMO B ──────────────────────────────────────────────── -->
+      <section class="slide slide--demo" data-sec="6" data-title="DEMO B: EVM to Stellar">
+        <p class="demo__tag">Demo B &nbsp;·&nbsp; 7 min &nbsp;·&nbsp; &sect;6</p>
+        <h2 class="demo__h">EVM &rarr; Stellar</h2>
+        <dl class="demo__grid">
+          <dt>Direction</dt>
+          <dt>Flows</dt>
+          <dt>Watch for</dt>
+          <dd>Arc &rarr; Stellar</dd>
+          <dd>2 tx &middot; permit &middot; sendCalls</dd>
+          <dd>the Forwarder's last hop</dd>
+        </dl>
+        <aside class="notes">
+          <li>Show at least two of the three flows live. <code>sendCalls</code> is a capability probe. If the chip doesn't light up, that's expected, not a bug.</li>
+        </aside>
+      </section>
+
+      <!-- 21 ─ §6a the invariant ───────────────────────────────────── -->
+      <section class="slide slide--code" data-sec="6" data-title="The inbound invariant">
+        <p class="eyebrow"><b>&sect;6a</b> <span>src/lib/evm/cctp.ts</span></p>
+        <h2 class="title">Two things must be true, or funds are gone</h2>
+        <div class="body">
+          <pre class="code code--xs">burnArgs = [
+  amount,             <span class="c">// uint256, 6 dp</span>
+  <span class="n">27</span>,                 <span class="c">// destinationDomain = Stellar</span>
+  <span class="hl">forwarderBytes32</span>,   <span class="c">// mintRecipient     = CctpForwarder  &larr; must be the forwarder</span>
+  cfg.usdc,           <span class="c">// burnToken (per-chain USDC)</span>
+  <span class="hl">forwarderBytes32</span>,   <span class="c">// destinationCaller = CctpForwarder  &larr; MUST equal mintRecipient</span>
+  maxFee,
+  finalityThreshold,
+  hookData,           <span class="c">// encodeStellarForwarderHookData(yourGAddress)</span>
+]</pre>
+          <div class="flag flag--danger">
+            <span class="flag__tag">Why both</span>
+            <span>
+              <code>destinationCaller = </code>the Forwarder means <strong>only the Forwarder</strong>
+              can submit the mint, which guarantees <code>mint_and_forward</code>'s payout logic
+              runs instead of someone minting <em>to</em> the Forwarder and stranding the funds.
+            </span>
+          </div>
+        </div>
+        <aside class="notes">
+          <li>Same rule as §3b, now from the EVM side: no hook, no recipient, lost funds. Always <code>depositForBurnWithHook</code>.</li>
+        </aside>
+      </section>
+
+      <!-- 22 ─ §6b three flows ─────────────────────────────────────── -->
+      <section class="slide" data-sec="6" data-title="Three burn flows">
+        <p class="eyebrow"><b>&sect;6b</b> <span>The EVM UX ladder</span></p>
+        <h2 class="title">Three ways to bundle approve + burn</h2>
+        <div class="body">
+          <div class="tablewrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>Flow</th>
+                  <th>User sees</th>
+                  <th>On-chain txs</th>
+                  <th>Needs</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>2 tx (direct)</td>
+                  <td>2 confirmations</td>
+                  <td class="num">2</td>
+                  <td>nothing extra</td>
+                </tr>
+                <tr>
+                  <td>1 tx (permit)</td>
+                  <td>1 signature + 1 confirmation</td>
+                  <td class="num">1</td>
+                  <td>our <code>CctpWrapper</code> on this chain</td>
+                </tr>
+                <tr>
+                  <td>1 click (sendCalls)</td>
+                  <td>1 confirmation</td>
+                  <td class="num">1</td>
+                  <td>wallet supports EIP&#8209;5792</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+          <div class="flag flag--plain">
+            <span class="flag__tag">Destination</span>
+            <span>
+              Always identical: poll Iris &rarr;
+              <code>mint_and_forward(message, attestation)</code> &rarr; USDC at your G address. No
+              <code>receiveMessage</code> to call by hand.
+            </span>
+          </div>
+        </div>
+        <aside class="notes">
+          <li>permit: one signature costs no gas, it's just a typed message. Half the gas of the 2-tx path.</li>
+          <li>sendCalls = EIP-5792 <code>wallet_sendCalls</code>: hand the wallet both calls. Smart wallet or EIP-7702 &rarr; one atomic tx; plain EOA &rarr; one prompt, two txs behind it.</li>
+        </aside>
+      </section>
+
+      <!-- 23 ─ DEMO C ──────────────────────────────────────────────── -->
+      <section class="slide slide--demo" data-sec="7" data-title="DEMO C: Solana, both ways">
+        <p class="demo__tag">Demo C &nbsp;·&nbsp; 5 min &nbsp;·&nbsp; &sect;7</p>
+        <h2 class="demo__h">Solana, both ways</h2>
+        <dl class="demo__grid">
+          <dt>Direction</dt>
+          <dt>Network</dt>
+          <dt>Watch for</dt>
+          <dd>Solana &#8646; Stellar</dd>
+          <dd>devnet</dd>
+          <dd>no approve step; the custody twist</dd>
+        </dl>
+        <aside class="notes">
+          <li>Solana breaks one of the assumptions I've been repeating all talk.</li>
+          <li>If the receive fails, it may be Circle's devnet custody float, not our code. Say so plainly and cut to the recording.</li>
+        </aside>
+      </section>
+
+      <!-- 24 ─ §7a solana burn ─────────────────────────────────────── -->
+      <section class="slide" data-sec="7" data-title="What's different about the Solana burn">
+        <p class="eyebrow"><b>&sect;7a</b> <span>Solana &rarr; Stellar</span></p>
+        <h2 class="title">No approve, fifteen accounts</h2>
+        <div class="body">
+          <ul class="points">
+            <li>
+              <strong>No approve step.</strong> <code>depositForBurn</code> burns directly under the
+              owner's signature via CPI. One transaction, plus a throwaway co-signer keypair for the
+              event account.
+            </li>
+            <li>
+              ~15 accounts and several <strong>PDAs</strong> (program-derived addresses) go in. I
+              don't hand-roll them: a typed client generated from Circle's Anchor <strong>IDL</strong>
+              with Codama.
+            </li>
+            <li>
+              Same into-Stellar invariant as EVM:
+              <code>mintRecipient == destinationCaller ==</code> the Forwarder, real G address in
+              <code>hookData</code>.
+            </li>
+          </ul>
+          <div class="flag flag--plain">
+            <span class="flag__tag">Payoff</span>
+            <span>
+              The Stellar side is the <em>identical</em> <code>mint_and_forward</code> from Demo B.
+              Zero new Stellar code.
+            </span>
+          </div>
+        </div>
+        <aside class="notes">
+          <li>Codama is Solana's analog of <code>stellar contract bindings typescript</code>: interface description in, typed instruction builder out.</li>
+          <li>Zero new Stellar code on the mint side is what routing everything through the Forwarder buys.</li>
+          <li>Good place to remind the room that the Forwarder is the single inbound chokepoint by design.</li>
+        </aside>
+      </section>
+
+      <!-- 25 ─ §7b custody twist ───────────────────────────────────── -->
+      <section class="slide" data-sec="7" data-title="The custody twist">
+        <p class="eyebrow"><b>&sect;7b</b> <span>Stellar &rarr; Solana</span></p>
+        <h2 class="title">On Solana, the receive is not a mint</h2>
+        <div class="body">
+          <ul class="points">
+            <li>
+              <code>handle_receive_finalized_message</code> <strong>transfers USDC out of a shared
+              <code>custody_token_account</code></strong> that Circle pre-funds, and pays its fee
+              out of it too. There is no <code>mint_to</code> in the instruction's account list at
+              all.
+            </li>
+            <li>
+              So "burn-and-mint" is really
+              <strong>burn-and-release-from-custody</strong>. Circle keeps a float of
+              already-minted USDC waiting to be handed out.
+            </li>
+            <li>
+              It's an implementation detail of how CCTP maps onto Solana's token model. Nothing
+              materially different for a developer, but a fun discovery.
+            </li>
+          </ul>
+          <div class="flag flag--plain">
+            <span class="flag__tag">Failure you can't cause</span>
+            <span>
+              If Circle's custody float is underfunded on devnet, the transfer reverts. That's their
+              liquidity, not our bug.
+            </span>
+          </div>
+        </div>
+        <aside class="notes">
+          <li>Genuinely interesting protocol detail for this room.</li>
+          <li>Custody funding is the one variable Circle controls, so if the receive fails live, say that plainly and cut to the recording.</li>
+        </aside>
+      </section>
+
+      <!-- 26 ─ §7c fast honestly ───────────────────────────────────── -->
+      <section class="slide" data-sec="7" data-title="Fast vs Standard, honestly">
+        <p class="eyebrow"><b>&sect;7c</b> <span>Coming clean</span></p>
+        <h2 class="title">From Stellar, the Fast toggle is cosmetic</h2>
+        <div class="body">
+          <ul class="points">
+            <li>
+              Every flow has a Fast/Standard toggle, mapping to the
+              <code>minFinalityThreshold</code> you saw in the args: 1000 vs 2000.
+            </li>
+            <li>
+              <strong>But</strong> when the source is Stellar, Circle attests at the Standard
+              threshold regardless of what we request, because Stellar already has fast finality.
+              Circle lists Fast Transfer as <strong>N/A</strong> for Stellar.
+            </li>
+            <li>
+              Fast only does something observable when the source is a slower chain, Base for instance.
+            </li>
+          </ul>
+          <div class="flag">
+            <span class="flag__tag">Why keep it</span>
+            <span>
+              I left the toggle in so the parameter is <em>visible</em>, but I'd be lying if I said
+              it changed Stellar-origin timing.
+            </span>
+          </div>
+        </div>
+        <aside class="notes">
+          <li>The caveats are the credibility. Don't smooth this one over.</li>
+        </aside>
+      </section>
+
+      <!-- 27 ─ DEMO D (safe cut) ───────────────────────────────────── -->
+      <section class="slide slide--demo" data-sec="8" data-title="DEMO D: forwarding live">
+        <p class="demo__tag">Demo D &nbsp;·&nbsp; 2 min &nbsp;·&nbsp; &sect;8</p>
+        <h2 class="demo__h">Forwarding, live</h2>
+        <dl class="demo__grid">
+          <dt>Direction</dt>
+          <dt>Forwarding</dt>
+          <dt>Watch for</dt>
+          <dd>Stellar &rarr; Arc</dd>
+          <dd>on</dd>
+          <dd>nothing to click</dd>
+        </dl>
+        <aside class="notes">
+          <li>Two differences in the burn: hook data carries the <code>cctp-forward</code> flag (no address, because the recipient is still the ordinary <code>mint_recipient</code>), and <code>maxFee</code> is bumped from the <code>?forward=true</code> quote. <code>destination_caller</code> stays zero.</li>
+          <li class="say">"Normally here I'd poll for the attestation and submit the mint. With forwarding, I just poll the destination balance. There it is."</li>
+          <li>Repeat the directional asterisk once: Stellar as a source works to EVM and Solana. Into Stellar isn't shipped.</li>
+        </aside>
+      </section>
+
+      <!-- 28 ─ §9 recap ────────────────────────────────────────────── -->
+      <section class="slide" data-sec="9" data-title="Recap">
+        <p class="eyebrow"><b>&sect;9</b> <span>Recap</span></p>
+        <h2 class="title">In one breath</h2>
+        <div class="body">
+          <ul class="points">
+            <li>
+              CCTP is <strong>burn &rarr; attest &rarr; mint</strong>. Canonical USDC both sides. No
+              wrapped token, no pool.
+            </li>
+            <li>
+              Inbound to Stellar routes through the <strong>Forwarder</strong>, because a raw G
+              address bricks funds. The recipient rides in <strong>hook data</strong>, so it's
+              always <code>depositForBurnWithHook</code>. <strong>Domain 27.</strong>
+            </li>
+            <li>
+              A <strong>wrapper contract</strong> collapses approve + burn into one signature.
+              Trivially on Soroban via the auth tree; on EVM only via <code>permit</code>.
+            </li>
+            <li>
+              <strong>Forwarding</strong> removes the destination step, for Stellar as a
+              <em>source</em>, to EVM or Solana, today.
+            </li>
+            <li>Solana is real, but it <strong>receives from custody</strong>, not a fresh mint.</li>
+          </ul>
+        </div>
+        <aside class="notes">
+          <li>One breath. Don't re-teach. This is a landing, not a lesson.</li>
+        </aside>
+      </section>
+
+      <!-- 29 ─ §9 what's next ──────────────────────────────────────── -->
+      <section class="slide" data-sec="9" data-title="What's next for this demo">
+        <p class="eyebrow"><b>&sect;9</b> <span>Where this goes</span></p>
+        <h2 class="title">What's next for this demo?</h2>
+        <div class="body">
+          <ul class="points">
+            <li><strong>Smart accounts and muxed accounts</strong> for Stellar.</li>
+            <li>More chains: Avalanche, Polygon PoS, and friends.</li>
+            <li>
+              A wrapper function that does <code>usdc.trust(...)</code> and
+              <code>mint_and_forward</code> in one contract invocation.
+            </li>
+            <li>
+              On Solana, there's a way to ask the forwarding service to create the recipient's ATA on
+              their behalf.
+            </li>
+          </ul>
+        </div>
+        <aside class="notes">
+          <li>This is also the honest answer to the &sect;3a hedge: Circle's docs say the Forwarder pays out to G, C, or M, but this demo only ever encodes a G address.</li>
+        </aside>
+      </section>
+
+      <!-- 30 ─ §9 what this is not ─────────────────────────────────── -->
+      <section class="slide" data-sec="9" data-title="What this is not">
+        <p class="eyebrow"><b>&sect;9</b> <span>So nobody quotes me wrong</span></p>
+        <h2 class="title">What this is <em>not</em></h2>
+        <div class="body">
+          <ul class="points">
+            <li>This demo is on <strong>Testnet only</strong>.</li>
+            <li>Transfer history is <strong>in memory</strong>, so a refresh wipes it.</li>
+            <li>Forwarding <em>into</em> Stellar isn't supported by Circle.</li>
+            <li>
+              A couple of the wallet-batching paths are best-effort and chain-dependent.
+            </li>
+          </ul>
+          <div class="flag flag--plain">
+            <span class="flag__tag">Open</span>
+            <span>The code's all open. Take it, break it, and tell me where it's wrong.</span>
+          </div>
+        </div>
+        <aside class="notes">
+          <li>Then: "Thanks, questions?"</li>
+        </aside>
+      </section>
+
+      <!-- 31 ─ Q&A / resources ─────────────────────────────────────── -->
+      <section class="slide" data-sec="0" data-title="Questions + references">
+        <p class="eyebrow"><b>Q&amp;A</b> <span>15 min</span></p>
+        <h2 class="title">Questions?</h2>
+        <div class="body">
+          <ul class="links">
+            <li>
+              <span class="links__k">Demo</span>
+              <a href="https://cctp27.vercel.app" target="_blank" rel="noopener">cctp27.vercel.app</a>
+            </li>
+            <li>
+              <span class="links__k">Code</span>
+              <a href="https://github.com/ElliotFriend/stellar-cctp-demo" target="_blank" rel="noopener">github.com/ElliotFriend/stellar-cctp-demo</a>
+            </li>
+            <li>
+              <span class="links__k">Circle</span>
+              <a href="https://developers.circle.com/cctp/references/stellar" target="_blank" rel="noopener">developers.circle.com/cctp/references/stellar</a>
+            </li>
+            <li>
+              <span class="links__k">Circle</span>
+              <a href="https://developers.circle.com/cctp/concepts/forwarding-service" target="_blank" rel="noopener">developers.circle.com/cctp/concepts/forwarding-service</a>
+            </li>
+          </ul>
+        </div>
+        <aside class="notes">
+          <li>Iris sandbox is <b>iris-api-sandbox.circle.com</b>. Endpoints: <code>GET /v2/messages/{srcDomain}?transactionHash=…</code> and <code>GET /v2/burn/USDC/fees/{src}/{dst}</code> (add <code>?forward=true</code>).</li>
+          <li>Q&amp;A starters live in <code>qa.md</code>: trust model, vs anchors, Forwarder security, fees, Fast vs Standard, Solana custody, recovery, EURC/mainnet, why Arc.</li>
+        </aside>
+      </section>
+    </div>
+
+    <footer class="foot">
+      <span class="foot__sec" id="footSec"></span>
+      <span class="nav">
+        <button type="button" id="btnPrev" aria-label="Previous slide">&larr;</button>
+        <button type="button" id="btnNext" aria-label="Next slide">&rarr;</button>
+        <button type="button" id="btnOv" aria-label="Slide list">list</button>
+      </span>
+      <span class="foot__count" id="footCount"></span>
+    </footer>
+
+    <div class="progress"><div class="progress__bar" id="bar"></div></div>
+  </div>
+</div>
+
+<div class="drawer" id="drawer" data-open="0">
+  <h3>
+    <span id="drawerHead">Speaker notes</span>
+    <span class="warnnote">visible to the room if you're sharing this tab, press n to hide</span>
+  </h3>
+  <ul id="drawerBody"></ul>
+</div>
+
+<div class="overview" id="overview" data-open="0">
+  <h2>Slides &nbsp;·&nbsp; click to jump &nbsp;·&nbsp; esc to close</h2>
+  <div class="ovlist" id="ovlist"></div>
+</div>
+
+<div class="help" id="help" data-open="0">
+  <div class="helpbox">
+    <b>&rarr; space</b> next slide<br />
+    <b>&larr;</b> previous<br />
+    <b>home end</b> first / last<br />
+    <b>n</b> speaker notes<br />
+    <b>o</b> slide list<br />
+    <b>f</b> fullscreen<br />
+    <b>?</b> this<br />
+    <br />
+    <b>meet</b> share this tab · notes are in it too
+  </div>
+</div>
+
+<script>
+  (function () {
+    const SECTIONS = {
+      1: "Cold open",
+      2: "CCTP mental model",
+      3: "Stellar realities",
+      4: "Forwarding service",
+      5: "Demo A: Stellar and Arc",
+      6: "Demo B: EVM to Stellar",
+      7: "Demo C: Solana",
+      8: "Demo D: forwarding live",
+      9: "Recap",
+    };
+
+    const slides = Array.from(document.querySelectorAll(".slide"));
+    const railNum = document.getElementById("railNum");
+    const railTicks = document.getElementById("railTicks");
+    const footSec = document.getElementById("footSec");
+    const footCount = document.getElementById("footCount");
+    const bar = document.getElementById("bar");
+    const drawer = document.getElementById("drawer");
+    const drawerBody = document.getElementById("drawerBody");
+    const drawerHead = document.getElementById("drawerHead");
+    const overview = document.getElementById("overview");
+    const ovlist = document.getElementById("ovlist");
+    const help = document.getElementById("help");
+
+    let i = 0;
+    let notesOn = false;
+
+    // rail ticks, one per talk section
+    Object.keys(SECTIONS).forEach(function (s) {
+      const t = document.createElement("span");
+      t.className = "rail__tick";
+      t.dataset.sec = s;
+      railTicks.appendChild(t);
+    });
+    const ticks = Array.from(railTicks.children);
+
+    // overview list
+    slides.forEach(function (sl, n) {
+      const b = document.createElement("button");
+      b.type = "button";
+      const sec = sl.dataset.sec;
+      b.innerHTML =
+        '<span class="i">' +
+        String(n + 1).padStart(2, "0") +
+        '</span><span class="s">' +
+        (sec === "0" ? "—" : "§" + sec) +
+        "</span><span>" +
+        sl.dataset.title +
+        "</span>";
+      b.addEventListener("click", function () {
+        go(n);
+        setOverview(false);
+      });
+      ovlist.appendChild(b);
+    });
+    const ovbtns = Array.from(ovlist.children);
+
+    function renderNotes() {
+      const notes = slides[i].querySelector(".notes");
+      drawerBody.innerHTML = notes ? notes.innerHTML : "<li>—</li>";
+      const sec = slides[i].dataset.sec;
+      drawerHead.textContent =
+        (sec === "0" ? "" : "§" + sec + " · ") + slides[i].dataset.title;
+    }
+
+    function go(n) {
+      i = Math.max(0, Math.min(slides.length - 1, n));
+      slides.forEach(function (sl, k) {
+        sl.classList.toggle("is-current", k === i);
+      });
+
+      const sec = slides[i].dataset.sec;
+      railNum.textContent = sec === "0" ? "··" : "§" + sec;
+      ticks.forEach(function (t) {
+        const s = Number(t.dataset.sec);
+        t.dataset.on = s === Number(sec) ? "1" : "0";
+        t.dataset.past = s < Number(sec) ? "1" : "0";
+      });
+
+      footSec.textContent = sec === "0" ? "CCTP on Stellar" : SECTIONS[sec];
+      footCount.textContent = String(i + 1) + " / " + slides.length;
+      bar.style.width = ((i + 1) / slides.length) * 100 + "%";
+
+      ovbtns.forEach(function (b, k) {
+        b.dataset.on = k === i ? "1" : "0";
+      });
+
+      if (notesOn) renderNotes();
+      if (history.replaceState) history.replaceState(null, "", "#/" + (i + 1));
+    }
+
+    function setNotes(on) {
+      notesOn = on;
+      drawer.dataset.open = on ? "1" : "0";
+      if (on) renderNotes();
+    }
+    function setOverview(on) {
+      overview.dataset.open = on ? "1" : "0";
+    }
+    function setHelp(on) {
+      help.dataset.open = on ? "1" : "0";
+    }
+
+    document.getElementById("btnPrev").addEventListener("click", function () {
+      go(i - 1);
+    });
+    document.getElementById("btnNext").addEventListener("click", function () {
+      go(i + 1);
+    });
+    document.getElementById("btnOv").addEventListener("click", function () {
+      setOverview(overview.dataset.open !== "1");
+    });
+    overview.addEventListener("click", function (e) {
+      if (e.target === overview) setOverview(false);
+    });
+    help.addEventListener("click", function () {
+      setHelp(false);
+    });
+
+    document.addEventListener("keydown", function (e) {
+      if (e.metaKey || e.ctrlKey || e.altKey) return;
+      const k = e.key;
+      if (k === "Escape") {
+        setOverview(false);
+        setHelp(false);
+        return;
+      }
+      if (k === "ArrowRight" || k === " " || k === "PageDown") {
+        e.preventDefault();
+        go(i + 1);
+      } else if (k === "ArrowLeft" || k === "PageUp") {
+        e.preventDefault();
+        go(i - 1);
+      } else if (k === "Home") {
+        go(0);
+      } else if (k === "End") {
+        go(slides.length - 1);
+      } else if (k === "n" || k === "N") {
+        setNotes(!notesOn);
+      } else if (k === "o" || k === "O") {
+        setOverview(overview.dataset.open !== "1");
+      } else if (k === "?" || k === "h") {
+        setHelp(help.dataset.open !== "1");
+      } else if (k === "f" || k === "F") {
+        const el = document.documentElement;
+        if (!document.fullscreenElement && el.requestFullscreen) {
+          el.requestFullscreen().catch(function () {});
+        } else if (document.exitFullscreen) {
+          document.exitFullscreen().catch(function () {});
+        }
+      }
+    });
+
+    const start = Number((location.hash.match(/^#\/(\d+)$/) || [])[1]);
+    go(start ? start - 1 : 0);
+  })();
+</script>

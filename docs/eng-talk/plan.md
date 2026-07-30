@@ -1,4 +1,4 @@
-# CCTP Eng-Talk — Remaining Work Plan
+# CCTP Eng-Talk: Remaining Work Plan
 
 Handoff doc for finishing the talk prep. The **speaker script is done**
 (`docs/eng-talk/script.md`, committed); this outlines what's left and the
@@ -35,7 +35,7 @@ by passing that `url` to the Artifact tool to keep the same link.
   Soroban wrapper walkthrough / 5c wrapper path) · 6 Demo B (EVM→Stellar) · 7
   Demo C (Solana) · 8 Demo D (forwarding live) · 9 recap.
 
-## Deliverable 1 — Demo runbook (`runbook.md`)
+## Deliverable 1: Demo runbook (`runbook.md`)
 
 Choreography + safety net for driving the demos live. The script says what to
 _say_; the runbook says what to _click_ and what to do when it breaks.
@@ -53,12 +53,12 @@ Contents:
     (Stellar Testnet / Arc Testnet / Base Sepolia); Base ETH
     `alchemy.com/faucets/base-sepolia`.
   - Pre-quote/pre-check custody: a Solana receive can fail if Circle's devnet
-    custody is underfunded — do a dry-run transfer the day before.
+    custody is underfunded, so do a dry-run transfer the day before.
 - **Per-demo click paths** (Demo A/B/C/D): direction picker → flow chip → amount
   → which wallet prompts appear → what to point at on screen (tie to the
   `(SLIDE)` arg tables in the script) → "done" signal.
 - **Fallbacks:**
-  - **Resume-by-burn-hash** — the app's resume flow (`ResumeForm`,
+  - **Resume-by-burn-hash**: the app's resume flow (`ResumeForm`,
     `transfer.svelte.ts:resume()`) skips to attest+mint given a burn hash. Keep
     a few known-good burn hashes on hand to resume if a live burn stalls.
   - **Pre-recorded clips** for every flow; cut to the clip if a live attestation
@@ -68,10 +68,10 @@ Contents:
   starting balances so the "balance went up" beat reads clearly.
 - **Timing cues:** target minutes per demo from the script's budget table.
 
-## Deliverable 2 — Q&A prep (`qa.md`)
+## Deliverable 2: Q&A prep (`qa.md`)
 
 Likely audience questions + starter answers, grouped. Seed list (expand each
-with a 2–4 sentence starter answer, honest about unknowns):
+with a 2 to 4 sentence starter answer, honest about unknowns):
 
 - **Trust model:** Is Circle a trusted third party? What if the attester(s) or
   Iris lie/go down? Can funds be stuck if Circle disappears?
@@ -93,8 +93,36 @@ with a 2–4 sentence starter answer, honest about unknowns):
 
 ## Deliverable 3: Slide deck (`deck.html`), DONE
 
-31 slides, one per `(SLIDE)` cue plus a title, running order, four demo
-dividers, and a Q&A/references closer. Self-contained; no external fetches.
+31 slides: a cover, the running order, 24 content slides carrying the script's
+29 `(SLIDE)` cues (a few closely related cues share a slide, e.g. both of §3a's
+and all four of §4's front half), four demo dividers, and a Q&A/references
+closer. Self-contained; no external fetches.
+
+**Resynced to the script on 2026-07-30.** The deck was built before the script
+revision, so it had drifted. What changed, in case any of it needs revisiting:
+
+- **The launch date was wrong on-slide:** it said "18 Sept 2025", now **May
+  2026**. This is the exact error the grounded-facts note below warns about, and
+  it had already reached the deck.
+- **Contract naming** is now per-chain (`TokenMessengerMinter` on Stellar,
+  `TokenMessengerV2` on EVM, `TokenMessengerMinterV2` on Solana) with the
+  three-names aside in the §2 notes.
+- **Forwarder ownership** corrected. `CctpForwarder` is Circle's, not ours; the
+  only deployed-by-us contracts are the two `CctpWrapper`s.
+- **`expiration_ledger` renamed** to `live_until_ledger`, matching `322a372`.
+- **Removed** the §5a `deposit_for_burn` args slide. That section is now pure
+  live-demo narration, since §2 already shows the signature.
+- **Added** a §9 "What's next for this demo?" slide.
+- **Cold open** now shows all three ways to move a dollar (lock-and-wrap,
+  liquidity pool, burn-and-mint), naming Wormhole and Allbridge Core.
+- **Dropped** the docs-lag-reality block, the custody-scoping detail, and the
+  EURC / not-a-bridge-product caveats, per decisions recorded in the script.
+- **All prose em dashes removed** (89 of them). The only remaining `—` are four
+  UI glyph placeholders: a CSS `content`, the rail number, and two JS fallbacks.
+- **Arrows spelled out** in slide titles, the running-order table, and the JS
+  `SECTIONS` map. Arrows inside flow diagrams and code annotations stay.
+- Running order now reads §9 = 2 min, total 46 against a ~45 budget, flagged
+  as unrehearsed.
 
 **Presentation medium is Google Meet screenshare, not a projector.** That drove
 several build decisions, so keep them in mind before editing:
@@ -111,7 +139,9 @@ several build decisions, so keep them in mind before editing:
   without double letterboxing.
 
 Driving it: `→`/`space` next, `←` prev, `home`/`end`, `n` speaker notes, `o`
-jump list, `?` keys, `f` fullscreen. Deep links are `#/N`. **Speaker notes live
+jump list, `?` keys, `f` fullscreen. The footer has prev/next/list buttons only:
+the notes button and the safe-cut indicator were both removed on request, though
+`n` still toggles notes from the keyboard. Deep links are `#/N`. **Speaker notes live
 in the same tab, so they're shared if you share the deck.** Keep them off while
 presenting and read from `script.md` on a second screen.
 
@@ -124,7 +154,47 @@ Layout invariants worth not breaking:
 - Every slide must fit the stage with no clipping. There's an audit harness for
   this: build a probe wrapper around `deck.html`, force each slide current, and
   measure `.body` / `.code` / `.tablewrap` for `scrollHeight > clientHeight` and
-  overflow past the slide box. Last run: 31 slides, 0 failures at 1100×900,
+  overflow past the slide box.
+
+  **Audit against the footer, not the slide box.** The `.foot` bar sits *inside*
+  `.slide`, so content can stay within the slide box and still land underneath the
+  section label and the nav buttons. Measure every `.body` descendant's `bottom`
+  against `.foot`'s `top`. An earlier version of this note said to ignore
+  `scrollHeight > clientHeight` on `.body` as a soft signal; that was wrong. When
+  `.body` overflows, its children spill into the footer band, which is exactly the
+  defect. Audit both, plus sibling `.cols` / `.codecols` children for equal height.
+
+  **Do not zero default block margins in the probe.** The Artifact skeleton's
+  "minimal CSS reset" leaves `<p>` / `<h2>` / `<ul>` margins in place, and the deck
+  has no reset of its own, so those margins are real layout. A probe that zeroes
+  them under-reports height and reports a clean deck that clips in production. Use
+  only `*{box-sizing:border-box}` + `body{margin:0}`. (As of the 2026-07-30 layout
+  pass the deck fits under both assumptions, so either probe now passes; keep the
+  faithful one as the gate.)
+
+  Run it with **real Chrome** (`chromium.launch({ channel: 'chrome' })`), not the
+  bundled headless shell. The shell has none of the Charter / Iowan / Palatino
+  stack, falls back to different metrics, and inflates every measurement by ~30%,
+  which makes the whole deck look broken.
+
+  Last run (2026-07-30, after the layout pass): 31 slides, **0 failures** at
+  1100×900, 1440×810, and 1920×1080, both themes, on both probe variants.
+
+  Before that pass, 23 of 31 slides had a problem: 14 with content under the
+  footer, 5 code blocks scrolling, 7 with mismatched sibling card heights, and 2
+  scrolling tables. Fixed structurally rather than slide by slide:
+
+  - `.slide` padding-bottom 6.6cqi → 7.2cqi, and the vertical rhythm tightened
+    across `.title`, `.body`, `ul.points`, `.card`, `.flag`, `.code`, and table
+    rows. Nothing dropped below ~1.3cqi, which is the Meet legibility floor.
+  - `.cols` went `align-items: start` → `stretch`. That single change fixed every
+    "the boxes are different heights" complaint; `.codecols` matches it.
+  - New primitives: `.codecols` (two code blocks side by side, used by §2's
+    entrypoint pair so neither scrolls), `.flag--stack` (tag on its own line so
+    prose uses the full width, used by §2's chainId callout), and `ul.links`
+    (the Q&A reference list).
+  - Reference-only chips on the §3b encoder and §5b wrapper slides moved into
+    speaker notes to buy the code blocks room.
   1440×810, and 1920×1080, both themes.
 - Type sizes are all `cqi` against a `container-type: inline-size` stage, so the
   deck scales identically at any window size. Don't introduce `px` type.
@@ -151,7 +221,7 @@ date into the deck. See the CCTP-live entry below.)
 - **Forwarding status:** works **out of** Stellar to EVM (Arc, Base) _and_
   Solana (all verified end-to-end); **blocked into** Stellar ("destination does
   not support forwarding"). Circle's published destination list omits Solana but
-  the sandbox relayer services it — docs lag reality. `destinationCaller` must
+  the sandbox relayer services it (docs lag reality). `destinationCaller` must
   be 0 for forwarding; relayer consumes ~full `maxFee`.
 - **Verified Stellar→Solana forward (2026-07-24):** burn (Stellar testnet)
   `0d4fcd21ce8cfbe98f3e2bc9441a472c7cf9e28e886e516fbabfd696dc0b09aa` → Iris
@@ -159,14 +229,14 @@ date into the deck. See the CCTP-live entry below.)
   `3WertUfbKQA22CobQ7uh3mKDQegfw5ZKGKPsdpk45gRPq8PCiGZddfkgiKtpLFrkvcoYye9jnf5awRevKqfj1xqF`
   (`finalized`, `Ok`). Full write-up in
   `docs/experiments/2026-06-24-forwarder-stellar-source.md`.
-- **Solana custody twist:** inbound receive is _not_ `mint_to` —
+- **Solana custody twist:** inbound receive is _not_ `mint_to`,
   `handle_receive_finalized_message` transfers from a shared
   `custody_token_account` (seed `["custody", mint]`, **one per USDC mint**,
   shared across all source domains). `token_pair(27,…)` /
   `remote_token_messenger(27)` are the per-domain registrations.
 - **Stellar-destination requires `depositForBurnWithHook`:** G-address rides
   only in hook data; plain `deposit_for_burn` strands funds (TMM errors
-  `HookDataEmpty` on empty hook). Muxed `M` addresses are G-flavored — can't be
+  `HookDataEmpty` on empty hook). Muxed `M` addresses are G-flavored, so they can't be
   a direct `mintRecipient` either.
 - **Hook layouts:** forwarder-recipient = 24 zero bytes + u32 version(0) + u32
   strkey-length + UTF-8 strkey; `cctp-forward` flag = 24-byte region with ASCII
@@ -195,11 +265,11 @@ date into the deck. See the CCTP-live entry below.)
 
 ## Notes for whoever picks this up
 
-- Script may still get wording tweaks — re-read it before building the deck so
+- Script may still get wording tweaks, so re-read it before building the deck so
   slides match. Deck slides map 1:1 to `(SLIDE)` cues.
 - TOC in `script.md` is auto-generated (Markdown All-in-One `<!-- omit in toc
   -->` markers); regenerate after any heading edits. `pnpm format` reflows
   prose.
 - Voice: warm, second person, caveats-as-credibility (see script's "Voice
-  reminders"). This is DevRel content — the `stellar-devrel-context` skill has
+  reminders"). This is DevRel content, and the `stellar-devrel-context` skill has
   the full voice spec.
