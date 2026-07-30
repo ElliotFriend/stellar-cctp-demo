@@ -140,7 +140,9 @@ several build decisions, so keep them in mind before editing:
 
 The footer carries a persistent pointer to the repo and the deployed demo (inline
 GitHub mark, then `stellar-cctp-demo · cctp27.vercel.app`) just left of the nav
-buttons. The owner prefix is deliberately omitted: with `ElliotFriend/` included
+buttons. Both are real links, styled to inherit the footer colour with no
+underline; only a hover/focus shift to `--accent` marks them as clickable. The
+mark is inside the repo anchor, so the icon is part of the hit area. The owner prefix is deliberately omitted: with `ElliotFriend/` included
 the credit ate 55% of the footer and truncated the section label on 6 of the 9
 sections. As shipped, the longest label ("Demo A: Stellar and Arc") clears its box
 with ~25% slack at every viewport. The full owner/repo path is on the Q&A slide.
