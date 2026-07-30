@@ -151,7 +151,9 @@ funds.
 - **EVM:** the 20-byte address, right-aligned in 32 bytes.
 - **Solana:** the recipient's **USDC ATA**, not the wallet. Raw 32 bytes,
   left-aligned.
-- **Stellar:** the Forwarder, with the real recipient in hook data.
+- **Stellar:** **always** the Forwarder's `C...` id, decoded to its raw 32 bytes
+  (`strkeyToBytes32`). The real recipient rides in hook data, and _that_ one is
+  the UTF-8 strkey from 3b. Two fields, two opposite conventions.
 - New vocab to introduce: on Solana you don't hold USDC at your wallet address,
   you hold it in an **Associated Token Account** derived from wallet plus mint.
 - The burn's recipient must be that ATA.

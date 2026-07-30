@@ -40,9 +40,16 @@ export function encodeStellarForwarderHookData(stellarStrkey: string): Hex {
     return concatHex([magic, version, lengthField, recipientHex]);
 }
 
-// Convert a Stellar strkey contract or account into a 32-byte bytes32 for
-// CCTP message fields. Both `mintRecipient` and `destinationCaller` need
-// to be the *raw 32-byte Ed25519 pubkey*, NOT the strkey string itself.
+// Decode a Stellar strkey into the raw 32 bytes a CCTP message slot expects.
+// For every Stellar-bound burn in this app the value is the CctpForwarder
+// contract id, and it fills BOTH `mintRecipient` and `destinationCaller`.
+//
+// Note the convention here is the *opposite* of hook data: a message slot takes
+// the DECODED bytes, while `encodeStellarForwarderHookData` above sends the
+// recipient strkey as UTF-8 text. Don't mix them up; either mistake loses funds.
+//
+// The account branch is kept for symmetry, but nothing currently passes a G
+// address here, so a Stellar destination always decodes a `C...` contract id.
 export function strkeyToBytes32(strkey: string): Hex {
     const isContract = StrKey.isValidContract(strkey);
     const raw = isContract ? StrKey.decodeContract(strkey) : StrKey.decodeEd25519PublicKey(strkey);

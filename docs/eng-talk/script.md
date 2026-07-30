@@ -321,7 +321,7 @@ Stellar audience:
 | ----------- | ---------------------------- | -------- |
 | EVM | the 20-byte EOA or contract address | **right-aligned** in 32 bytes (`leftPad32FromHex`) |
 | Solana | the recipient's **USDC ATA**, not the wallet | raw 32 bytes, **left-aligned** (a Solana pubkey already fills 32) |
-| Stellar | the **Forwarder contract**, real recipient in hook data | strkey encoded as hex bytes (`strkeyToHex`) |
+| Stellar | **always the Forwarder contract**, real recipient in hook data | the Forwarder's `C...` id decoded to its raw 32 bytes (`strkeyToBytes32`), _not_ the UTF-8 form from 3b |
 
 - One-liner for the room: every chain has a 32-byte slot and its own opinion
   about how to fill it. EVM right-pads a short address, Solana hands you a token
