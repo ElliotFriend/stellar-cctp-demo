@@ -125,8 +125,8 @@
                 <span class="forwarding-text">
                     Circle forwarding ⚗︎
                     <span class="forwarding-sub">
-                        EXPERIMENTAL — tag the burn so Circle's relayer auto-mints on the
-                        destination (works with either flow above).
+                        Tag the burn so Circle's relayer auto-mints on the destination (works with
+                        either flow above).
                     </span>
                 </span>
                 <button
