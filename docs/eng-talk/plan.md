@@ -138,6 +138,13 @@ several build decisions, so keep them in mind before editing:
 - Share **the tab**, window near 16:9, so the fixed 16:9 stage fills the frame
   without double letterboxing.
 
+The footer carries a persistent pointer to the repo and the deployed demo (inline
+GitHub mark, then `stellar-cctp-demo · cctp27.vercel.app`) just left of the nav
+buttons. The owner prefix is deliberately omitted: with `ElliotFriend/` included
+the credit ate 55% of the footer and truncated the section label on 6 of the 9
+sections. As shipped, the longest label ("Demo A: Stellar and Arc") clears its box
+with ~25% slack at every viewport. The full owner/repo path is on the Q&A slide.
+
 Driving it: `→`/`space` next, `←` prev, `home`/`end`, `n` speaker notes, `o`
 jump list, `?` keys, `f` fullscreen. The footer has prev/next/list buttons only:
 the notes button and the safe-cut indicator were both removed on request, though
