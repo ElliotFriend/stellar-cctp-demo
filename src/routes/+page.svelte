@@ -83,7 +83,7 @@
     // Fast Transfer (mint-before-finality) applies when the SOURCE chain has a
     // real finality delay to mint into: Solana yes; EVM chains with an
     // attestation ETA yes; but not Stellar or Arc (they finalize in seconds, so
-    // there's no pre-finality window). Stellar-source is always Standard.
+    // there's no pre-finality window). Outbound is always Standard.
     let fastAllowed = $derived(
         !stellarIsSource &&
             (rightChain === 'solana' || EVM_CHAINS[rightChain].attestationEtaMs !== undefined),

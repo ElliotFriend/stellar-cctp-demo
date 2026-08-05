@@ -225,8 +225,8 @@ date into the deck. See the CCTP-live entry below.)
   need to cite it precisely.
 - **Domains:** Ethereum 0, Solana 5, Base 6, Arc 26, **Stellar 27**. (Arc
   chainId 5042002 ≠ its domain 26.)
-- **Finality thresholds:** Standard 2000, Fast 1000. Stellar-source always
-  attests at 2000 (Fast is N/A for a fast-finality chain).
+- **Finality thresholds:** Standard 2000, Fast 1000. Outbound always attests at
+  2000 (Fast is N/A for a fast-finality source).
 - **Forwarding status:** works **out of** Stellar to EVM (Arc, Base) _and_
   Solana (all verified end-to-end); **blocked into** Stellar ("destination does
   not support forwarding"). Circle's published destination list omits Solana but
@@ -243,7 +243,7 @@ date into the deck. See the CCTP-live entry below.)
   `custody_token_account` (seed `["custody", mint]`, **one per USDC mint**,
   shared across all source domains). `token_pair(27,…)` /
   `remote_token_messenger(27)` are the per-domain registrations.
-- **Stellar-destination requires `depositForBurnWithHook`:** G-address rides
+- **Inbound requires `depositForBurnWithHook`:** G-address rides
   only in hook data; plain `deposit_for_burn` strands funds (TMM errors
   `HookDataEmpty` on empty hook). Muxed `M` addresses are G-flavored, so they can't be
   a direct `mintRecipient` either.

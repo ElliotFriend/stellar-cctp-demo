@@ -92,7 +92,7 @@
     {/if}
 
     {#if direction === 'stellar-to-evm' || direction === 'stellar-to-solana'}
-        <div class="flow-picker" role="tablist" aria-label="Stellar outbound flow">
+        <div class="flow-picker" role="tablist" aria-label="Outbound flow">
             <span class="flow-label">Outbound flow</span>
             <div class="flow-buttons">
                 <button

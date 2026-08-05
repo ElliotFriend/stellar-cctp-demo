@@ -22,7 +22,7 @@
     import { parseUsdcStellar, formatUsdc } from '$lib/stellar/usdc';
     import { shortAddr } from '$lib/utils';
 
-    // The stellar-source burn preview, reused for either destination. Pass EVM
+    // The outbound burn preview, reused for either destination. Pass EVM
     // fields for a Stellar→EVM burn, or `solanaRecipient` (a Solana owner
     // address) for a Stellar→Solana burn — the two are mutually exclusive.
     let {

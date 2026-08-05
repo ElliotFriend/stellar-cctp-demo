@@ -73,9 +73,9 @@ parts.
   `deposit_for_burn_with_hook`.
   - Strict superset: same arguments, plus `hook_data`.
   - `hook_data` is essentially how you say something to the destination chain.
-  - Hold onto this: On Stellar-inbound it's mandatory, not optional.
+  - Hold onto this: on inbound (_into_ Stellar) it's mandatory, not optional.
 - (SLIDE) **Mint side is the same shape everywhere:** `(message, attestation)`.
-  - The one twist is Stellar inbound, where `mint_and_forward` does the last hop
+  - The one twist is inbound, where `mint_and_forward` does the last hop
     to the _actual_ recipient.
 - (SLIDE) **Domains, not chain IDs.** CCTP has its own address space.
   - Ethereum `0`, Solana `5`, Base `6`, Arc `26`, **Stellar `27`**.
@@ -132,7 +132,7 @@ funds.
 - Send decoded bytes instead and the Forwarder can't parse it. Funds stuck.
 - (CAVEAT) I validate the strkey _before_ building the burn, because there's
   no undo.
-- (SLIDE) **So a Stellar-destination burn MUST use the with-hook variant.**
+- (SLIDE) **So an inbound burn MUST use the with-hook variant.**
 - The recipient's address exists _only_ in the hook.
 - Two hookless options, both lose funds:
   - G address in `mintRecipient`: bricks (3a).
@@ -368,8 +368,9 @@ assumption I've been repeating all talk.
   regardless of what we ask for, because Stellar already has fast finality.
   Circle lists Fast Transfer as **N/A** for Stellar.
 - So Fast only does something observable from a slower source.
-- From Stellar the toggle is effectively cosmetic. I left it in so the parameter
-  is _visible_, but I'd be lying if I said it changed Stellar-origin timing.
+- On an outbound transfer the toggle is effectively cosmetic. I left it in so
+  the parameter is _visible_, but I'd be lying if I said it changed outbound
+  timing.
 
 **Transition:** Last one, quick, so you can watch the destination step
 _disappear_.
@@ -421,8 +422,8 @@ _disappear_.
 **Domains:** Ethereum `0`, Solana `5`, Base `6`, Arc `26`, **Stellar `27`**.
 Arc's chainId is `5,042,002`, which is not its domain.
 
-**Finality thresholds:** `2000` Standard, `1000` Fast. Stellar-source always
-attests at `2000`, because Fast is N/A for a fast-finality chain.
+**Finality thresholds:** `2000` Standard, `1000` Fast. Outbound always attests
+at `2000`, because Fast is N/A for a fast-finality source.
 
 **Contracts (per chain, because the names differ):**
 
@@ -432,7 +433,7 @@ attests at `2000`, because Fast is N/A for a fast-finality chain.
 | EVM     | `TokenMessengerV2` + `TokenMinterV2`   | `MessageTransmitterV2`               |
 | Solana  | `TokenMessengerMinterV2`               | `MessageTransmitterV2`               |
 
-Inbound-to-Stellar last hop is Circle's **`CctpForwarder`** (`CA66...4VSZ`). The
+The inbound last hop is Circle's **`CctpForwarder`** (`CA66...4VSZ`). The
 only contracts I deployed are the two **`CctpWrapper`s** (Soroban and Solidity).
 
 **Iris:** sandbox `iris-api-sandbox.circle.com`.

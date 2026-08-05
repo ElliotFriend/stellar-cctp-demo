@@ -69,6 +69,20 @@ CCTP burns USDC on the source chain and mints fresh USDC on the destination
 — no liquidity pools, no wrapped tokens. Three contracts are involved on
 Stellar:
 
+### A note on direction
+
+Two words do a lot of work in this repo and in the code comments, so they're
+worth pinning down. **Outbound** means USDC leaving Stellar, so Stellar is the
+burn source. **Inbound** means USDC arriving on Stellar, so Stellar is the mint
+destination. Those two only make sense because Stellar is this demo's fixed
+vantage point.
+
+Everywhere else (a domain id, a contract argument, a chain that isn't Stellar)
+it's plain **source** and **destination**, used the same way
+[Circle's docs](https://developers.circle.com/cctp) use them. When a chain needs
+naming in that role, it gets a clause ("when Stellar is the destination") rather
+than a compound.
+
 | Contract                             | Purpose                                          |
 | ------------------------------------ | ------------------------------------------------ |
 | `TokenMessengerMinter` (`CDNG…RTHP`) | Burns USDC outbound, mints inbound               |

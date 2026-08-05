@@ -1,8 +1,8 @@
-# Experiment: Circle Forwarding Service for a Stellar-origin burn
+# Experiment: Circle Forwarding Service for a burn out of Stellar
 
 Date: 2026-06-24 (resolved 2026-07-09)
 Branch: `experiment/forwarder-stellar-source`
-Status: **RESOLVED** — Circle enabled Stellar-source forwarding; verified working
+Status: **RESOLVED** — Circle enabled outbound forwarding; verified working
 end-to-end on 2026-07-09 (EVM destinations) and 2026-07-24 (Solana destination).
 See [Resolution](#resolution-2026-07-09). Our implementation was correct
 throughout; the gap was entirely Circle-side.
@@ -48,7 +48,7 @@ collector `0xc17d06b66fb2f308bb3af99231a45380a28563a2`.
 
 Probe whether Circle's Crosschain Forwarding Service (hosted relayer that
 auto-completes the destination mint and deducts its fee from the minted USDC)
-will service a **Stellar-origin** CCTP burn, even though Stellar is not listed as
+will service an **outbound** CCTP burn, even though Stellar is not listed as
 a supported forwarder chain.
 
 ## How the forwarder is triggered
@@ -132,7 +132,7 @@ flow. Same outcome, decoded from the burn message (Stellar 27 → Ethereum 0):
   message is mintable; the burn is recoverable via manual `receiveMessage`
   (resume flow with Ethereum selected).
 
-So Stellar-source forwarding fails identically against **both** supported
+So outbound forwarding fails identically against **both** supported
 destinations (Base and Ethereum Sepolia). Combined with the EVM↔EVM control
 succeeding, this isolates the cause to Circle's relayer not watching a **Stellar
 source** — not a destination, fee, threshold, caller, or encoding issue on our
@@ -152,7 +152,7 @@ Decimals verified sound: `amount` and `maxFee` are both 6-dp-normalized in the
 message and self-consistent. **`feeExecuted` = 0 on both.** No change.
 
 The decisive evidence is in Iris's own response shape, comparing the
-Stellar-source message to a working EVM↔EVM forward (Base→Eth, control):
+outbound message to a working EVM↔EVM forward (Base→Eth, control):
 
 | field                | EVM control (worked) | Stellar source (ignored) |
 | -------------------- | -------------------- | ------------------------ |
@@ -169,7 +169,7 @@ Two structural tells beyond `feeExecuted`:
    has it because the message entered the forwarding pipeline. Absent = never
    enrolled. Circle's API surfaces no forward lifecycle for a Stellar source.
 2. **`decodedMessageBody` = `null` and `sender` = `null`** — Iris's own decoder
-   choked on the Stellar-source burn body (decoded the EVM one fully). Stellar
+   choked on the Stellar source.s burn body (decoded the EVM one fully). Stellar
    source is second-class even in the parsing layer, not just the relayer.
 
 Source messages for the record:
@@ -178,7 +178,7 @@ Source messages for the record:
 - `GET /v2/messages/6?transactionHash=0xdaeb3c49…f2334` (Base→Eth control, CONFIRMED)
 
 Aside (not a forwarding signal): Circle's supported-chains table lists Fast
-Transfer as **N/A for Stellar**, which explains every Stellar-source burn
+Transfer as **N/A for Stellar**, which explains every outbound burn
 attesting at threshold 2000 regardless of `minFinalityThreshold`. This is
 expected — Stellar finalizes in seconds, so Fast Transfer (mint-before-finality
 for a fee) is moot; the chain only offers Standard, same as Arc, Avalanche, and
@@ -221,18 +221,18 @@ no forward was ever created:
    `sourceTxHash` are pattern-locked to `^0x[a-fA-F0-9]{64}$` (Stellar hashes are
    64 hex _without_ `0x` — ours didn't match, though the endpoint accepted them);
    the `Address` schema and message decoder assume EVM-style addresses, which is
-   why `decodedMessageBody` / `sender` came back `null` for the Stellar-source
+   why `decodedMessageBody` / `sender` came back `null` for the Stellar source
    burn. Nothing in the spec enumerates supported forwarder sources or models a
    Stellar source.
 
 ## Conclusion
 
 - Our forwarding implementation is correct (proven by the EVM↔EVM control).
-- Stellar-origin forwarding is unsupported by Circle's relayer on sandbox as of
+- Outbound forwarding is unsupported by Circle's relayer on sandbox as of
   2026-06-24, across all tested destinations. The fee API quoting the route and
   the docs gating only by destination are both misleading — the relayer simply
   doesn't act on a Stellar source.
-- Aside, not a forwarding signal: Stellar-source burns always attest at
+- Aside, not a forwarding signal: outbound burns always attest at
   finalized / threshold 2000, and Circle's table lists Fast Transfer as **N/A for
   Stellar**. Expected — Stellar finalizes in seconds, so Fast Transfer is moot;
   Standard is the only (and effectively the fast) path, same as Arc/Avalanche.
@@ -240,13 +240,13 @@ no forward was ever created:
 - Cleanest proof the relayer never enrolls a Stellar source: Iris omits the
   `forwardState`/`forwardTxHash` fields entirely (present + `CONFIRMED` on a
   working EVM forward) and returns `decodedMessageBody`/`sender` = `null` for the
-  Stellar-source message. maxFee is not the lever — moved twice with no effect on
+  outbound message. maxFee is not the lever — moved twice with no effect on
   `feeExecuted` (stayed 0) or `forwardState` (stayed absent).
 - Forwarder economics: `feeExecuted` ≈ full `maxFee`; forward fee tracks
   destination gas (~$0.20 Base, ~$1.45 Ethereum) — size `maxFee` tightly.
 
-Worth reporting to Circle: confirm whether/when Stellar-source forwarding will be
-enabled (the relayer watching a Stellar source). Stellar-source Fast is _not_ a
+Worth reporting to Circle: confirm whether/when outbound forwarding will be
+enabled (the relayer watching a Stellar source). Outbound Fast is _not_ a
 gap to chase — Fast Transfer is moot on a fast-finality chain. Parked until then.
 The Ethereum Sepolia chain addition is a separate, general-purpose commit
 (cherry-pickable onto `main`).
@@ -269,7 +269,7 @@ minted with no manual `receiveMessage`.** Confirmed on-chain on both destination
   status 1 (USDC `0x036CbD…CF7e` on Base Sepolia). Fee math checks out both legs
   (amount − feeExecuted = minted).
 
-Every structural tell from the third trial has flipped for the Stellar-source
+Every structural tell from the third trial has flipped for the outbound
 message — the mirror image of the table in that section:
 
 | field                | 2026-06-24 (ignored) | 2026-07-09 (forwarded)  |
@@ -279,8 +279,8 @@ message — the mirror image of the table in that section:
 | `decodedMessageBody` | `null`               | **fully decoded**       |
 | `feeExecuted`        | 0                    | **= maxFee** (full)     |
 
-Iris now enrolls the Stellar-source burn into the forwarding pipeline and its
-decoder parses the Stellar-source body — both the relayer and parsing layers were
+Iris now enrolls the outbound burn into the forwarding pipeline and its
+decoder parses the outbound body — both the relayer and parsing layers were
 fixed. `feeExecuted` = full `maxFee` on both legs, consistent with the earlier
 EVM-control finding (the forwarder consumes ~the full cap; size `maxFee` tightly).
 

@@ -13,7 +13,7 @@
 - No `$effect` in Svelte components — explicit dataflow only (props down, `bind:` up, `$derived` for computed).
 - Every `.svelte` / `.svelte.ts` edit must pass the Svelte MCP `svelte-autofixer` (run until no issues) before commit, per project CLAUDE.md.
 - No new test toolchain (vitest etc.) — verification is `npm run check` + `npm run lint` + manual testnet runs.
-- `maxFee = ceil(amount * bps / 10000) + floor`; floor = `STELLAR_MAX_FEE` (7-dp Stellar subunits) for a Stellar-source burn, `EVM_MAX_FEE` (6-dp) for an EVM-source burn.
+- `maxFee = ceil(amount * bps / 10000) + floor`; floor = `STELLAR_MAX_FEE` (7-dp Stellar subunits) when Stellar is the source, `EVM_MAX_FEE` (6-dp) when an EVM chain is.
 - Thresholds: Standard = 2000, Fast = 1000. Fee API: `GET {IRIS_API}/v2/burn/USDC/fees/{srcDomain}/{dstDomain}` → `[{finalityThreshold, minimumFee}]`, `minimumFee` in basis points.
 - Keep `npm run check` green after every task (temporary `FINALIZED_THRESHOLD` alias in config until Task 3 removes it).
 

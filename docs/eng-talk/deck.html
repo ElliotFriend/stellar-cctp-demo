@@ -1200,7 +1200,7 @@
 <span class="c">// ...but INTO Stellar we never call receive_message directly:</span>
 <span class="t">Stellar</span>  <span class="hl">CctpForwarder.mint_and_forward(message, attestation)</span></pre>
           <p class="sub">
-            Verify Circle's signature, mint. The only twist is Stellar inbound, where the same call
+            Verify Circle's signature, mint. The only twist is inbound, where the same call
             also does the last hop to a G&#8209;account, which is the next section.
           </p>
         </div>
@@ -1271,7 +1271,7 @@
           </div>
         </div>
         <aside class="notes">
-          <li>Payoff lands in §7c: from a Stellar source, the toggle is effectively cosmetic.</li>
+          <li>Payoff lands in §7c: on an outbound transfer, the toggle is effectively cosmetic.</li>
         </aside>
       </section>
 
@@ -1865,7 +1865,7 @@
             <span class="flag__tag">Why keep it</span>
             <span>
               I left the toggle in so the parameter is <em>visible</em>, but I'd be lying if I said
-              it changed Stellar-origin timing.
+              it changed outbound timing.
             </span>
           </div>
         </div>

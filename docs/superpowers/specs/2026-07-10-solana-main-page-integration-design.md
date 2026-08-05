@@ -43,8 +43,8 @@ connect + balance. Rejected alternatives: lifting the selector inline into
 
 - New `RightChain = EvmChainId | 'solana'` (in `config.ts`).
 - `direction` on the page is derived from `(rightChain, orientation)`:
-    - EVM + Stellar-source → `stellar-to-evm`; EVM-source → `evm-to-stellar`.
-    - Solana + Stellar-source → `stellar-to-solana`; Solana-source → `solana-to-stellar`.
+    - EVM, Stellar as source → `stellar-to-evm`; EVM as source → `evm-to-stellar`.
+    - Solana, Stellar as source → `stellar-to-solana`; Solana as source → `solana-to-stellar`.
 
 ## Components
 
@@ -133,7 +133,7 @@ both Solana directions, contradicting "Fast out of scope" — the page's
 
 - Take `otherLabel` (from the page's `rightLabel`) instead of `evmLabel`; build
   source-aware button copy that reads correctly for all four directions.
-- Treat both Solana directions as Fast-disabled (like the Stellar-source case):
+- Treat both Solana directions as Fast-disabled (like the outbound case):
   the Fast chip is hidden/disabled and only `standard` is offered.
 
 ## `+page.svelte` changes

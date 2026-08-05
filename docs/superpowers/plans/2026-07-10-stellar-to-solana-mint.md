@@ -12,7 +12,7 @@
 
 - Svelte 5 runes, **no `$effect`**; browser code guarded with `browser`.
 - `@solana/kit` pinned `^6.5.0`. Generated code must import from `@solana/kit` (the gen script already remaps `@solana/program-client-core` → `@solana/kit/program-client-core` and strips `process.env.NODE_ENV`).
-- Standard finality only (`minFinalityThreshold = STANDARD_THRESHOLD = 2000`). Stellar-source burn fee uses the **7-dp `STELLAR_MAX_FEE`** floor and `fetchBurnFee(STELLAR.domain, SOLANA.domain)` — NOT `SOLANA_MAX_FEE`.
+- Standard finality only (`minFinalityThreshold = STANDARD_THRESHOLD = 2000`). outbound burn fee uses the **7-dp `STELLAR_MAX_FEE`** floor and `fetchBurnFee(STELLAR.domain, SOLANA.domain)` — NOT `SOLANA_MAX_FEE`.
 - **Fund-safety:** the burn `mintRecipient` is the recipient's **USDC ATA** (32 raw bytes, left-aligned — Solana pubkeys fill all 32), NOT the wallet and NOT right-aligned. `destinationCaller = ZERO_BYTES_32` (permissionless mint).
 - Addresses (config): Stellar domain 27, USDC `CBIELTK6YBZJU5UP2WWQEUCYKLPU6AUNZ2BQ4WWFEIE3USCIHMXQDAMA`, TMM `CDNG7HXAPBWICI2E3AUBP3YZWZELJLYSB6F5CC7WLDTLTHVM74SLRTHP`. Solana domain 5, USDC mint `4zMMC9srt5Ri5X14GAgXhaHii3GnPAEERYPJgZJDncDU`, TMM program `CCTPV2vPZJS2u2BBsUoscuikbYjnpFmbFsvVuJdgUMQe`, MessageTransmitter program `CCTPV2Sm4AdWt5296sk4P66VBZ7bEhcARwFaaS9YPbeC`.
 - `pnpm check` + `pnpm lint` pass; run `svelte-autofixer` on `.svelte` files.

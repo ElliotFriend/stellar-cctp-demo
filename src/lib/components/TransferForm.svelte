@@ -14,9 +14,10 @@
     }: {
         otherLabel?: string;
         stellarIsSource?: boolean;
-        // Whether Fast Transfer applies to the current route (only when a
-        // non-Solana chain is the source). Stellar-source and any Solana route
-        // are Standard-only.
+        // Whether Fast Transfer applies to the current route. Outbound is always
+        // Standard (Stellar finalizes in seconds, so there's no pre-finality
+        // window to mint into); inbound gets Fast when the source chain has one,
+        // meaning Solana or an EVM chain with a known attestation ETA.
         fastAllowed?: boolean;
         amount?: string;
         speed?: TransferSpeed;

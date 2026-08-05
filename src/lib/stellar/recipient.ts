@@ -49,7 +49,7 @@ export function encodeStellarForwarderHookData(stellarStrkey: string): Hex {
 // recipient strkey as UTF-8 text. Don't mix them up; either mistake loses funds.
 //
 // The account branch is kept for symmetry, but nothing currently passes a G
-// address here, so a Stellar destination always decodes a `C...` contract id.
+// address here, so an inbound transfer always decodes a `C...` contract id.
 export function strkeyToBytes32(strkey: string): Hex {
     const isContract = StrKey.isValidContract(strkey);
     const raw = isContract ? StrKey.decodeContract(strkey) : StrKey.decodeEd25519PublicKey(strkey);

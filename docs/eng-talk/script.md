@@ -42,7 +42,7 @@ the wrapper concept on Stellar in §5b/§5c._
 - [1. Cold open: the problem (2 min)](#1-cold-open-the-problem-2-min)
 - [2. CCTP mental model: burn, attest, mint (6 min)](#2-cctp-mental-model-burn-attest-mint-6-min)
 - [3. Stellar realities: the Forwarder \& hook data (6 min)](#3-stellar-realities-the-forwarder--hook-data-6-min)
-  - [3a. Why inbound-to-Stellar needs a Forwarder](#3a-why-inbound-to-stellar-needs-a-forwarder)
+  - [3a. Why inbound transfers need a Forwarder](#3a-why-inbound-transfers-need-a-forwarder)
   - [3b. Hook data, the most important bytes in the repo](#3b-hook-data-the-most-important-bytes-in-the-repo)
   - [3c. Three address encodings, one concept](#3c-three-address-encodings-one-concept)
 - [4. The forwarding service (4 min)](#4-the-forwarding-service-4-min)
@@ -166,8 +166,8 @@ fn deposit_for_burn_with_hook(
 - The hook variant is a strict superset: same arguments, plus `hook_data`.
 - That payload is how you say something to the destination chain: it's what
   carries a Stellar recipient, or other Circle instructions we'll see later.
-- Hold onto this; on Stellar-inbound transfers it turns out to be mandatory, not
-  optional.
+- Hold onto this; on inbound transfers (USDC coming _into_ Stellar) it turns out
+  to be mandatory, not optional.
 
 (SLIDE) **The mint side is same shape everywhere: `(message, attestation)`.**
 
@@ -183,7 +183,7 @@ Stellar  CctpForwarder.mint_and_forward(message, attestation)
 
 - Every destination chain takes the message plus Circle's attestation, verifies
   the signature, and `mint`s.
-- The only twist is Stellar inbound, where we wrap that in `mint_and_forward`
+- The only twist is inbound, where we wrap that in a `mint_and_forward`
   invocation so the same call also does the last hop to the _actual_ recipient.
 
 Two vocabulary items that might help us, because they can trip up developers:
@@ -221,7 +221,7 @@ can't safely target any Stellar address directly, so inbound transfers route
 through a **Forwarder contract**; (2) the recipient's real address rides in
 **hook data**, and its byte layout is unforgiving.
 
-### 3a. Why inbound-to-Stellar needs a Forwarder
+### 3a. Why inbound transfers need a Forwarder
 
 (SLIDE) **Why a raw Stellar address can't be the `mintRecipient`.**
 
@@ -237,7 +237,7 @@ through a **Forwarder contract**; (2) the recipient's real address rides in
 
 (SLIDE) **The fix: Circle's Forwarder contract.**
 
-- Every inbound-to-Stellar transfer mints to the **`CctpForwarder`** contract
+- Every inbound transfer mints to the **`CctpForwarder`** contract
   (`CA66...4VSZ` on Testnet), and the _real_ recipient travels in the message's
   **hook data**.
 - The Forwarder `mint`s to itself, and then pays out to the real recipient
@@ -291,8 +291,7 @@ export function encodeStellarForwarderHookData(stellarStrkey: string): Hex {
 - (CAVEAT) I validate the strkey _before_ building the burn, because there's no
   undo.
 
-(SLIDE) **This is why a Stellar-destination `burn` MUST use the _with-hook_
-variant.**
+(SLIDE) **This is why an inbound `burn` MUST use the _with-hook_ variant.**
 
 - The recipient's address exists _only_ in the hook. A plain `deposit_for_burn`
   has nowhere to carry it.
@@ -395,9 +394,9 @@ story:
   - **Stellar to Solana**: burn `0d4fcd21...dc0b09aa`, then Iris `forwardState:
     COMPLETE`, then a relayer mint finalized on Solana devnet with no user
     transaction.
-  - Stellar-source is the piece that had to get fixed.
+  - Outbound is the piece that had to get fixed.
 - **Forwarding does _not_ work for Stellar as a _destination_.**
-  - Inbound-to-Stellar transfers still return a _"destination does not support
+  - Inbound transfers still return a _"destination does not support
     forwarding"_ error.
   - So inbound always goes through the `CctpForwarder` contract and its
     `mint_and_forward` function, the way we saw in §3a.
@@ -586,7 +585,7 @@ of what Soroban's auth model buys you.
 - (DEMO) The destination side is identical to 5a: attest, then `receiveMessage`
   on Arc. Nothing new here, the whole delta was the burn.
 
-**Transition:** So that's the outbound-from-Stellar story. Let's turn it around
+**Transition:** So that's the outbound story. Let's turn it around
 and come _into_ Stellar from EVM, where we get to see the Forwarder do its job,
 and see three different ways to make one burn happen.
 
@@ -670,7 +669,7 @@ breaks one of the assumptions I've been repeating this whole talk.
 
 **Point:** Solana works in both directions, but it quietly violates
 "burn-and-mint" on the receive side, and it's the one place where
-Fast-vs-Standard actually _doesn't_ do what you'd expect from a Stellar source.
+Fast-vs-Standard actually _doesn't_ do what you'd expect on an outbound transfer.
 
 ### 7a. Solana to Stellar (burn on Solana)
 
@@ -726,7 +725,7 @@ interesting protocol detail for this room:
   Ethereum or one of its L2s.
 - From Stellar, the toggle is effectively cosmetic. I left it in so the
   parameter is _visible_, but I'd be lying if I said it changed the
-  Stellar-origin timing.
+  outbound timing.
 
 **Transition:** Last one, and it's quick. The forwarding service we talked
 about, live, so you can watch the destination step _disappear_.

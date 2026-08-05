@@ -154,6 +154,22 @@ export const EVM_MAX_FEE = 500n;
 // Solana USDC is 6-dp like EVM, so the same 500n (≈ $0.0005) buffer applies.
 export const SOLANA_MAX_FEE = 500n;
 
+// ─────────────────────────────────────────────────────────────────────
+//  Direction vocabulary (used consistently across this repo)
+// ─────────────────────────────────────────────────────────────────────
+// Two orthogonal axes, and mixing them is what makes this confusing:
+//
+//  1. Route, relative to Stellar. `outbound` leaves Stellar (Stellar burns),
+//     `inbound` arrives on Stellar (Stellar mints). Only meaningful because
+//     Stellar is this repo's fixed vantage point, so never use these two words
+//     in a sentence that isn't about Stellar.
+//  2. Role within a single transfer. `source` and `destination`, chain-neutral,
+//     matching CCTP's own field names (sourceDomain, destinationDomain). Attach
+//     a chain with a clause ("when Stellar is the destination"), not a compound
+//     ("Stellar-destination").
+//
+// `Direction` below is the third, fully explicit level: the concrete pair, used
+// as a machine identifier where neither shorthand is wanted.
 export type Direction =
     'stellar-to-evm' | 'evm-to-stellar' | 'solana-to-stellar' | 'stellar-to-solana';
 

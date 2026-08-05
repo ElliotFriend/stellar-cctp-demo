@@ -732,7 +732,7 @@ export function createTransferStore(
     // is the destination: its USDC ATA is the burn recipient, and it pays +
     // signs the Solana mint.
     // Approve TokenMessenger to pull USDC (two-tx path only). Shared by the
-    // plain and wrapper-less Stellar-source flows.
+    // plain and wrapper-less outbound flows.
     async function stellarApproveStep(stellarAddress: string, amount: bigint) {
         return performStep('approving', 'approve', async () => {
             const existing = await getUsdcAllowance({

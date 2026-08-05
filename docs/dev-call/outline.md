@@ -251,8 +251,7 @@ Longer starters in `docs/eng-talk/plan.md` §"Q&A prep".
 **Domains:** Ethereum `0`, Solana `5`, Base `6`, Arc `26`, **Stellar `27`**.
 Arc's chainId is `5,042,002`, which is not its domain.
 
-**Finality:** `2000` Standard, `1000` Fast. Stellar-source always attests at
-`2000`.
+**Finality:** `2000` Standard, `1000` Fast. Outbound always attests at `2000`.
 
 | Chain   | Burn + mint                            | Message bus                          |
 | ------- | -------------------------------------- | ------------------------------------ |
