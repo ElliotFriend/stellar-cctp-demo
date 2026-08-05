@@ -51,22 +51,22 @@
         return [
             {
                 label: 'magic prefix (Circle-reserved zeros)',
-                range: '0 to 23',
+                range: '0-23',
                 hex: sliceBytes(hex, 0, 24),
             },
             {
                 label: 'version (uint32)',
-                range: '24 to 27',
+                range: '24-27',
                 hex: sliceBytes(hex, 24, 28),
             },
             {
                 label: 'recipient strkey length (uint32)',
-                range: '28 to 31',
+                range: '28-31',
                 hex: sliceBytes(hex, 28, 32),
             },
             {
                 label: 'recipient strkey (UTF-8)',
-                range: `32 to ${totalBytes - 1}`,
+                range: `32-${totalBytes - 1}`,
                 hex: sliceBytes(hex, 32, totalBytes),
             },
         ];
@@ -76,17 +76,17 @@
         return [
             {
                 label: `magic prefix (ascii "${CCTP_FORWARD_MAGIC}", zero-padded to 24 bytes)`,
-                range: '0 to 23',
+                range: '0-23',
                 hex: sliceBytes(hex, 0, 24),
             },
             {
                 label: 'version (uint32)',
-                range: '24 to 27',
+                range: '24-27',
                 hex: sliceBytes(hex, 24, 28),
             },
             {
                 label: 'length of any extra Circle hook data (uint32)',
-                range: '28 to 31',
+                range: '28-31',
                 hex: sliceBytes(hex, 28, 32),
             },
         ];

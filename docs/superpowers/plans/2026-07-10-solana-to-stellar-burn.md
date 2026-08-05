@@ -17,7 +17,7 @@
 - CCTP addresses (already in `SOLANA` config): domain 5, `tokenMessengerMinterV2 = CCTPV2vPZJS2u2BBsUoscuikbYjnpFmbFsvVuJdgUMQe`, `messageTransmitterV2 = CCTPV2Sm4AdWt5296sk4P66VBZ7bEhcARwFaaS9YPbeC`, USDC mint `4zMMC9srt5Ri5X14GAgXhaHii3GnPAEERYPJgZJDncDU` (6-dp). Stellar domain 27, `cctpForwarder = CA66Q2WFBND6V4UEB7RD4SAXSVIWMD6RA4X3U32ELVFGXV5PJK4T4VSZ`.
 - `pnpm check` and `pnpm lint` must pass. Run the Svelte MCP `svelte-autofixer` on every `.svelte` file until clean.
 
-**Testing note:** No test runner in this repo; the spec's verification is a real devnet→testnet transfer. Tasks 1 to 6 gate on `pnpm check` (+ `pnpm lint` where `.svelte`/formatting changes). Task 7 is the manual end-to-end run. Do not scaffold a test framework. **`pnpm check` passing does NOT prove runtime correctness**, the balance spike shipped green and still broke at `vite dev` on a version mismatch; only Task 7 proves the path.
+**Testing note:** No test runner in this repo; the spec's verification is a real devnet→testnet transfer. Tasks 1-6 gate on `pnpm check` (+ `pnpm lint` where `.svelte`/formatting changes). Task 7 is the manual end-to-end run. Do not scaffold a test framework. **`pnpm check` passing does NOT prove runtime correctness**, the balance spike shipped green and still broke at `vite dev` on a version mismatch; only Task 7 proves the path.
 
 ---
 
@@ -45,9 +45,9 @@ import { StrKey } from '@stellar/stellar-sdk';
 // Hook data layout for routing CCTP funds to a Stellar G-address via
 // CctpForwarder. From Circle's Stellar CCTP docs:
 //
-//   bytes 0 to 23   : 24 magic bytes (zeros, Circle-reserved)
-//   bytes 24 to 27  : version (uint32, currently 0)
-//   bytes 28 to 31  : length of forwardRecipient in bytes (uint32)
+//   bytes 0-23   : 24 magic bytes (zeros, Circle-reserved)
+//   bytes 24-27  : version (uint32, currently 0)
+//   bytes 28-31  : length of forwardRecipient in bytes (uint32)
 //   bytes 32+    : forwardRecipient as UTF-8 encoded strkey (the G-address)
 //
 // Getting any byte of this wrong will permanently lose funds. Validate
@@ -76,7 +76,7 @@ export function strkeyToBytes32(strkey: string): Hex {
 
 - [ ] **Step 2: Update `evm/cctp.ts`**
 
-In `src/lib/evm/cctp.ts`: delete the `encodeStellarForwarderHookData` (lines ~96 to 116) and `strkeyToBytes32` (lines ~118 to 125) function definitions and their leading comment block. Remove now-unused imports from the viem import on line 1 (`concatHex`, `pad`, `stringToHex`, keep `encodeFunctionData`, `erc20Abi`, `toHex`, `type Hex` if still used elsewhere in the file; let `pnpm check` flag any unused). Remove the `StrKey` import on line 2. Add:
+In `src/lib/evm/cctp.ts`: delete the `encodeStellarForwarderHookData` (lines ~96-116) and `strkeyToBytes32` (lines ~118-125) function definitions and their leading comment block. Remove now-unused imports from the viem import on line 1 (`concatHex`, `pad`, `stringToHex`, keep `encodeFunctionData`, `erc20Abi`, `toHex`, `type Hex` if still used elsewhere in the file; let `pnpm check` flag any unused). Remove the `StrKey` import on line 2. Add:
 
 ```ts
 import { encodeStellarForwarderHookData, strkeyToBytes32 } from '$lib/stellar/recipient';
@@ -819,6 +819,6 @@ git commit -m "feat: /solana-spike burn harness. Solana -> Stellar transfer"
 
 ## Verification summary
 
-- Tasks 1 to 6: `pnpm check` passes after each (+ `pnpm lint` on 1 and 7).
+- Tasks 1-6: `pnpm check` passes after each (+ `pnpm lint` on 1 and 7).
 - Task 7: a real 5-USDC transfer burns on Solana devnet and mints to a Stellar testnet G-address, confirmed on stellar.expert.
 - Highest-risk spots, in order: (a) the generated builder's account/signer input shape (Task 5 signer-wiring note), (b) Phantom `solana:signTransaction` + ephemeral co-signer assembly (Task 4), (c) Iris signature encoding (Task 7 checkpoint). None are provable by typecheck, Task 7 is the gate.

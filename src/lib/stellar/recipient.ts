@@ -21,9 +21,9 @@ export async function solanaAtaToBytes32(ownerAddress: string): Promise<Uint8Arr
 // Hook data layout for routing CCTP funds to a Stellar G-address via
 // CctpForwarder. From Circle's Stellar CCTP docs:
 //
-//   bytes 0 to 23  : 24 magic bytes (zeros, Circle-reserved)
-//   bytes 24 to 27 : version (uint32, currently 0)
-//   bytes 28 to 31 : length of forwardRecipient in bytes (uint32)
+//   bytes 0-23  : 24 magic bytes (zeros, Circle-reserved)
+//   bytes 24-27 : version (uint32, currently 0)
+//   bytes 28-31 : length of forwardRecipient in bytes (uint32)
 //   bytes 32+    : forwardRecipient as UTF-8 encoded strkey (the G-address)
 //
 // Getting any byte of this wrong will permanently lose funds. Validate

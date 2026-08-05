@@ -183,7 +183,7 @@ Apply the matching minimal fix per error, do not refactor surrounding logic:
 - [ ] **Step 3: Loop check until clean**
 
 Run: `pnpm run check`
-Expected: iterate Steps 1 to 2 until `0 errors`. Fix per error; don't batch-guess.
+Expected: iterate Steps 1-2 until `0 errors`. Fix per error; don't batch-guess.
 
 - [ ] **Step 4: Commit (only if files changed)**
 
@@ -200,7 +200,7 @@ git commit -m "fix(solana): update hand-written consumers for kit 7 / token 0.15
 
 **Interfaces:**
 
-- Consumes: Tasks 2 to 4.
+- Consumes: Tasks 2-4.
 - Produces: a static-green tree ready for the live test.
 
 - [ ] **Step 1: Typecheck**, Run: `pnpm run check` → Expected: `0 errors 0 warnings`.

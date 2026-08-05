@@ -187,9 +187,9 @@ export async function bridgeUsdcToEvmWithHook(args: {
 // deducting its fee from the minted USDC, so the user pays no destination gas.
 //
 // hookData layout (Circle docs):
-//   bytes 0 to 23 : 24-byte magic, ascii "cctp-forward" left-aligned, zero-padded
-//   bytes 24 to 27: u32 version (0)
-//   bytes 28 to 31: u32 length of additional Circle hook data (0, none here)
+//   bytes 0-23 : 24-byte magic, ascii "cctp-forward" left-aligned, zero-padded
+//   bytes 24-27: u32 version (0)
+//   bytes 28-31: u32 length of additional Circle hook data (0, none here)
 //
 // Stellar is NOT a documented forwarding source; this probes whether the relayer
 // picks it up regardless. destination_caller is left ZERO (permissionless) so if

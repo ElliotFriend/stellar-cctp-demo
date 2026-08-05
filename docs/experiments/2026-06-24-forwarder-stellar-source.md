@@ -55,8 +55,8 @@ a supported forwarder chain.
 
 - Burn with `hookData` = the 32-byte `cctp-forward` magic
   (`0x636374702d666f72776172640000000000000000000000000000000000000000`
-  = ascii "cctp-forward" in bytes 0 to 23, u32 version 0 in 24 to 27, u32 length 0 in
-  28 to 31).
+  = ascii "cctp-forward" in bytes 0-23, u32 version 0 in 24-27, u32 length 0 in
+  28-31).
 - `maxFee` must cover protocol fee (bps of amount) + the forwarding fee.
 - `destinationCaller` **must be zero**, setting it _disables_ forwarding
   (Circle docs: "Forwarding Service doesn't support forwarding ... when

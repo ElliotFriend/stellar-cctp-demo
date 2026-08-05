@@ -74,7 +74,7 @@ connect + balance. Rejected alternatives: lifting the selector inline into
   the id via a controlled prop does NOT remount EvmPanel and `$effect` is
   forbidden, so these side effects would be lost. **EvmPanel must expose an
   imperative `export async function setChain(id: EvmChainId)`** that performs all
-  of (a) to (c) (plus the no-wallet balance/cap reset at `:143-149`). `DestinationPanel`
+  of (a)-(c) (plus the no-wallet balance/cap reset at `:143-149`). `DestinationPanel`
   calls `evmPanelRef.setChain(id)` from its chip handler when an EVM chip is picked.
 
 ### `SolanaPanel.svelte` (stripped)

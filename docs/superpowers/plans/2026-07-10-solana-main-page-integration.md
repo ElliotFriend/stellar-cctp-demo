@@ -691,6 +691,6 @@ git commit -m "feat: Solana in main-page destination selector (DestinationPanel)
 
 ## Verification summary
 
-- Tasks 1 to 3 gate on `pnpm check` + `pnpm lint`.
+- Tasks 1-3 gate on `pnpm check` + `pnpm lint`.
 - Task 4 gates on the full manual run: both Solana directions complete, EVM regression intact, chain-switch side effects work, Resume/Fast hidden for Solana, correct per-direction burn preview, `/solana-spike` gone.
 - Highest risk: the DestinationPanel↔EvmPanel `setChain` timing on body swap (Step 2 note) and the two burn previews rendering the correct per-direction args. Only the live run settles these.

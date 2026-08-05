@@ -18,7 +18,7 @@
 - Run the Svelte MCP `svelte-autofixer` on every `.svelte` file until clean (per project CLAUDE.md).
 - Scope: Solana devnet only. USDC mint `4zMMC9srt5Ri5X14GAgXhaHii3GnPAEERYPJgZJDncDU`, 6 decimals, domain 5, already in `SOLANA` in `src/lib/config.ts`.
 
-**Testing note:** This repo has no test runner and the spec defines verification as manual. Tasks 1 to 3 gate on `pnpm check` (typecheck). Task 4 is the real end-to-end verification: connect Phantom on devnet and confirm the displayed balance matches the Circle faucet. Do not scaffold a test framework for throwaway code.
+**Testing note:** This repo has no test runner and the spec defines verification as manual. Tasks 1-3 gate on `pnpm check` (typecheck). Task 4 is the real end-to-end verification: connect Phantom on devnet and confirm the displayed balance matches the Circle faucet. Do not scaffold a test framework for throwaway code.
 
 ---
 
@@ -424,7 +424,7 @@ git commit -m "feat: /solana-spike panel, connect Phantom + read USDC balance"
 
 ## Verification summary
 
-- Task 1 to 3: `pnpm check` passes after each.
+- Task 1-3: `pnpm check` passes after each.
 - Task 4: `/solana-spike` connects Phantom and displays a devnet USDC balance matching the Circle faucet; reload silently reconnects.
 
 Once green, the spike has de-risked the stack and the CCTP burn/mint work can build on `solana/client.ts`, `solana/wallet.ts`, and `solana/usdc.ts`.

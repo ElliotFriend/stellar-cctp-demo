@@ -17,9 +17,9 @@
 - Addresses (config): Stellar domain 27, USDC `CBIELTK6YBZJU5UP2WWQEUCYKLPU6AUNZ2BQ4WWFEIE3USCIHMXQDAMA`, TMM `CDNG7HXAPBWICI2E3AUBP3YZWZELJLYSB6F5CC7WLDTLTHVM74SLRTHP`. Solana domain 5, USDC mint `4zMMC9srt5Ri5X14GAgXhaHii3GnPAEERYPJgZJDncDU`, TMM program `CCTPV2vPZJS2u2BBsUoscuikbYjnpFmbFsvVuJdgUMQe`, MessageTransmitter program `CCTPV2Sm4AdWt5296sk4P66VBZ7bEhcARwFaaS9YPbeC`.
 - `pnpm check` + `pnpm lint` pass; run `svelte-autofixer` on `.svelte` files.
 
-**CCTP V2 message layout** (byte offsets, needed for the mint): version 0 to 3, sourceDomain 4 to 7, destinationDomain 8 to 11, **nonce 12 to 43 (32 bytes)**, sender 44 to 75, recipient 76 to 107, destinationCaller 108 to 139, minFinalityThreshold 140 to 143, finalityThresholdExecuted 144 to 147, **burn message body from 148**. Burn body: version 0 to 3 then **burnToken at body 4 to 35** → absolute message bytes **152 to 183**.
+**CCTP V2 message layout** (byte offsets, needed for the mint): version 0-3, sourceDomain 4-7, destinationDomain 8-11, **nonce 12-43 (32 bytes)**, sender 44-75, recipient 76-107, destinationCaller 108-139, minFinalityThreshold 140-143, finalityThresholdExecuted 144-147, **burn message body from 148**. Burn body: version 0-3 then **burnToken at body 4-35** → absolute message bytes **152-183**.
 
-**Testing note:** no test runner; the spec's verification is a real Stellar-testnet→Solana-devnet transfer. Tasks 1 to 4 gate on `pnpm check`; Task 5 is the manual run. `pnpm check` proves nothing about the CPI account list, only the live run does. The mint task is expected to iterate.
+**Testing note:** no test runner; the spec's verification is a real Stellar-testnet→Solana-devnet transfer. Tasks 1-4 gate on `pnpm check`; Task 5 is the manual run. `pnpm check` proves nothing about the CPI account list, only the live run does. The mint task is expected to iterate.
 
 ---
 
@@ -655,6 +655,6 @@ git commit -m "feat: /solana-spike direction toggle. Stellar -> Solana transfer"
 
 ## Verification summary
 
-- Tasks 1 to 4: `pnpm check` after each.
+- Tasks 1-4: `pnpm check` after each.
 - Task 5: a real 5-USDC Stellar-testnet→Solana-devnet transfer, confirmed by Phantom's devnet USDC balance.
 - Highest-risk, in order: (a) the `receiveMessage` CPI account list/order/roles (Task 3), (b) `used_nonce` (msg[12:44]) + `token_pair` remote-token (msg[152:184]) seeds, (c) fee-recipient ATA derivation. None are provable by typecheck, Task 5 is the gate. This is why an adversarial review of the account assembly precedes execution.

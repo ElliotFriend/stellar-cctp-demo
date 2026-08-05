@@ -313,9 +313,9 @@
                 <span class="arg-type">Bytes</span>
                 <code class="arg-hex">{hookDataHex}</code>
                 <span class="arg-note">
-                    32 bytes: the ascii magic "{CCTP_FORWARD_MAGIC}" in bytes 0 to 23, a u32 version
-                    of 0, and a u32 length of 0. That magic is what Circle's forwarding relayer
-                    watches for. The full byte layout is broken out below.
+                    32 bytes: the ascii magic "{CCTP_FORWARD_MAGIC}" in bytes 0-23, a u32 version of
+                    0, and a u32 length of 0. That magic is what Circle's forwarding relayer watches
+                    for. The full byte layout is broken out below.
                 </span>
             </li>
         {/if}
