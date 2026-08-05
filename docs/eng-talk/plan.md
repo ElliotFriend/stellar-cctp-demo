@@ -6,12 +6,12 @@ context needed to build it without re-deriving decisions.
 
 ## Status
 
-| Deliverable | State | File |
-| ----------- | ----- | ---- |
-| Speaker script | **done** (committed `02bb695`) | `docs/eng-talk/script.md` |
-| Slide deck | **done** (31 slides) | `docs/eng-talk/deck.html` |
-| Demo runbook | todo | `docs/eng-talk/runbook.md` |
-| Q&A prep | todo | `docs/eng-talk/qa.md` |
+| Deliverable    | State                          | File                       |
+| -------------- | ------------------------------ | -------------------------- |
+| Speaker script | **done** (committed `02bb695`) | `docs/eng-talk/script.md`  |
+| Slide deck     | **done** (31 slides)           | `docs/eng-talk/deck.html`  |
+| Demo runbook   | todo                           | `docs/eng-talk/runbook.md` |
+| Q&A prep       | todo                           | `docs/eng-talk/qa.md`      |
 
 Deck artifact URL (private):
 <https://claude.ai/code/artifact/8f7d4ba8-8b3b-4593-a3b7-20451c5e3b00> Republish
@@ -43,27 +43,27 @@ _say_; the runbook says what to _click_ and what to do when it breaks.
 Contents:
 
 - **Pre-flight checklist (morning-of):**
-  - Freighter on **Stellar Testnet**, funded XLM + USDC, **USDC trustline
-    added**.
-  - MetaMask with **Arc Testnet** (chainId 5042002) + USDC; Base Sepolia + a
-    little ETH for the recording.
-  - Phantom (or Wallet-Standard Solana wallet) on **devnet**, funded devnet USDC
-    and SOL; recipient **USDC ATA** exists (or first-transfer will create it).
-  - Faucets: XLM `lab.stellar.org/account/fund`; USDC `faucet.circle.com`
-    (Stellar Testnet / Arc Testnet / Base Sepolia); Base ETH
-    `alchemy.com/faucets/base-sepolia`.
-  - Pre-quote/pre-check custody: a Solana receive can fail if Circle's devnet
-    custody is underfunded, so do a dry-run transfer the day before.
+    - Freighter on **Stellar Testnet**, funded XLM + USDC, **USDC trustline
+      added**.
+    - MetaMask with **Arc Testnet** (chainId 5042002) + USDC; Base Sepolia + a
+      little ETH for the recording.
+    - Phantom (or Wallet-Standard Solana wallet) on **devnet**, funded devnet USDC
+      and SOL; recipient **USDC ATA** exists (or first-transfer will create it).
+    - Faucets: XLM `lab.stellar.org/account/fund`; USDC `faucet.circle.com`
+      (Stellar Testnet / Arc Testnet / Base Sepolia); Base ETH
+      `alchemy.com/faucets/base-sepolia`.
+    - Pre-quote/pre-check custody: a Solana receive can fail if Circle's devnet
+      custody is underfunded, so do a dry-run transfer the day before.
 - **Per-demo click paths** (Demo A/B/C/D): direction picker → flow chip → amount
   → which wallet prompts appear → what to point at on screen (tie to the
   `(SLIDE)` arg tables in the script) → "done" signal.
 - **Fallbacks:**
-  - **Resume-by-burn-hash**: the app's resume flow (`ResumeForm`,
-    `transfer.svelte.ts:resume()`) skips to attest+mint given a burn hash. Keep
-    a few known-good burn hashes on hand to resume if a live burn stalls.
-  - **Pre-recorded clips** for every flow; cut to the clip if a live attestation
-    hangs (esp. anything Base).
-  - Arc = seconds; Base Standard = ~15 min (never do Base live).
+    - **Resume-by-burn-hash**: the app's resume flow (`ResumeForm`,
+      `transfer.svelte.ts:resume()`) skips to attest+mint given a burn hash. Keep
+      a few known-good burn hashes on hand to resume if a live burn stalls.
+    - **Pre-recorded clips** for every flow; cut to the clip if a live attestation
+      hangs (esp. anything Base).
+    - Arc = seconds; Base Standard = ~15 min (never do Base live).
 - **Reset between runs:** transfer history is in-memory (refresh wipes it); note
   starting balances so the "balance went up" beat reads clearly.
 - **Timing cues:** target minutes per demo from the script's budget table.
@@ -165,46 +165,47 @@ Layout invariants worth not breaking:
   measure `.body` / `.code` / `.tablewrap` for `scrollHeight > clientHeight` and
   overflow past the slide box.
 
-  **Audit against the footer, not the slide box.** The `.foot` bar sits _inside_
-  `.slide`, so content can stay within the slide box and still land underneath the
-  section label and the nav buttons. Measure every `.body` descendant's `bottom`
-  against `.foot`'s `top`. An earlier version of this note said to ignore
-  `scrollHeight > clientHeight` on `.body` as a soft signal; that was wrong. When
-  `.body` overflows, its children spill into the footer band, which is exactly the
-  defect. Audit both, plus sibling `.cols` / `.codecols` children for equal height.
+    **Audit against the footer, not the slide box.** The `.foot` bar sits _inside_
+    `.slide`, so content can stay within the slide box and still land underneath the
+    section label and the nav buttons. Measure every `.body` descendant's `bottom`
+    against `.foot`'s `top`. An earlier version of this note said to ignore
+    `scrollHeight > clientHeight` on `.body` as a soft signal; that was wrong. When
+    `.body` overflows, its children spill into the footer band, which is exactly the
+    defect. Audit both, plus sibling `.cols` / `.codecols` children for equal height.
 
-  **Do not zero default block margins in the probe.** The Artifact skeleton's
-  "minimal CSS reset" leaves `<p>` / `<h2>` / `<ul>` margins in place, and the deck
-  has no reset of its own, so those margins are real layout. A probe that zeroes
-  them under-reports height and reports a clean deck that clips in production. Use
-  only `*{box-sizing:border-box}` + `body{margin:0}`. (As of the 2026-07-30 layout
-  pass the deck fits under both assumptions, so either probe now passes; keep the
-  faithful one as the gate.)
+    **Do not zero default block margins in the probe.** The Artifact skeleton's
+    "minimal CSS reset" leaves `<p>` / `<h2>` / `<ul>` margins in place, and the deck
+    has no reset of its own, so those margins are real layout. A probe that zeroes
+    them under-reports height and reports a clean deck that clips in production. Use
+    only `*{box-sizing:border-box}` + `body{margin:0}`. (As of the 2026-07-30 layout
+    pass the deck fits under both assumptions, so either probe now passes; keep the
+    faithful one as the gate.)
 
-  Run it with **real Chrome** (`chromium.launch({ channel: 'chrome' })`), not the
-  bundled headless shell. The shell has none of the Charter / Iowan / Palatino
-  stack, falls back to different metrics, and inflates every measurement by ~30%,
-  which makes the whole deck look broken.
+    Run it with **real Chrome** (`chromium.launch({ channel: 'chrome' })`), not the
+    bundled headless shell. The shell has none of the Charter / Iowan / Palatino
+    stack, falls back to different metrics, and inflates every measurement by ~30%,
+    which makes the whole deck look broken.
 
-  Last run (2026-07-30, after the layout pass): 31 slides, **0 failures** at
-  1100×900, 1440×810, and 1920×1080, both themes, on both probe variants.
+    Last run (2026-07-30, after the layout pass): 31 slides, **0 failures** at
+    1100×900, 1440×810, and 1920×1080, both themes, on both probe variants.
 
-  Before that pass, 23 of 31 slides had a problem: 14 with content under the
-  footer, 5 code blocks scrolling, 7 with mismatched sibling card heights, and 2
-  scrolling tables. Fixed structurally rather than slide by slide:
+    Before that pass, 23 of 31 slides had a problem: 14 with content under the
+    footer, 5 code blocks scrolling, 7 with mismatched sibling card heights, and 2
+    scrolling tables. Fixed structurally rather than slide by slide:
 
-  - `.slide` padding-bottom 6.6cqi → 7.2cqi, and the vertical rhythm tightened
-    across `.title`, `.body`, `ul.points`, `.card`, `.flag`, `.code`, and table
-    rows. Nothing dropped below ~1.3cqi, which is the Meet legibility floor.
-  - `.cols` went `align-items: start` → `stretch`. That single change fixed every
-    "the boxes are different heights" complaint; `.codecols` matches it.
-  - New primitives: `.codecols` (two code blocks side by side, used by §2's
-    entrypoint pair so neither scrolls), `.flag--stack` (tag on its own line so
-    prose uses the full width, used by §2's chainId callout), and `ul.links`
-    (the Q&A reference list).
-  - Reference-only chips on the §3b encoder and §5b wrapper slides moved into
-    speaker notes to buy the code blocks room.
-  1440×810, and 1920×1080, both themes.
+    - `.slide` padding-bottom 6.6cqi → 7.2cqi, and the vertical rhythm tightened
+      across `.title`, `.body`, `ul.points`, `.card`, `.flag`, `.code`, and table
+      rows. Nothing dropped below ~1.3cqi, which is the Meet legibility floor.
+    - `.cols` went `align-items: start` → `stretch`. That single change fixed every
+      "the boxes are different heights" complaint; `.codecols` matches it.
+    - New primitives: `.codecols` (two code blocks side by side, used by §2's
+      entrypoint pair so neither scrolls), `.flag--stack` (tag on its own line so
+      prose uses the full width, used by §2's chainId callout), and `ul.links`
+      (the Q&A reference list).
+    - Reference-only chips on the §3b encoder and §5b wrapper slides moved into
+      speaker notes to buy the code blocks room.
+      1440×810, and 1920×1080, both themes.
+
 - Type sizes are all `cqi` against a `container-type: inline-size` stage, so the
   deck scales identically at any window size. Don't introduce `px` type.
 
@@ -277,7 +278,7 @@ date into the deck. See the CCTP-live entry below.)
 - Script may still get wording tweaks, so re-read it before building the deck so
   slides match. Deck slides map 1:1 to `(SLIDE)` cues.
 - TOC in `script.md` is auto-generated (Markdown All-in-One `<!-- omit in toc
-  -->` markers); regenerate after any heading edits. `pnpm format` reflows
+-->` markers); regenerate after any heading edits. `pnpm format` reflows
   prose.
 - Voice: warm, second person, caveats-as-credibility (see script's "Voice
   reminders"). This is DevRel content, and the `stellar-devrel-context` skill has

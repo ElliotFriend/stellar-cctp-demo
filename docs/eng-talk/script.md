@@ -16,7 +16,7 @@ Solana both ways, forwarding (Stellar to EVM). Base Sepolia is recording-only.
 > `(SLIDE)` marks a slide cue, `(DEMO)` a live-demo handoff, `(CAVEAT)` an
 > honesty beat worth not skipping.
 
-## Running order & time budget  <!-- omit in toc -->
+## Running order & time budget <!-- omit in toc -->
 
 | #   | Section                                                 | Min | Cumulative |
 | --- | ------------------------------------------------------- | --- | ---------- |
@@ -42,21 +42,21 @@ the wrapper concept on Stellar in §5b/§5c._
 - [1. Cold open: the problem (2 min)](#1-cold-open-the-problem-2-min)
 - [2. CCTP mental model: burn, attest, mint (6 min)](#2-cctp-mental-model-burn-attest-mint-6-min)
 - [3. Stellar realities: the Forwarder \& hook data (6 min)](#3-stellar-realities-the-forwarder--hook-data-6-min)
-  - [3a. Why inbound transfers need a Forwarder](#3a-why-inbound-transfers-need-a-forwarder)
-  - [3b. Hook data, the most important bytes in the repo](#3b-hook-data-the-most-important-bytes-in-the-repo)
-  - [3c. Three address encodings, one concept](#3c-three-address-encodings-one-concept)
+    - [3a. Why inbound transfers need a Forwarder](#3a-why-inbound-transfers-need-a-forwarder)
+    - [3b. Hook data, the most important bytes in the repo](#3b-hook-data-the-most-important-bytes-in-the-repo)
+    - [3c. Three address encodings, one concept](#3c-three-address-encodings-one-concept)
 - [4. The forwarding service (4 min)](#4-the-forwarding-service-4-min)
 - [5. Demo A (Stellar and Arc): raw, walkthrough, wrapper (12 min)](#5-demo-a-stellar-and-arc-raw-walkthrough-wrapper-12-min)
-  - [5a. The raw path: "2 tx (direct)"](#5a-the-raw-path-2-tx-direct)
-  - [5b. Wrapper walkthrough: the Soroban contract](#5b-wrapper-walkthrough-the-soroban-contract)
-  - [5c. The wrapper path: "1 tx (wrapper)"](#5c-the-wrapper-path-1-tx-wrapper)
+    - [5a. The raw path: "2 tx (direct)"](#5a-the-raw-path-2-tx-direct)
+    - [5b. Wrapper walkthrough: the Soroban contract](#5b-wrapper-walkthrough-the-soroban-contract)
+    - [5c. The wrapper path: "1 tx (wrapper)"](#5c-the-wrapper-path-1-tx-wrapper)
 - [6. Demo B (EVM to Stellar): three burn flows (7 min)](#6-demo-b-evm-to-stellar-three-burn-flows-7-min)
-  - [6a. The invariant, up front](#6a-the-invariant-up-front)
-  - [6b. Three burn flows (show at least two live)](#6b-three-burn-flows-show-at-least-two-live)
+    - [6a. The invariant, up front](#6a-the-invariant-up-front)
+    - [6b. Three burn flows (show at least two live)](#6b-three-burn-flows-show-at-least-two-live)
 - [7. Demo C: Solana both ways, plus the custody twist (5 min)](#7-demo-c-solana-both-ways-plus-the-custody-twist-5-min)
-  - [7a. Solana to Stellar (burn on Solana)](#7a-solana-to-stellar-burn-on-solana)
-  - [7b. Stellar to Solana, and the custody twist](#7b-stellar-to-solana-and-the-custody-twist)
-  - [7c. Fast vs Standard, honestly](#7c-fast-vs-standard-honestly)
+    - [7a. Solana to Stellar (burn on Solana)](#7a-solana-to-stellar-burn-on-solana)
+    - [7b. Stellar to Solana, and the custody twist](#7b-stellar-to-solana-and-the-custody-twist)
+    - [7c. Fast vs Standard, honestly](#7c-fast-vs-standard-honestly)
 - [8. Demo D: forwarding live (Stellar to EVM) (2 min)](#8-demo-d-forwarding-live-stellar-to-evm-2-min)
 - [9. Recap + honest limitations (2 min)](#9-recap--honest-limitations-2-min)
 - [Voice reminders (for you, not the slides)](#voice-reminders-for-you-not-the-slides)
@@ -115,9 +115,9 @@ The three steps:
    structured **message** into the **MessageTransmitter(V2)** contract. Think of
    it as a generic cross-chain message bus. Basically, the message says: _"N
    units were burned on domain X, destined for recipient R on domain Y."_
-   - (Aside worth one breath: the same contract has three names across the three
-     chains. I'll use each chain's own spelling when we're looking at that
-     chain's code.)
+    - (Aside worth one breath: the same contract has three names across the three
+      chains. I'll use each chain's own spelling when we're looking at that
+      chain's code.)
 2. **Attest.** Circle's off-chain service (its API is called **Iris**) watches
    for that burn message, waits for the source chain to reach the required
    finality, and then issues a signed **attestation** (Circle's cryptographic
@@ -191,20 +191,20 @@ Two vocabulary items that might help us, because they can trip up developers:
 (SLIDE) **Domains, not chain IDs.**
 
 - CCTP has its own address space for chains called _domains_.
-  - Ethereum is `0`
-  - Solana is `5`
-  - Base is `6`
-  - Arc is `26`
-  - **Stellar is `27`**
+    - Ethereum is `0`
+    - Solana is `5`
+    - Base is `6`
+    - Arc is `26`
+    - **Stellar is `27`**
 - A domain is _not_ an EVM `chainId` (Arc's chainId is `5,042,002`; its domain
   is `26`). Every "which chain" field in a CCTP message is a domain.
 
 (SLIDE) **Fast vs Standard.**
 
 - CCTP V2 lets you trade finality for speed via a `minFinalityThreshold`:
-  - **2000 = Standard** (wait for hard finality)
-  - **1000 = Fast** (Circle attests earlier, for a small fee, backed by Circle's
-    guarantee).
+    - **2000 = Standard** (wait for hard finality)
+    - **1000 = Fast** (Circle attests earlier, for a small fee, backed by Circle's
+      guarantee).
 - We'll see this play out in the demos.
 - (CAVEAT) Fast is only meaningful when the _source_ is a slow-finality chain,
   so hold that thought for the Solana demo.
@@ -277,7 +277,7 @@ export function encodeStellarForwarderHookData(stellarStrkey: string): Hex {
     }
     const magic = pad('0x', { size: 24 });
     const version = pad(toHex(0), { size: 4 });
-    const recipientHex = stringToHex(stellarStrkey);          // the "GB..." strkey, as UTF-8
+    const recipientHex = stringToHex(stellarStrkey); // the "GB..." strkey, as UTF-8
     const lengthField = pad(toHex((recipientHex.length - 2) / 2), { size: 4 });
     return concatHex([magic, version, lengthField, recipientHex]);
 }
@@ -296,10 +296,10 @@ export function encodeStellarForwarderHookData(stellarStrkey: string): Hex {
 - The recipient's address exists _only_ in the hook. A plain `deposit_for_burn`
   has nowhere to carry it.
 - Your two hookless options both lose funds:
-  - Put a G address in `mintRecipient`, and it bricks.
-  - Put the Forwarder in `mintRecipient` with no hook, and the Forwarder has no
-    recipient to pay out to (the Soroban contract literally errors
-    `HookDataEmpty`).
+    - Put a G address in `mintRecipient`, and it bricks.
+    - Put the Forwarder in `mintRecipient` with no hook, and the Forwarder has no
+      recipient to pay out to (the Soroban contract literally errors
+      `HookDataEmpty`).
 - So: **into Stellar, always `deposit_for_burn_with_hook`.** We'll see this hold
   on both the EVM and Solana source transfers.
 
@@ -316,11 +316,11 @@ permanently stuck" warning) is at
 (SLIDE) A small table. This is a great "other chains are weird" moment for a
 Stellar audience:
 
-| Destination | What goes in `mintRecipient` | Encoding |
-| ----------- | ---------------------------- | -------- |
-| EVM | the 20-byte EOA or contract address | **right-aligned** in 32 bytes (`leftPad32FromHex`) |
-| Solana | the recipient's **USDC ATA**, not the wallet | raw 32 bytes, **left-aligned** (a Solana pubkey already fills 32) |
-| Stellar | **always the Forwarder contract**, real recipient in hook data | the Forwarder's `C...` id decoded to its raw 32 bytes (`strkeyToBytes32`), _not_ the UTF-8 form from 3b |
+| Destination | What goes in `mintRecipient`                                   | Encoding                                                                                                |
+| ----------- | -------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------- |
+| EVM         | the 20-byte EOA or contract address                            | **right-aligned** in 32 bytes (`leftPad32FromHex`)                                                      |
+| Solana      | the recipient's **USDC ATA**, not the wallet                   | raw 32 bytes, **left-aligned** (a Solana pubkey already fills 32)                                       |
+| Stellar     | **always the Forwarder contract**, real recipient in hook data | the Forwarder's `C...` id decoded to its raw 32 bytes (`strkeyToBytes32`), _not_ the UTF-8 form from 3b |
 
 - One-liner for the room: every chain has a 32-byte slot and its own opinion
   about how to fill it. EVM right-pads a short address, Solana hands you a token
@@ -371,40 +371,39 @@ The recipient needs nothing on the destination chain. No gas, no manual
 - The `cctp-forward` hook carries _no additional information_. It's purely a
   flag that says "please forward this for me."
 - In the code that's my `encodeCctpForwardHookData()` function: a 24-byte
-  reserved region carrying the ASCII tag `cctp-forward`, then version 0, length
-  0.
+  reserved region carrying the ASCII tag `cctp-forward`, then version 0, length 0.
 - `fetchForwardFee` gets the fee from the Iris fee endpoint with
   `?forward=true`, and we pass a slightly larger `maxFee` to cover the relayer.
 - On the app side there's _no_ destination step at all. We just poll the
   `mint_recipient`'s balance until the relayer's mint lands.
 - (CAVEAT) Two gotchas:
-  - The relayer appears to consume ~the _full_ `maxFee` (unlike plain CCTP,
-    where it usually takes less), so size `maxFee` to the quote. Padding is
-    paid, not refunded.
-  - `destinationCaller` **must be zero**. Setting it _disables_ forwarding.
+    - The relayer appears to consume ~the _full_ `maxFee` (unlike plain CCTP,
+      where it usually takes less), so size `maxFee` to the quote. Padding is
+      paid, not refunded.
+    - `destinationCaller` **must be zero**. Setting it _disables_ forwarding.
 
 (SLIDE)(CAVEAT) **The honest status.** Say this plainly, it's the point of the
 story:
 
 - **Forwarding works for Stellar as a _source_ (origin), to both EVM and
   Solana.** Verified end to end:
-  - **Stellar to Arc** and **Stellar to Base**, via both the raw
-    `deposit_for_burn_with_hook` and the wrapper `approve_and_deposit_with_hook`
-    paths.
-  - **Stellar to Solana**: burn `0d4fcd21...dc0b09aa`, then Iris `forwardState:
-    COMPLETE`, then a relayer mint finalized on Solana devnet with no user
-    transaction.
-  - Outbound is the piece that had to get fixed.
+    - **Stellar to Arc** and **Stellar to Base**, via both the raw
+      `deposit_for_burn_with_hook` and the wrapper `approve_and_deposit_with_hook`
+      paths.
+    - **Stellar to Solana**: burn `0d4fcd21...dc0b09aa`, then Iris `forwardState:
+COMPLETE`, then a relayer mint finalized on Solana devnet with no user
+      transaction.
+    - Outbound is the piece that had to get fixed.
 - **Forwarding does _not_ work for Stellar as a _destination_.**
-  - Inbound transfers still return a _"destination does not support
-    forwarding"_ error.
-  - So inbound always goes through the `CctpForwarder` contract and its
-    `mint_and_forward` function, the way we saw in §3a.
-  - Be careful with the word "forwarder" here, because it names two unrelated
-    Circle things: the hosted **relayer service** (off-chain, this section), and
-    the on-chain **Soroban `CctpForwarder` contract** (the inbound last hop).
-    Neither one is code I wrote. The only contracts I deployed are the two
-    `CctpWrapper`s.
+    - Inbound transfers still return a _"destination does not support
+      forwarding"_ error.
+    - So inbound always goes through the `CctpForwarder` contract and its
+      `mint_and_forward` function, the way we saw in §3a.
+    - Be careful with the word "forwarder" here, because it names two unrelated
+      Circle things: the hosted **relayer service** (off-chain, this section), and
+      the on-chain **Soroban `CctpForwarder` contract** (the inbound last hop).
+      Neither one is code I wrote. The only contracts I deployed are the two
+      `CctpWrapper`s.
 
 **Transition:** Enough concept. Let's make money move. First one is Stellar out
 to Arc, the plain unbundled version, so we can read the actual burn arguments.
@@ -432,25 +431,25 @@ room asked for.
 
 - (DEMO) Pick **Stellar to Arc**, flow **2 tx (direct)**, small amount.
 - Narrate the function arguments in the live demo site:
-  - `caller`: your G address, the depositor.
-  - `amount`: `50_000_000` is 5.00 USDC. **7 decimals on Stellar**, but USDC is
-    6 on EVM and Solana. The protocol just carries an integer, and the demo
-    handles the conversion. Easy to get wrong.
-  - `destination_domain`: `26` for Arc. **Not** chainId `5_042_002`.
-  - `mint_recipient`: your EVM address, right-aligned into 32 bytes.
-  - `burn_token`: the USDC SAC address (`CBIE...DAMA`).
-  - `destination_caller`: `0x00...00`, so you're not restricting who submits the
-    mint on the far side. **Anyone** holding the attestation can. That's what
-    makes the raw `receive_message` permissionless.
-    - You _could_ set this to a real address on the destination chain, but then
-      the `mint` MUST be called by that address, which means your own address is
-      the one paying the gas over there.
-  - `max_fee`: `100_000`, a $0.01 ceiling. Only used on Fast.
-  - `min_finality_threshold`: `2000`, Standard.
+    - `caller`: your G address, the depositor.
+    - `amount`: `50_000_000` is 5.00 USDC. **7 decimals on Stellar**, but USDC is
+      6 on EVM and Solana. The protocol just carries an integer, and the demo
+      handles the conversion. Easy to get wrong.
+    - `destination_domain`: `26` for Arc. **Not** chainId `5_042_002`.
+    - `mint_recipient`: your EVM address, right-aligned into 32 bytes.
+    - `burn_token`: the USDC SAC address (`CBIE...DAMA`).
+    - `destination_caller`: `0x00...00`, so you're not restricting who submits the
+      mint on the far side. **Anyone** holding the attestation can. That's what
+      makes the raw `receive_message` permissionless.
+        - You _could_ set this to a real address on the destination chain, but then
+          the `mint` MUST be called by that address, which means your own address is
+          the one paying the gas over there.
+    - `max_fee`: `100_000`, a $0.01 ceiling. Only used on Fast.
+    - `min_finality_threshold`: `2000`, Standard.
 - Narrate the two prompts:
-  - The first Freighter prompt is an **`approve`**. You're giving the
-    **TokenMessengerMinter** contract an allowance to pull your USDC.
-  - The second prompt is the actual **`deposit_for_burn`**.
+    - The first Freighter prompt is an **`approve`**. You're giving the
+      **TokenMessengerMinter** contract an allowance to pull your USDC.
+    - The second prompt is the actual **`deposit_for_burn`**.
 - Note _why_ the approve is even needed: the CCTP contract pulls the funds with
   `transfer_from` on the USDC SAC, not `transfer`. So, you have to grant an
   allowance first.
@@ -461,8 +460,8 @@ Then let it run:
 
 - (DEMO) Burn submits, then the **attestation poll**, then **`receiveMessage`**
   on Arc's MessageTransmitterV2, then the USDC lands. On Arc this is seconds.
-  - Call out the Iris URL shape: `/v2/messages/26?transactionHash=...`. It's
-    keyed by _source domain plus burn tx hash_.
+    - Call out the Iris URL shape: `/v2/messages/26?transactionHash=...`. It's
+      keyed by _source domain plus burn tx hash_.
 
 **Transition:** That was two prompts. To get it down to one, I lean on a wrapper
 contract, and it's only ~40 lines of Rust, so let's actually read it before we
@@ -507,41 +506,41 @@ pub fn approve_and_deposit(
 Walk it line by line (this is where the room's Stellar fluency pays off):
 
 - **`caller.require_auth()`**: one auth assertion.
-  - Because the inner `approve` and the inner `deposit_for_burn` both act _on
-    behalf of_ `caller`, Soroban's auth framework requires `caller`'s signature
-    to cover this whole tree, and Freighter collects it in one prompt.
-  - On EVM there's no equivalent. `approve` and the burn are two separate
-    transactions from the EOA, full stop, unless you add a contract or use a
-    newer wallet batching standard. We can cover that in a second.
+    - Because the inner `approve` and the inner `deposit_for_burn` both act _on
+      behalf of_ `caller`, Soroban's auth framework requires `caller`'s signature
+      to cover this whole tree, and Freighter collects it in one prompt.
+    - On EVM there's no equivalent. `approve` and the burn are two separate
+      transactions from the EOA, full stop, unless you add a contract or use a
+      newer wallet batching standard. We can cover that in a second.
 - **`token::Client::new(&env, &usdc).approve(...)`**: a standard SEP-41
   `approve`.
-  - I set the allowance's `live_until_ledger` to the next multiple of 50 ledgers
-    out, mainly to avoid weird mismatches in the current ledger number between
-    simulation and submission of the transaction.
-  - The exact ledger expiration doesn't matter much here, since the entirety of
-    the allowance gets used up in the burn anyway.
+    - I set the allowance's `live_until_ledger` to the next multiple of 50 ledgers
+      out, mainly to avoid weird mismatches in the current ledger number between
+      simulation and submission of the transaction.
+    - The exact ledger expiration doesn't matter much here, since the entirety of
+      the allowance gets used up in the burn anyway.
 - **`TmmClient::new(&env, &tmm).deposit_for_burn(...)`**: a cross-contract call
   into Circle's **TokenMessengerMinter**.
-  - `TmmClient` is a typed interface I generated from the contract with `stellar
-    contract bindings rust`. Same idea as `stellar contract bindings typescript`,
-    but Rust to Rust.
-  - The args are exactly the ones we just read off the page in the demo.
+    - `TmmClient` is a typed interface I generated from the contract with `stellar
+contract bindings rust`. Same idea as `stellar contract bindings typescript`,
+      but Rust to Rust.
+    - The args are exactly the ones we just read off the page in the demo.
 - Design notes worth stating out loud (this room appreciates the _why_):
-  - The USDC only ever passes _through_ the wrapper within this one call. It
-    holds no balance between invocations, so there's nothing to drain.
-  - `usdc` is an argument here because I'm following the pattern the
-    TokenMessengerMinter contract itself uses. The USDC SAC address is one of
-    _its_ arguments too.
-  - `tmm` I passed through because I'm honestly not sure how _permanent_
-    Circle's contract addresses are. If that address ever changes, I didn't want
-    to either redeploy this wrapper or bake in a `set_tmm(...)` function.
-    Passing it per call sidesteps both.
-  - (CAVEAT) The flip side is that the frontend has to supply trusted addresses,
-    so for mainnet you'd probably want to pin or govern these rather than trust
-    the caller. For a testnet demo, passing them like this is just me being
-    pragmatic.
-  - There's a second method, `approve_and_deposit_with_hook`, identical but with
-    a trailing `hook_data: Bytes`. That's what the forwarding demo uses.
+    - The USDC only ever passes _through_ the wrapper within this one call. It
+      holds no balance between invocations, so there's nothing to drain.
+    - `usdc` is an argument here because I'm following the pattern the
+      TokenMessengerMinter contract itself uses. The USDC SAC address is one of
+      _its_ arguments too.
+    - `tmm` I passed through because I'm honestly not sure how _permanent_
+      Circle's contract addresses are. If that address ever changes, I didn't want
+      to either redeploy this wrapper or bake in a `set_tmm(...)` function.
+      Passing it per call sidesteps both.
+    - (CAVEAT) The flip side is that the frontend has to supply trusted addresses,
+      so for mainnet you'd probably want to pin or govern these rather than trust
+      the caller. For a testnet demo, passing them like this is just me being
+      pragmatic.
+    - There's a second method, `approve_and_deposit_with_hook`, identical but with
+      a trailing `hook_data: Bytes`. That's what the forwarding demo uses.
 
 **If time, the EVM wrapper comparison**
 (`contracts/evm/cctp-wrapper/src/CctpWrapper.sol`):
@@ -549,13 +548,13 @@ Walk it line by line (this is where the room's Stellar fluency pays off):
 - (SLIDE) Its one function, `bridgeWithPermit(...)`, bundles **four** calls:
   `usdc.permit(...)`, `transferFrom`, `approve`, and `depositForBurnWithHook`.
 - The contrast is the story:
-  - On Stellar, one signature authorizes a sub-tree. No extra primitive needed.
-  - On EVM, getting to one signature takes **EIP-2612 `permit`**: the user signs
-    a _typed message_ off-chain granting the allowance, and the contract redeems
-    that signature on-chain.
-  - Same UX goal (one signature, one transaction), but Stellar gets there much
-    more easily, while EVM needs a signed-permit dance baked into both the token
-    and the wrapper.
+    - On Stellar, one signature authorizes a sub-tree. No extra primitive needed.
+    - On EVM, getting to one signature takes **EIP-2612 `permit`**: the user signs
+      a _typed message_ off-chain granting the allowance, and the contract redeems
+      that signature on-chain.
+    - Same UX goal (one signature, one transaction), but Stellar gets there much
+      more easily, while EVM needs a signed-permit dance baked into both the token
+      and the wrapper.
 - (CAVEAT) And `permit` only works because USDC implements EIP-2612. Not every
   ERC-20 token does.
 
@@ -603,15 +602,15 @@ tour of the EVM UX ladder.
 
 ```ts
 burnArgs = [
-  amount,             // uint256, 6 dp
-  27,                 // destinationDomain = Stellar
-  forwarderBytes32,   // mintRecipient     = CctpForwarder  <- must be the forwarder
-  cfg.usdc,           // burnToken (per-chain USDC)
-  forwarderBytes32,   // destinationCaller = CctpForwarder  <- MUST equal mintRecipient
-  maxFee,
-  finalityThreshold,
-  hookData,           // encodeStellarForwarderHookData(yourGAddress)
-]
+    amount, // uint256, 6 dp
+    27, // destinationDomain = Stellar
+    forwarderBytes32, // mintRecipient     = CctpForwarder  <- must be the forwarder
+    cfg.usdc, // burnToken (per-chain USDC)
+    forwarderBytes32, // destinationCaller = CctpForwarder  <- MUST equal mintRecipient
+    maxFee,
+    finalityThreshold,
+    hookData, // encodeStellarForwarderHookData(yourGAddress)
+];
 ```
 
 Two things must be true, or the funds are lost:
@@ -632,11 +631,11 @@ Two things must be true, or the funds are lost:
 
 (SLIDE) The comparison table:
 
-| Flow | User sees | On-chain txs | Needs |
-| ------ | ----------- | -------------- | ------- |
-| **2 tx (direct)** | 2 confirmations | 2 | nothing extra, just plain CCTP |
-| **1 tx (permit)** | 1 signature + 1 confirmation | 1 | our `CctpWrapper` deployed on this chain |
-| **1 click (sendCalls)** | 1 confirmation | 1 atomic (or 2 sequential) | wallet supports EIP-5792 |
+| Flow                    | User sees                    | On-chain txs               | Needs                                    |
+| ----------------------- | ---------------------------- | -------------------------- | ---------------------------------------- |
+| **2 tx (direct)**       | 2 confirmations              | 2                          | nothing extra, just plain CCTP           |
+| **1 tx (permit)**       | 1 signature + 1 confirmation | 1                          | our `CctpWrapper` deployed on this chain |
+| **1 click (sendCalls)** | 1 confirmation               | 1 atomic (or 2 sequential) | wallet supports EIP-5792                 |
 
 - (DEMO) **2 tx (direct):** MetaMask pops **`approve`**, then
   **`depositForBurnWithHook`**. This is the EVM baseline: two transactions,
@@ -644,23 +643,23 @@ Two things must be true, or the funds are lost:
 - (DEMO) **1 tx (permit):** one signature, which costs no gas because it's just
   signing a typed `Permit` message, and then one transaction into our EVM
   wrapper.
-  - That's the Solidity `bridgeWithPermit` we looked at, and it's half the gas
-    of the 2-tx path.
+    - That's the Solidity `bridgeWithPermit` we looked at, and it's half the gas
+      of the 2-tx path.
 - **1 click (sendCalls):** describe this one, and demo it only if the wallet
   cooperates.
-  - This is **EIP-5792 `wallet_sendCalls`**. You hand the _wallet_ both calls
-    and let _it_ batch them.
-  - On a smart wallet or an EIP-7702 account it's one atomic on-chain
-    transaction. On a plain EOA the wallet still shows one prompt, but submits
-    two transactions behind it.
-  - The chip auto-disables if the wallet doesn't advertise the capability.
-  - (CAVEAT) This one's the most wallet-dependent, so if it doesn't light up
-    live, that's expected. It's a capability probe, not a bug.
+    - This is **EIP-5792 `wallet_sendCalls`**. You hand the _wallet_ both calls
+      and let _it_ batch them.
+    - On a smart wallet or an EIP-7702 account it's one atomic on-chain
+      transaction. On a plain EOA the wallet still shows one prompt, but submits
+      two transactions behind it.
+    - The chip auto-disables if the wallet doesn't advertise the capability.
+    - (CAVEAT) This one's the most wallet-dependent, so if it doesn't light up
+      live, that's expected. It's a capability probe, not a bug.
 - (DEMO) The destination side is always the same: poll Iris, then
   **`mint_and_forward(message, attestation)`** on the Forwarder, then the USDC
   lands at your G address.
-  - No `receiveMessage` to call by hand. The Forwarder contract is the thing
-    that mints and pays out, in one Soroban call.
+    - No `receiveMessage` to call by hand. The Forwarder contract is the thing
+      that mints and pays out, in one Soroban call.
 
 **Transition:** Two chains down. Let's add the weird one, Solana, because it
 breaks one of the assumptions I've been repeating this whole talk.
@@ -674,22 +673,22 @@ Fast-vs-Standard actually _doesn't_ do what you'd expect on an outbound transfer
 ### 7a. Solana to Stellar (burn on Solana)
 
 - (DEMO) Direction **Solana to Stellar**. Notice: **no approve step.**
-  - On Solana, `depositForBurn` burns directly under the owner's signature via a
-    cross-program invocation. So it's a single burn transaction, plus one
-    throwaway co-signer keypair for the event account.
+    - On Solana, `depositForBurn` burns directly under the owner's signature via a
+      cross-program invocation. So it's a single burn transaction, plus one
+      throwaway co-signer keypair for the event account.
 - (SLIDE) **What's different about the Solana burn.**
-  - ~15 accounts and several **PDAs** (program-derived addresses) have to be
-    supplied.
-  - I don't hand-roll those. I generate a typed client from Circle's Anchor
-    **IDL** using Codama. It's the Solana analog of `stellar contract bindings
-    typescript`: interface description in, typed
-    `getDepositForBurnWithHookInstruction({...})` out.
-  - Same into-Stellar invariant as EVM: `mintRecipient == destinationCaller ==`
-    the Forwarder, with the real G address in `hookData`.
+    - ~15 accounts and several **PDAs** (program-derived addresses) have to be
+      supplied.
+    - I don't hand-roll those. I generate a typed client from Circle's Anchor
+      **IDL** using Codama. It's the Solana analog of `stellar contract bindings
+typescript`: interface description in, typed
+      `getDepositForBurnWithHookInstruction({...})` out.
+    - Same into-Stellar invariant as EVM: `mintRecipient == destinationCaller ==`
+      the Forwarder, with the real G address in `hookData`.
 - (DEMO) Then the Stellar side is the _identical_ `mint_and_forward` you saw in
   Demo B.
-  - The mint side was literally zero new Stellar code. That's the payoff of
-    routing everything through the Forwarder.
+    - The mint side was literally zero new Stellar code. That's the payoff of
+      routing everything through the Forwarder.
 
 ### 7b. Stellar to Solana, and the custody twist
 
@@ -737,18 +736,18 @@ Circle's relayer mints, and we just watch the balance change.
 
 - (DEMO) **Stellar to Arc**, forwarding **on**. Point out two differences in the
   burn:
-  - Hook data now carries the **`cctp-forward`** flag
-    (`encodeCctpForwardHookData`). No address, because the recipient is still
-    the ordinary `mint_recipient` (your EVM address). The relayer just delivers
-    to it.
-  - `maxFee` is bumped to cover the relayer (from the `?forward=true` fee
-    quote), and `destination_caller` is zero, since setting it would disable
-    forwarding.
+    - Hook data now carries the **`cctp-forward`** flag
+      (`encodeCctpForwardHookData`). No address, because the recipient is still
+      the ordinary `mint_recipient` (your EVM address). The relayer just delivers
+      to it.
+    - `maxFee` is bumped to cover the relayer (from the `?forward=true` fee
+      quote), and `destination_caller` is zero, since setting it would disable
+      forwarding.
 - (DEMO) Submit the burn, and then... **nothing to click.**
-  - Normally here you'd poll for the attestation and submit the mint. With
-    forwarding, you just poll the destination balance, because Circle's relayer
-    takes the attestation and mints for you.
-  - There it is. USDC appears on Arc with no second signature.
+    - Normally here you'd poll for the attestation and submit the mint. With
+      forwarding, you just poll the destination balance, because Circle's relayer
+      takes the attestation and mints for you.
+    - There it is. USDC appears on Arc with no second signature.
 - (CAVEAT) Repeat the directional asterisk once: this is Stellar as a _source_,
   which works to EVM _and_ Solana destinations, and I've landed both. The one
   direction that still refuses is forwarding _into_ Stellar. That half isn't

@@ -11,16 +11,16 @@ Full theory detail still lives in `docs/eng-talk/script.md` and
 **Budget:** 19 minutes of content, 6 for questions. Slide numbers are the deck's
 own (31 slides, cover is 1). Deck footer `list` button jumps.
 
-| #   | Section                                | Min | Cum | Slides    |
-| --- | -------------------------------------- | --- | --- | --------- |
-| 1   | Cold open, app already up              | 1   | 1   | 1         |
-| 2   | **Demo A** Stellar to Arc, 2 tx then 1 | 6   | 7   | 17        |
-| 3   | Theory stop: the one thing that bricks | 3   | 10  | 9, 10     |
-| 4   | **Demo B** Arc to Stellar              | 4   | 14  | 21        |
-| 5   | **Demo C** Solana, clock permitting    | 2   | 16  | 25        |
-| 6   | What building it actually taught me    | 2   | 18  | 15        |
-| 7   | Caveats and wrap                       | 1   | 19  | 30        |
-|     | Q&A                                    | 6   | 25  | 31        |
+| #   | Section                                | Min | Cum | Slides |
+| --- | -------------------------------------- | --- | --- | ------ |
+| 1   | Cold open, app already up              | 1   | 1   | 1      |
+| 2   | **Demo A** Stellar to Arc, 2 tx then 1 | 6   | 7   | 17     |
+| 3   | Theory stop: the one thing that bricks | 3   | 10  | 9, 10  |
+| 4   | **Demo B** Arc to Stellar              | 4   | 14  | 21     |
+| 5   | **Demo C** Solana, clock permitting    | 2   | 16  | 25     |
+| 6   | What building it actually taught me    | 2   | 18  | 15     |
+| 7   | Caveats and wrap                       | 1   | 19  | 30     |
+|     | Q&A                                    | 6   | 25  | 31     |
 
 **Cut in this order if you're long:** §5 (Solana) first, then the 2 tx path in
 Demo A (open straight on the wrapper), then §7 down to one sentence.
@@ -45,8 +45,8 @@ for these preemptively. A demo audience would rather see a third transfer.
   will eat the call.
 - Resume hashes in reach. If a live burn stalls, `ResumeForm` skips to attest
   plus mint:
-  - Stellar-to-Arc: `64cd3051c47a4f73b4a7ddae2653a5d4e44885199fafcf41c153ad0977fa47d8`
-  - Arc-to-Stellar: `0xedff6d8e1bf81831fafd2a5f72ac7c1f72bd02540127a0efe521e55e4b4f432d`
+    - Stellar-to-Arc: `64cd3051c47a4f73b4a7ddae2653a5d4e44885199fafcf41c153ad0977fa47d8`
+    - Arc-to-Stellar: `0xedff6d8e1bf81831fafd2a5f72ac7c1f72bd02540127a0efe521e55e4b4f432d`
 - Transfer history is in memory. Don't refresh mid-demo.
 
 Still no `docs/eng-talk/runbook.md` (todo in `plan.md`), so the click paths
@@ -79,13 +79,13 @@ That's the whole intro. Get to the demo.
   it's real and it's moving.
 - (DEMO) Direction **Stellar to Arc**, flow **2 tx (direct)**, small amount.
 - Narrate the live values as the transaction builds:
-  - `amount`: `50_000_000` is 5.00 USDC. **7 decimals on Stellar**, 6 on EVM and
-    Solana. The protocol carries an integer and the app converts. Easy to get
-    wrong.
-  - `destination_domain`: `26` for Arc. CCTP has its own address space, so this
-    is **not** a chainId. Arc's chainId is `5,042,002`. Stellar is domain `27`.
-  - `destination_caller`: all zeros, so anyone holding the attestation can
-    submit the mint. That's what makes the destination step permissionless.
+    - `amount`: `50_000_000` is 5.00 USDC. **7 decimals on Stellar**, 6 on EVM and
+      Solana. The protocol carries an integer and the app converts. Easy to get
+      wrong.
+    - `destination_domain`: `26` for Arc. CCTP has its own address space, so this
+      is **not** a chainId. Arc's chainId is `5,042,002`. Stellar is domain `27`.
+    - `destination_caller`: all zeros, so anyone holding the attestation can
+      submit the mint. That's what makes the destination step permissionless.
 - **Two Freighter prompts.** `approve`, then `deposit_for_burn`. Say why: CCTP
   pulls with `transfer_from` on the USDC SAC, not `transfer`, so it needs an
   allowance first. That's the entire reason this is two steps.
@@ -94,15 +94,15 @@ That's the whole intro. Get to the demo.
   `receiveMessage` on Arc, then the balance moves.
 - (SLIDE 17) One slide here, because 40 lines of Rust don't fit on the app
   screen. `approve_and_deposit`:
-  - `caller.require_auth()` is the whole trick. Both inner calls act on behalf
-    of `caller`, so Soroban's auth tree covers the subtree and Freighter
-    collects it in **one prompt**. There is no EVM equivalent without EIP-2612
-    `permit`.
-  - The wrapper holds no balance between invocations. USDC only passes through
-    inside a single call, so there's nothing to drain.
-  - `usdc` and `tmm` are arguments because I'm not sure how permanent Circle's
-    addresses are. Flip side: the frontend supplies trusted addresses. Fine for
-    testnet, not fine for mainnet.
+    - `caller.require_auth()` is the whole trick. Both inner calls act on behalf
+      of `caller`, so Soroban's auth tree covers the subtree and Freighter
+      collects it in **one prompt**. There is no EVM equivalent without EIP-2612
+      `permit`.
+    - The wrapper holds no balance between invocations. USDC only passes through
+      inside a single call, so there's nothing to drain.
+    - `usdc` and `tmm` are arguments because I'm not sure how permanent Circle's
+      addresses are. Flip side: the frontend supplies trusted addresses. Fine for
+      testnet, not fine for mainnet.
 - (DEMO) Same direction, same amount, flip to **1 tx (wrapper)**. Say "watch the
   prompt count" **before** you click. One signature.
 - Be precise about what that is: not cheaper gas, not cryptographically clever,
@@ -118,40 +118,40 @@ The only real slide stretch in the talk, and it earns it: this is the part you
   recipient is a 20 byte address and the mint doesn't care whether it's an EOA
   or a contract. On Stellar, CCTP mints to a **contract** (`C...`), and
   `mintRecipient` is a raw 32 byte key with no way to tell a G from a C.
-  - Put a bare G address in there and you **brick the transfer**. Single most
-    dangerous mistake in the integration.
-  - Fix is Circle's **`CctpForwarder`** (`CA66...4VSZ`). Inbound mints to the
-    Forwarder, which mints to itself and pays out to the real recipient
-    atomically, in one permissionless `mint_and_forward(message, attestation)`.
-  - Analogy for this room: same reason you can't pay an asset to a G account
-    with no trustline. The destination has to be prepared to receive.
+    - Put a bare G address in there and you **brick the transfer**. Single most
+      dangerous mistake in the integration.
+    - Fix is Circle's **`CctpForwarder`** (`CA66...4VSZ`). Inbound mints to the
+      Forwarder, which mints to itself and pays out to the real recipient
+      atomically, in one permissionless `mint_and_forward(message, attestation)`.
+    - Analogy for this room: same reason you can't pay an asset to a G account
+      with no trustline. The destination has to be prepared to receive.
 - (SLIDE 10) **So where does the real recipient ride?** Hook data.
-  - bytes `0-23` reserved zeros, `24-27` version (`u32`, currently `0`), `28-31`
-    strkey length (`u32`), `32+` the G address as a **UTF-8 strkey** (the
-    literal `"GB..."` text, not the decoded 32 bytes).
-  - That surprised me. It's the opposite convention from `mintRecipient` in the
-    same message. Two fields, two opposite encodings. Code is
-    `encodeStellarForwarderHookData()` in `src/lib/stellar/recipient.ts`.
-  - Which means: **into Stellar, always `depositForBurnWithHook`.** A hookless
-    burn either bricks (G address in `mintRecipient`) or errors `HookDataEmpty`
-    (Forwarder, no hook). Holds for EVM and Solana sources alike.
+    - bytes `0-23` reserved zeros, `24-27` version (`u32`, currently `0`), `28-31`
+      strkey length (`u32`), `32+` the G address as a **UTF-8 strkey** (the
+      literal `"GB..."` text, not the decoded 32 bytes).
+    - That surprised me. It's the opposite convention from `mintRecipient` in the
+      same message. Two fields, two opposite encodings. Code is
+      `encodeStellarForwarderHookData()` in `src/lib/stellar/recipient.ts`.
+    - Which means: **into Stellar, always `depositForBurnWithHook`.** A hookless
+      burn either bricks (G address in `mintRecipient`) or errors `HookDataEmpty`
+      (Forwarder, no hook). Holds for EVM and Solana sources alike.
 
 ## 4. Demo B: Arc to Stellar (4 min)
 
 - (SLIDE 21) Ten seconds on the invariant, then back to the app. Two things
   must be true or funds are gone:
-  - `mintRecipient` is the **Forwarder**, not your G address.
-  - `destinationCaller` **equals** `mintRecipient`. Pinning it means only the
-    Forwarder can submit the mint, which guarantees the payout logic runs
-    instead of someone minting to the Forwarder and stranding the funds there.
+    - `mintRecipient` is the **Forwarder**, not your G address.
+    - `destinationCaller` **equals** `mintRecipient`. Pinning it means only the
+      Forwarder can submit the mint, which guarantees the payout logic runs
+      instead of someone minting to the Forwarder and stranding the funds there.
 - (DEMO) Direction **Arc to Stellar**, flow **2 tx (direct)**. MetaMask pops
   `approve`, then `depositForBurnWithHook`. An EOA can't do both atomically,
   which is the EVM baseline and the contrast with what you just showed on
   Soroban.
-  - Point at the **hook data preview** in the UI while it builds. That's the
-    byte layout from slide 10, live, with your own G address in it.
-  - Room to spare? Flip to **1 tx (permit)**: one gasless typed signature, then
-    one transaction into the EVM wrapper. Half the gas of the 2 tx path.
+    - Point at the **hook data preview** in the UI while it builds. That's the
+      byte layout from slide 10, live, with your own G address in it.
+    - Room to spare? Flip to **1 tx (permit)**: one gasless typed signature, then
+      one transaction into the EVM wrapper. Half the gas of the 2 tx path.
 - (DEMO) Destination side: poll Iris, call `mint_and_forward`, USDC lands at
   your G address. No hand-rolled `receiveMessage`.
 
@@ -181,12 +181,12 @@ The part this audience came for. Keep it concrete, name the receipts.
   `stellar contract bindings typescript`, and `stellar contract bindings rust`
   for the wrapper's view of TokenMessengerMinter. Every chain-specific mistake I
   didn't make came from that.
-  - If anyone needs it: an **IDL** (Interface Definition Language) is Solana's
-    machine-readable description of a program's instructions, accounts, and
-    types. It's the same role an ABI plays on EVM, or the contract spec embedded
-    in a Soroban wasm. Circle publishes theirs, the two files are in `idl/`, and
-    Codama turns them into the typed client under
-    `src/lib/solana/generated/`.
+    - If anyone needs it: an **IDL** (Interface Definition Language) is Solana's
+      machine-readable description of a program's instructions, accounts, and
+      types. It's the same role an ABI plays on EVM, or the contract spec embedded
+      in a Soroban wasm. Circle publishes theirs, the two files are in `idl/`, and
+      Codama turns them into the typed client under
+      `src/lib/solana/generated/`.
 - **Every chain has its own opinion about the same 32 bytes.** EVM
   right-aligns a 20 byte address. Solana wants the recipient's **ATA**, not the
   wallet. Stellar wants the Forwarder's contract id decoded, with the real
@@ -201,14 +201,14 @@ The part this audience came for. Keep it concrete, name the receipts.
   hash, fee, and `forwardState`. Our side was correct the whole time and the gap
   was entirely Circle-side. It got enabled on **9 July**, verified end to end to
   Arc and Base that day, and to Solana on **24 July**.
-  - Having verified hashes on hand is what made that support conversation
-    concrete instead of "seems broken on my end."
-  - Honest asterisk, say it plainly: forwarding works **out of** Stellar. It
-    still **does not work into** Stellar (Iris returns "destination does not
-    support forwarding"), so inbound always goes through the `CctpForwarder`.
-  - Two unrelated Circle things share the name: the hosted **relayer service**,
-    and the on-chain Soroban **`CctpForwarder`**. I wrote neither. The only
-    contracts I deployed are the two `CctpWrapper`s.
+    - Having verified hashes on hand is what made that support conversation
+      concrete instead of "seems broken on my end."
+    - Honest asterisk, say it plainly: forwarding works **out of** Stellar. It
+      still **does not work into** Stellar (Iris returns "destination does not
+      support forwarding"), so inbound always goes through the `CctpForwarder`.
+    - Two unrelated Circle things share the name: the hosted **relayer service**,
+      and the on-chain Soroban **`CctpForwarder`**. I wrote neither. The only
+      contracts I deployed are the two `CctpWrapper`s.
 
 ## 7. Caveats and wrap (1 min)
 

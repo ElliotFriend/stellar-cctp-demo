@@ -69,7 +69,7 @@ burn ATA, mint, ephemeral event-data) and args.
 | ------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `src/lib/solana/generated/`    | Codama-generated Kit client (typed instruction builder + PDA finders + program address). Committed. Regenerated via a documented script, not edited by hand.               |
 | `src/lib/stellar/recipient.ts` | **Extracted** `strkeyToBytes32` and `encodeStellarForwarderHookData` from `evm/cctp.ts` (pure `@stellar/stellar-sdk`, no viem). Imported by both `evm/cctp.ts` and Solana. |
-| `src/lib/solana/cctp.ts`       | `burnUsdcToStellar(args)`, derive ATA + PDAs, encode mintRecipient/destinationCaller/hookData, build → sign → submit, return `{ signature }`.                             |
+| `src/lib/solana/cctp.ts`       | `burnUsdcToStellar(args)`, derive ATA + PDAs, encode mintRecipient/destinationCaller/hookData, build → sign → submit, return `{ signature }`.                              |
 | `src/lib/solana/signer.ts`     | Bridge Wallet Standard `solana:signTransaction` for use with Kit, plus the ephemeral `message_sent_event_data` keypair co-signer.                                          |
 
 Modified:
@@ -101,7 +101,7 @@ Replicating the EVM burn invariant exactly (`evm/cctp.ts`):
 - `destinationDomain`, `STELLAR.domain` = 27.
 - `burnToken`, `SOLANA.usdc.mint`.
 - `mintRecipient` = `destinationCaller` = `strkeyToBytes32(STELLAR.contracts.cctpForwarder)`
- , the forwarder contract's raw 32 bytes. **These MUST be equal and MUST be the
+  , the forwarder contract's raw 32 bytes. **These MUST be equal and MUST be the
   forwarder**; any other value permanently bricks the funds. Implementation asserts
   a valid contract decode.
 - `maxFee` = `SOLANA_MAX_FEE` (500n, 6-dp).

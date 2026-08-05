@@ -384,8 +384,7 @@ Both burn previews are source-side. `solana-to-stellar` burns on Solana → new 
             <span class="arg-name">mintRecipient = destinationCaller</span>
             <span class="arg-type">Pubkey</span>
             <code class="arg-hex">{forwarderHex}</code>
-            <span class="arg-note"
-                >the Stellar CctpForwarder, real recipient rides in hookData</span
+            <span class="arg-note">the Stellar CctpForwarder, real recipient rides in hookData</span
             >
         </li>
         <li class="row">

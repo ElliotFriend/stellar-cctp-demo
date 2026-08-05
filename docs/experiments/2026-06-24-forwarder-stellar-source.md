@@ -329,7 +329,7 @@ Stellar→Solana exactly as it does Stellar→EVM.
       `finalityThresholdExecuted` 2000, `delayReason` null.
     - forward mint (Solana devnet):
       `3WertUfbKQA22CobQ7uh3mKDQegfw5ZKGKPsdpk45gRPq8PCiGZddfkgiKtpLFrkvcoYye9jnf5awRevKqfj1xqF`
-     , `getSignatureStatuses` → `confirmationStatus: finalized`, `err: null`,
+      , `getSignatureStatuses` → `confirmationStatus: finalized`, `err: null`,
       `status: Ok`. No user `receiveMessage`.
 
 Same invariants as the EVM legs (`cctp-forward` hookData, `destinationCaller`

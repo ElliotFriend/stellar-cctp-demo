@@ -110,7 +110,7 @@ mintRecipient right per direction is fund-safety-critical (`recipient.ts:29-30`)
 
 - **Interface change (review M5):** today it takes `bind:direction: Direction`
   and `flip()` hardcodes `stellar-to-evm ↔ evm-to-stellar` (`DirectionSwitcher.svelte:14-15`)
- , incompatible with a Solana right side (it would flip a Solana direction to an
+  , incompatible with a Solana right side (it would flip a Solana direction to an
   EVM one). Change it to orientation-based: `bind:stellarIsSource: boolean` +
   `otherLabel: string`. It shows `Stellar ⇄ <otherLabel>` and flip only toggles
   `stellarIsSource`. The **page** owns the `(rightChain, stellarIsSource) →
