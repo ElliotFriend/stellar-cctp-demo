@@ -1,4 +1,4 @@
-# Solana main-page integration — design
+# Solana main-page integration, design
 
 **Date:** 2026-07-10
 **Status:** approved, pre-implementation
@@ -37,7 +37,7 @@ between an EVM body and a Solana body. `EvmPanel` becomes a controlled child
 (receives `chainId`, no internal selector); `SolanaPanel` is stripped back to
 connect + balance. Rejected alternatives: lifting the selector inline into
 `+page.svelte` (less encapsulated), and adding a Solana chip inside `EvmPanel`
-(pollutes it with non-EVM logic — the tension to avoid).
+(pollutes it with non-EVM logic, the tension to avoid).
 
 ## Types
 
@@ -67,14 +67,14 @@ connect + balance. Rejected alternatives: lifting the selector inline into
 - Keep: badge, EIP-6963 connect, `ensureChain` on connect, USDC balance,
   `refresh()`, `inboundFlow` / `sendCallsCap` outputs.
 - **Critical (review B1):** `pickChain`/`switchChain` today do more than set the
-  id — on a chip change they (a) `ensureChain(wallet, chainId)` to switch the
+  id, on a chip change they (a) `ensureChain(wallet, chainId)` to switch the
   wallet's network (`EvmPanel.svelte:127`), (b) refresh balance + `sendCallsCap`
   for the new chain (`:128-129`), and (c) drop `inboundFlow` from `'wrapper'` when
   the target chain has no `bridgeWrapper` (`:140-142`; e.g. Ethereum). Switching
   the id via a controlled prop does NOT remount EvmPanel and `$effect` is
   forbidden, so these side effects would be lost. **EvmPanel must expose an
   imperative `export async function setChain(id: EvmChainId)`** that performs all
-  of (a)–(c) (plus the no-wallet balance/cap reset at `:143-149`). `DestinationPanel`
+  of (a) to (c) (plus the no-wallet balance/cap reset at `:143-149`). `DestinationPanel`
   calls `evmPanelRef.setChain(id)` from its chip handler when an EVM chip is picked.
 
 ### `SolanaPanel.svelte` (stripped)
@@ -83,7 +83,7 @@ connect + balance. Rejected alternatives: lifting the selector inline into
 refresh()`. Remove the throwaway `amount` / `recipient` / `onBurn` / `steps`
   props and the burn form/step list.
 
-### Burn previews (review B2 — two directions burn on DIFFERENT chains)
+### Burn previews (review B2, two directions burn on DIFFERENT chains)
 
 The existing previews always show the **source-side** burn: `StellarBurnPreview`
 for `stellar-to-evm` (`+page.svelte:174`), `EvmBurnPreview` for `evm-to-stellar`
@@ -99,7 +99,7 @@ for `stellar-to-evm` (`+page.svelte:174`), `EvmBurnPreview` for `evm-to-stellar`
 - **`solana-to-stellar` (burn on Solana):** the burn is a Solana
   `depositForBurnWithHook` with `destinationDomain = 27`, `mintRecipient =
 destinationCaller = the Stellar forwarder`, `hookData = the G-address`. This is
-  the genuine **`SolanaBurnPreview.svelte` (new)** — show amount, forwarder
+  the genuine **`SolanaBurnPreview.svelte` (new)**, show amount, forwarder
   recipient, domain 27, and the G-address hook.
 
 Each preview renders for its own direction, keyed on `direction` exactly as the
@@ -110,7 +110,7 @@ mintRecipient right per direction is fund-safety-critical (`recipient.ts:29-30`)
 
 - **Interface change (review M5):** today it takes `bind:direction: Direction`
   and `flip()` hardcodes `stellar-to-evm ↔ evm-to-stellar` (`DirectionSwitcher.svelte:14-15`)
-  — incompatible with a Solana right side (it would flip a Solana direction to an
+ , incompatible with a Solana right side (it would flip a Solana direction to an
   EVM one). Change it to orientation-based: `bind:stellarIsSource: boolean` +
   `otherLabel: string`. It shows `Stellar ⇄ <otherLabel>` and flip only toggles
   `stellarIsSource`. The **page** owns the `(rightChain, stellarIsSource) →
@@ -122,13 +122,13 @@ Direction` derivation (mapping in "Types"; complete and unambiguous across all
 'Solana' : EVM_CHAINS[rightChain].label)`, feeding both `DirectionSwitcher` and
   `TransferForm`.
 
-### `TransferForm.svelte` (direction-aware — review M4)
+### `TransferForm.svelte` (direction-aware, review M4)
 
 Currently unhandled for Solana: `buttonLabel` (`TransferForm.svelte:30-36`) only
 special-cases `stellar-to-evm`, so `stellar-to-solana` falls through to a
 backwards "Send {evmShort} → Stellar"; and `stellarSource = direction ===
 'stellar-to-evm'` (`:40`) leaves the **Fast** speed chip enabled (`:81-94`) for
-both Solana directions, contradicting "Fast out of scope" — the page's
+both Solana directions, contradicting "Fast out of scope", the page's
 `effectiveSpeed` coercion only fixes the submitted value, not the UI. Fix:
 
 - Take `otherLabel` (from the page's `rightLabel`) instead of `evmLabel`; build
@@ -145,7 +145,7 @@ boolean` (the orientation). Derive `direction` and `rightLabel` from
 - Render `<DestinationPanel>` in the top-right instead of `<EvmPanel>`.
 - `send()` branches on `rightChain`:
     - Solana: require `solana`; call `start({ direction, stellarAddress,
-solanaWallet: solana, amount, speed: 'standard' })` — no `evmWallet`, no
+solanaWallet: solana, amount, speed: 'standard' })`, no `evmWallet`, no
       `evmChainId`.
     - EVM: unchanged.
 - **Resume (review B3):** hide `<ResumeForm>` when `rightChain === 'solana'`, and
@@ -153,9 +153,9 @@ solanaWallet: solana, amount, speed: 'standard' })` — no `evmWallet`, no
 - `bothConnected` and other gates branch on `rightChain` (Stellar + the active
   right wallet).
 - After `done`, refresh Stellar + the active **right** body (Solana panel or EVM
-  panel — Solana may be source or destination, so "right body," not "destination").
+  panel. Solana may be source or destination, so "right body," not "destination").
 - `effectiveSpeed` coerces Solana directions to `standard` (mirrors the existing
-  `stellar-to-evm` coercion) — belt-and-suspenders alongside TransferForm hiding
+  `stellar-to-evm` coercion), belt-and-suspenders alongside TransferForm hiding
   the Fast chip.
 
 ## Store change (proper: no EVM placeholder for Solana)
@@ -168,20 +168,20 @@ transfer holds no phantom EVM chain.
   dispatch throws a clear error if either is missing; Solana dispatch ignores
   them.
 - `TransferState.evmChainId?: EvmChainId` (optional). `start()` sets it from the
-  arg — `undefined` for Solana. The page passes `evmChainId: rightChain ===
+  arg, `undefined` for Solana. The page passes `evmChainId: rightChain ===
 'solana' ? undefined : rightChain`.
 - `createTransferStore(initialDirection, initialEvmChain?, ...)`: the initial EVM
-  chain stays `DEFAULT_EVM_CHAIN` as the _default when EVM is selected_ — that is
+  chain stays `DEFAULT_EVM_CHAIN` as the _default when EVM is selected_. That is
   not a Solana placeholder, and it's overwritten per-transfer by `start()`.
 - `stepsFor(direction, evmChainId?, ...)`: `evmChainId` optional. `evmLabel` is
   computed eagerly at `transfer.svelte.ts:108` before the Solana branches return
   (`:132-148`), so it would index `EVM_CHAINS[undefined]`. **Move the `evmLabel`
-  computation INSIDE the EVM branches** (not merely guard it) — review M7.
-- `TransferProgress`: guard `longWaitChainLabel` — `transfer.evmChainId ?
+  computation INSIDE the EVM branches** (not merely guard it), review M7.
+- `TransferProgress`: guard `longWaitChainLabel`, `transfer.evmChainId ?
 EVM_CHAINS[transfer.evmChainId].label : ''` (already only meaningful for
   `evm-to-stellar`). `evmTxUrl(...)` is only called on EVM paths; confirm no
   unguarded `EVM_CHAINS[transfer.evmChainId]` read remains.
-- `resume()`: same optionality — its EVM-only path keeps requiring
+- `resume()`: same optionality. Its EVM-only path keeps requiring
   `evmWallet`/`evmChainId`. A Solana resume path is out of scope; but resume must
   not be reachable for Solana (review B3): `resume()` at `transfer.svelte.ts:872`
   assumes `stellarSource = direction === 'stellar-to-evm'` and reads
@@ -195,14 +195,14 @@ EVM_CHAINS[transfer.evmChainId].label : ''` (already only meaningful for
 Unchanged gating carries over: StellarPanel's `outboundFlow` / `forwarding`
 toggles already render only for `stellar-to-evm`, so they hide for
 `stellar-to-solana`; EVM `inboundFlow` is EVM-only. Solana directions use plain
-two-tx with `standard` finality — no new toggles. Fast transfer on Solana stays
+two-tx with `standard` finality, no new toggles. Fast transfer on Solana stays
 out of scope.
 
 ## Cleanup
 
 Delete `src/routes/solana-spike/` (route + harness). **Sequencing (review M6):**
 delete the spike route BEFORE (or in the same step as) stripping `SolanaPanel`'s
-props — `solana-spike/+page.svelte:75` passes `bind:amount`/`bind:recipient`/
+props, `solana-spike/+page.svelte:75` passes `bind:amount`/`bind:recipient`/
 `steps`/`onBurn` to `SolanaPanel`, so removing those props first breaks
 `svelte-check` on the spike. Nothing else imports the spike or the old
 SolanaPanel prop shape.

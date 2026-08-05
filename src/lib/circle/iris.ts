@@ -31,7 +31,7 @@ export async function fetchAttestation(
     sourceDomain: number,
     transactionHash: string,
 ): Promise<IrisMessage | null> {
-    // EVM/Stellar tx hashes are hex (case-insensitive) — lowercase to normalize.
+    // EVM/Stellar tx hashes are hex (case-insensitive), so lowercase to normalize.
     // Solana signatures are base58, which IS case-sensitive, so lowercasing them
     // corrupts the value and Iris 404s forever. Only normalize hex-form hashes.
     const isHex = /^(0x)?[0-9a-fA-F]+$/.test(transactionHash);

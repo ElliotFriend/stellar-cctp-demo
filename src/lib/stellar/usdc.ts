@@ -59,7 +59,7 @@ export async function getUsdcAllowance(args: { from: string; spender: string }):
 }
 
 // SEP-41 `approve(from, spender, amount, expiration_ledger)`. The TMM contract
-// pulls USDC via `transfer_from`, which checks the allowance — Soroban auth on
+// pulls USDC via `transfer_from`, which checks the allowance. Soroban auth on
 // the burn tx alone is not enough. Set expiration ~1000 ledgers (~85 min) into
 // the future, plenty of room to land the burn that follows.
 export async function approveUsdc(args: {

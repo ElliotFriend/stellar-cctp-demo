@@ -43,12 +43,12 @@ export function computeMaxFee(amount: bigint, bps: number, floor: bigint): bigin
 }
 
 // ─────────────────────────────────────────────────────────────────────
-//  EXPERIMENTAL — Circle Crosschain Forwarding Service fee quote
+//  EXPERIMENTAL: Circle Crosschain Forwarding Service fee quote
 // ─────────────────────────────────────────────────────────────────────
 // `?forward=true` augments each row with a `forwardFee` (absolute, in canonical
 // 6-dp CCTP units, ~$0.20). The service fee covers destination gas + Circle's
 // cut, deducted from the minted USDC. Stellar is not a documented forwarding
-// source, but the endpoint returns a forwardFee for it anyway — which is part of
+// source, but the endpoint returns a forwardFee for it anyway, which is part of
 // what this experiment is testing.
 export type ForwardFee = { low: number; med: number; high: number };
 export type ForwardFeeRow = BurnFeeRow & { forwardFee?: ForwardFee };
@@ -83,10 +83,10 @@ const STELLAR_FORWARD_MARGIN = 10_000n;
 // the EVM depositForBurnWithHook path. Two unit notes:
 //   - the protocol fee is bps of `amount`, already in 7-dp Stellar subunits;
 //   - `forwardFee.high` is canonical 6-dp, so ×10 to reach the 7-dp burn-token
-//     scale. (This ×10 is a unit conversion, NOT padding — dropping it underpays
+//     scale. (This ×10 is a unit conversion, NOT padding; dropping it underpays
 //     10× and reverts with InsufficientMaxFee.)
 // Empirically forwarding consumes ~the full maxFee (feeExecuted ≈ maxFee), so
-// we size to the quote with only STELLAR_FORWARD_MARGIN of slack — no large floor.
+// we size to the quote with only STELLAR_FORWARD_MARGIN of slack, no large floor.
 export function forwardedMaxFeeStellar(
     rows: ForwardFeeRow[],
     speed: TransferSpeed,

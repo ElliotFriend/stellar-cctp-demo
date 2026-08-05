@@ -27,7 +27,7 @@
               : 'evm',
     );
 
-    // Format checks are intentionally light — Stellar tx hashes are 64 hex chars
+    // Format checks are intentionally light. Stellar tx hashes are 64 hex chars
     // (no 0x), EVM tx hashes are 0x + 64 hex, Solana signatures are base58 (~88
     // chars). Iris rejects anything it doesn't recognize when polling, so this is
     // an early-warning signal, not a security boundary.

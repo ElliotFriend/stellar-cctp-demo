@@ -19,14 +19,14 @@ export type EvmWallet = {
 export type EvmProviderInfo = {
     uuid: string;
     name: string;
-    icon: string; // data URI or URL — fine to render with <img src={icon}>
+    icon: string; // data URI or URL, fine to render with <img src={icon}>
     rdns: string;
     provider: EIP1193Provider;
 };
 
 const RDNS_STORAGE_KEY = 'cctp-demo:evm-rdns';
 
-// EIP-6963 announce-event payload shape. Kept local — the spec is small and
+// EIP-6963 announce-event payload shape. Kept local, since the spec is small and
 // pulling a dep just for these types isn't worth it.
 type AnnounceDetail = {
     info: { uuid: string; name: string; icon: string; rdns: string };
@@ -47,7 +47,7 @@ function writeStoredRdns(rdns: string): void {
     try {
         window.localStorage.setItem(RDNS_STORAGE_KEY, rdns);
     } catch {
-        // private windows / sandboxed iframes can throw — non-fatal.
+        // private windows / sandboxed iframes can throw, which is non-fatal.
     }
 }
 
@@ -104,7 +104,7 @@ export async function connectEvm(info?: EvmProviderInfo): Promise<EvmWallet> {
 }
 
 // Returns a wallet if the user has previously authorized this site, otherwise null.
-// Uses eth_accounts which never prompts — silent auto-reconnect.
+// Uses eth_accounts which never prompts, for a silent auto-reconnect.
 export async function detectExistingEvm(): Promise<EvmWallet | null> {
     if (!browser) return null;
 
@@ -175,7 +175,7 @@ export async function ensureChain(wallet: EvmWallet, target: EvmChainId): Promis
             params: [{ chainId: targetIdHex }],
         });
     } catch (err) {
-        // 4902: unrecognized chain — add it then we're done (most wallets switch as part of add).
+        // 4902: unrecognized chain, so add it then we're done (most wallets switch as part of add).
         if (isUnrecognizedChain(err)) {
             await wallet.provider.request({
                 method: 'wallet_addEthereumChain',

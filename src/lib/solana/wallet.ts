@@ -16,14 +16,14 @@ export type SolanaWallet = {
     icon: string;
     address: string;
     account: WalletAccount;
-    // The Wallet Standard wallet — feature *implementations* (e.g.
+    // The Wallet Standard wallet. Feature *implementations* (e.g.
     // solana:signTransaction) live here, not on the account (whose `features`
     // is only a list of supported feature names).
     standardWallet: Wallet;
 };
 
 // Minimal shape of the standard:connect feature. Kept local rather than
-// pulling @wallet-standard/features just for the type — mirrors how
+// pulling @wallet-standard/features just for the type. Mirrors how
 // evm/wallet.ts keeps its EIP-6963 types local.
 type ConnectFeature = {
     connect: (input?: { silent?: boolean }) => Promise<{ accounts: readonly WalletAccount[] }>;
@@ -51,7 +51,7 @@ function writeStoredName(name: string): void {
     try {
         window.localStorage.setItem(NAME_STORAGE_KEY, name);
     } catch {
-        // private windows / sandboxed iframes can throw — non-fatal.
+        // private windows / sandboxed iframes can throw, which is non-fatal.
     }
 }
 
@@ -90,13 +90,13 @@ export async function connectSolana(info: SolanaWalletInfo): Promise<SolanaWalle
 
 // Silent reconnect: standard:connect with { silent: true } asks the wallet to
 // return previously-authorized accounts without prompting. `silent` is a HINT
-// per the Wallet Standard spec — a wallet MAY prompt anyway. Null if the user
+// per the Wallet Standard spec, though a wallet MAY prompt anyway. Null if the user
 // never connected, the wallet is gone, or it declines.
 //
 // Timing: this runs on page load, when the wallet extension may not have
 // registered yet. Wallet Standard's app-ready/register handshake usually makes
 // getWallets().get() synchronously complete, but a late-injecting extension can
-// miss the first pass — so if our stored wallet isn't present, wait briefly and
+// miss the first pass, so if our stored wallet isn't present, wait briefly and
 // look again once (mirrors the EIP-6963 sleep in evm/wallet.ts) before giving up.
 export async function detectExistingSolana(): Promise<SolanaWallet | null> {
     if (!browser) return null;

@@ -1,4 +1,4 @@
-# Stellar → Solana CCTP mint path — design
+# Stellar → Solana CCTP mint path, design
 
 **Date:** 2026-07-10
 **Status:** approved, pre-implementation
@@ -24,7 +24,7 @@ The map from the codebase:
   20-byte EVM address). Fee sizing uses the 7-dp `STELLAR_MAX_FEE` floor and
   `fetchBurnFee(STELLAR.domain, destDomain)`. Burn is signed via Freighter through
   `tx.ts` `simulateSignAndSubmit`.
-- **Mint side is entirely new.** There is no Solana `receiveMessage` client — only
+- **Mint side is entirely new.** There is no Solana `receiveMessage` client, only
   the `tokenMessengerMinterV2` program was generated; `messageTransmitterV2` is not.
   The mint is `MessageTransmitterV2.receiveMessage`, which CPIs into
   TokenMessengerMinterV2's `handle_receive_finalized_message` to mint.
@@ -41,7 +41,7 @@ From Circle's solana-cctp-contracts:
   it. The burn's `mintRecipient` is the recipient's **ATA** (not the wallet); the
   program validates `recipient_token_account == mintRecipient`.
 - **`receiveMessage` CPIs via `remaining_accounts`** that the Anchor IDL does not
-  encode, so Codama cannot auto-resolve them — they are assembled by hand.
+  encode, so Codama cannot auto-resolve them. They are assembled by hand.
 - The mint is **permissionless** (any payer submits); here Phantom pays and receives.
 
 ## Decision: Codama + hand-assembled CPI
@@ -49,8 +49,8 @@ From Circle's solana-cctp-contracts:
 Generate the MessageTransmitterV2 Kit client (as done for TMM) for `receiveMessage`'s
 direct accounts + arg encoding, then hand-assemble the CPI `remaining_accounts` and
 their PDAs. Stays Kit-native and consistent with the shipped forward path. The
-rejected alternative — Circle's `@coral-xyz/anchor` + `@solana/web3.js` v1 client
-isolated to the mint — would lower assembly risk but drags in the second Solana SDK
+rejected alternative. Circle's `@coral-xyz/anchor` + `@solana/web3.js` v1 client
+isolated to the mint, would lower assembly risk but drags in the second Solana SDK
 deliberately avoided, and forces bridging Phantom (Wallet Standard) signing across
 SDKs.
 
@@ -61,8 +61,8 @@ message-derived PDA seeds are only truly settled by a live run.
 
 Reorganize `src/lib/solana/generated/` into per-program subdirs:
 
-- `generated/token-messenger-minter/` — existing TMM client (moved).
-- `generated/message-transmitter/` — new MessageTransmitterV2 client.
+- `generated/token-messenger-minter/`, existing TMM client (moved).
+- `generated/message-transmitter/`, new MessageTransmitterV2 client.
 
 `scripts/gen-solana-cctp.mjs` fetches both on-chain IDLs
 (`anchor idl fetch` for `CCTPV2vPZJS2u2BBsUoscuikbYjnpFmbFsvVuJdgUMQe` and
@@ -73,12 +73,12 @@ updates its import to `./generated/token-messenger-minter`.
 
 ## Burn side
 
-- **`stellar/recipient.ts`** — add `solanaAtaToBytes32(ownerAddress: string): Uint8Array`:
+- **`stellar/recipient.ts`**, add `solanaAtaToBytes32(ownerAddress: string): Uint8Array`:
   derive the owner's USDC ATA via `findAssociatedTokenPda({ owner, tokenProgram:
 TOKEN_PROGRAM_ADDRESS, mint: SOLANA.usdc.mint })`, then `getAddressEncoder().encode(ata)`
   → 32 raw bytes (Solana pubkeys are already full 32-byte, left-aligned; do NOT reuse
   the right-aligned `leftPad32FromHex`).
-- **`stellar/cctp.ts`** — add `depositForBurnToSolana(args: { caller: string; amount:
+- **`stellar/cctp.ts`**, add `depositForBurnToSolana(args: { caller: string; amount:
 bigint; mintRecipient: Uint8Array; maxFee: bigint; finalityThreshold: number }):
 Promise<{ hash: string; sourceDomain: number }>`. Same `deposit_for_burn` ScVal
   shape as `depositForBurnToEvm` with `destinationDomain: SOLANA.domain` (5),
@@ -95,10 +95,10 @@ Hex; attestation: Hex }): Promise<{ signature: string }>`.
 
 1. Decode `message`/`attestation` hex → bytes.
 2. Derive accounts/PDAs:
-    - `used_nonce` — PDA `["used_nonce", <nonce slice of the message bytes>]`. Parse the
+    - `used_nonce`, PDA `["used_nonce", <nonce slice of the message bytes>]`. Parse the
       CCTP V2 message at the nonce offset.
-    - `message_transmitter` — PDA `["message_transmitter"]` under MessageTransmitterV2.
-    - `authority_pda` — `["message_transmitter_authority", tokenMessengerMinterProgram]`.
+    - `message_transmitter`, PDA `["message_transmitter"]` under MessageTransmitterV2.
+    - `authority_pda`, `["message_transmitter_authority", tokenMessengerMinterProgram]`.
     - `event_authority` / program accounts as required.
     - CPI (`remaining_accounts`): `token_messenger` `["token_messenger"]`,
       `remote_token_messenger` `["remote_token_messenger","27"]`, `token_minter`
@@ -117,13 +117,13 @@ receiveMessage(...)]` in one transaction so the recipient ATA is guaranteed to
 - `Direction += 'stellar-to-solana'`.
 - `runStellarToSolana(args: { stellarAddress: string; solanaWallet: SolanaWallet;
 amount: string; speed: TransferSpeed })` mirrors `runStellarToEvm`:
-    1. **approve** — `approveUsdc` against `tokenMessengerMinter` (reused).
-    2. **burn** — `depositForBurnToSolana({ caller: stellarAddress, amount, mintRecipient:
+    1. **approve**, `approveUsdc` against `tokenMessengerMinter` (reused).
+    2. **burn**, `depositForBurnToSolana({ caller: stellarAddress, amount, mintRecipient:
 solanaAtaToBytes32(solanaWallet.address), maxFee, finalityThreshold })`. Fees:
        `fetchBurnFee(STELLAR.domain, SOLANA.domain)`, `computeMaxFee(amount, bps,
 STELLAR_MAX_FEE)`, `thresholdFor('standard')`.
-    3. **attest** — `pollAttestation(STELLAR.domain, burnHash)`.
-    4. **mint** — `receiveMessageOnSolana({ wallet: solanaWallet, recipientOwner:
+    3. **attest**, `pollAttestation(STELLAR.domain, burnHash)`.
+    4. **mint**, `receiveMessageOnSolana({ wallet: solanaWallet, recipientOwner:
 solanaWallet.address, message, attestation })`.
 - `start` branch for `'stellar-to-solana'`; `stepsFor` case (approve → burn → attest
   → mint).
@@ -144,12 +144,12 @@ Freighter, destination = Phantom (its USDC ATA); the amount field is reused. Thr
 
 ## Risks (settled only by a live run)
 
-- **CPI account list/order** — hand-assembled; the primary iteration point.
-- **`used_nonce` PDA** — requires parsing the CCTP V2 message for the nonce slice at
+- **CPI account list/order**, hand-assembled; the primary iteration point.
+- **`used_nonce` PDA**, requires parsing the CCTP V2 message for the nonce slice at
   the correct offset.
-- **`token_pair` seeds** — `["token_pair", "27", <Stellar USDC remote-token bytes>]`;
+- **`token_pair` seeds**, `["token_pair", "27", <Stellar USDC remote-token bytes>]`;
   the remote-token bytes must match what the burn recorded.
-- **ATA idempotent-create ordering** — must precede `receiveMessage` in the same tx.
+- **ATA idempotent-create ordering**, must precede `receiveMessage` in the same tx.
 
 ## Verification
 

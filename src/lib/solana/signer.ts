@@ -15,7 +15,7 @@ import { solanaRpc } from './client';
 import { sleep } from '$lib/utils';
 import type { SolanaWallet } from './wallet';
 
-// Poll until the tx confirms — sendTransaction only submits. Without this the
+// Poll until the tx confirms; sendTransaction only submits. Without this the
 // caller marks the transfer "done" before the mint lands, and a balance refetch
 // races the confirmation (stale balance). We have no WS subscription, so poll
 // getSignatureStatuses over HTTP.
@@ -45,7 +45,7 @@ async function confirmSignature(signature: string): Promise<void> {
 // pinned devnet RPC regardless, but signTransaction wants the chain named.
 const SOLANA_DEVNET_CHAIN = 'solana:devnet';
 
-// Minimal shape of the Wallet Standard solana:signTransaction feature — kept
+// Minimal shape of the Wallet Standard solana:signTransaction feature, kept
 // local rather than pulling @wallet-standard/features (mirrors evm/wallet.ts).
 type SignTransactionOutput = { signedTransaction: Uint8Array };
 type SignTransactionFeature = {

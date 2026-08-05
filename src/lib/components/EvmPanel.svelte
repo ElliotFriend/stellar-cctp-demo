@@ -139,7 +139,7 @@
     export async function setChain(id: EvmChainId) {
         if (id === chainId) {
             // Same selected chain (e.g. returning from Solana to the same EVM
-            // chip) — the wallet may have drifted networks while we were away, so
+            // chip). The wallet may have drifted networks while we were away, so
             // re-assert. No-op (no prompt) when it's already correct.
             if (wallet && wallet.chainId !== EVM_CHAINS[id].chain.id) await switchChain();
             return;
@@ -153,7 +153,7 @@
         if (wallet) {
             await switchChain();
         } else {
-            // No wallet to switch — just clear the stale balance for the previous chain.
+            // No wallet to switch, so just clear the stale balance for the previous chain.
             balance = null;
             sendCallsCap = { supported: false, atomic: false };
         }

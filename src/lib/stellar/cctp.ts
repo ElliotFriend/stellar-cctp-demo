@@ -15,7 +15,7 @@ const bridgeWrapper = new Contract(STELLAR.contracts.bridgeWrapper);
 const forwarder = new Contract(STELLAR.contracts.cctpForwarder);
 
 // Direct call to the TMM's `deposit_for_burn`. Caller must `approveUsdc` for
-// the TMM as a spender on USDC SAC first — the TMM pulls funds via
+// the TMM as a spender on USDC SAC first, because the TMM pulls funds via
 // `transfer_from`, not user-authorized `transfer`. Two transactions total.
 export async function depositForBurnToEvm(args: {
     caller: string;
@@ -56,11 +56,11 @@ export async function depositForBurnToEvm(args: {
 
 // Burn USDC on Stellar bound for Solana (domain 5). mintRecipient is the
 // recipient's Solana USDC ATA as raw 32 bytes (see solanaAtaToBytes32).
-// destinationCaller stays zero — the Solana mint is permissionless. No hook.
+// destinationCaller stays zero, since the Solana mint is permissionless. No hook.
 export async function depositForBurnToSolana(args: {
     caller: string;
     amount: bigint; // Stellar 7-decimal subunits
-    mintRecipient: Uint8Array; // 32 bytes — recipient's Solana USDC ATA
+    mintRecipient: Uint8Array; // 32 bytes, the recipient's Solana USDC ATA
     maxFee: bigint;
     finalityThreshold: number;
 }): Promise<{ hash: string; sourceDomain: number }> {
@@ -92,7 +92,7 @@ export async function depositForBurnToSolana(args: {
 
 // Calls the user-deployed wrapper contract's `approve_and_deposit`, which
 // internally `approve`s the TMM as a USDC spender and then invokes
-// `deposit_for_burn` — both within one Soroban transaction. Soroban's auth
+// `deposit_for_burn`, both within one Soroban transaction. Soroban's auth
 // tree lets a single user signature authorize both nested calls, so the user
 // sees one Freighter prompt and pays one network fee.
 export async function bridgeUsdcToEvm(args: {
@@ -179,28 +179,28 @@ export async function bridgeUsdcToEvmWithHook(args: {
 }
 
 // ─────────────────────────────────────────────────────────────────────
-//  EXPERIMENTAL — Circle Crosschain Forwarding Service trigger (outbound)
+//  EXPERIMENTAL: Circle Crosschain Forwarding Service trigger (outbound)
 // ─────────────────────────────────────────────────────────────────────
 // Same as depositForBurnToEvm, but calls deposit_for_burn_with_hook with the
 // Circle forwarding-service magic hookData. Circle's hosted relayer watches
 // source chains for this magic and auto-completes the destination mint,
-// deducting its fee from the minted USDC — so the user pays no destination gas.
+// deducting its fee from the minted USDC, so the user pays no destination gas.
 //
 // hookData layout (Circle docs):
-//   bytes 0–23 : 24-byte magic, ascii "cctp-forward" left-aligned, zero-padded
-//   bytes 24–27: u32 version (0)
-//   bytes 28–31: u32 length of additional Circle hook data (0 — none here)
+//   bytes 0 to 23 : 24-byte magic, ascii "cctp-forward" left-aligned, zero-padded
+//   bytes 24 to 27: u32 version (0)
+//   bytes 28 to 31: u32 length of additional Circle hook data (0, none here)
 //
 // Stellar is NOT a documented forwarding source; this probes whether the relayer
 // picks it up regardless. destination_caller is left ZERO (permissionless) so if
 // the relayer ignores the burn, the mint can still be completed manually via
-// receiveMessage (the demo's resume flow) — funds are never stranded.
+// receiveMessage (the demo's resume flow), so funds are never stranded.
 export const CCTP_FORWARD_MAGIC = 'cctp-forward';
 
 export function encodeCctpForwardHookData(): Uint8Array {
     // 32 bytes total: 24 magic + u32 version + u32 length, all-zero tail. Writing
     // the ascii magic at offset 0 leaves the magic padding, version, and length
-    // fields at their zero defaults — exactly the documented "no extra data" form.
+    // fields at their zero defaults, exactly the documented "no extra data" form.
     const out = new Uint8Array(32);
     out.set(new TextEncoder().encode(CCTP_FORWARD_MAGIC), 0);
     return out;

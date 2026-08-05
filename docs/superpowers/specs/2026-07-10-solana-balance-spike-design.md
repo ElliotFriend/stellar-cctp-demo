@@ -1,4 +1,4 @@
-# Solana balance spike — design
+# Solana balance spike, design
 
 **Date:** 2026-07-10
 **Status:** approved, pre-implementation
@@ -11,7 +11,7 @@ resolution all work together in this SvelteKit app by connecting a wallet and
 reading a devnet USDC balance.
 
 This is the first step toward turning on Solana as a CCTP chain. Scope of the
-larger effort is **Solana ↔ Stellar only** — Solana never pairs with the EVM
+larger effort is **Solana ↔ Stellar only**. Solana never pairs with the EVM
 chains. This spike is throwaway; the real `SolanaPanel` and CCTP burn/mint
 paths come later.
 
@@ -36,14 +36,14 @@ Existing wallet integrations set the pattern the spike mirrors:
 Connect via `@wallet-standard/app` (`getWallets()`), not `window.phantom.solana`.
 Wallet Standard is the current ecosystem default (Anza/Phantom/Solflare/Backpack),
 is the direct analog of the EIP-6963 discovery already used for EVM, and adds
-only a tiny registry package — not the heavy `@solana/wallet-adapter-react` UI
+only a tiny registry package, not the heavy `@solana/wallet-adapter-react` UI
 stack, which is not used.
 
 ## Dependencies
 
-- `@solana/kit` — RPC client + address types
-- `@solana-program/token` — ATA derivation (`findAssociatedTokenPda`)
-- `@wallet-standard/app`, `@wallet-standard/base` — wallet discovery/connect
+- `@solana/kit`, RPC client + address types
+- `@solana-program/token`, ATA derivation (`findAssociatedTokenPda`)
+- `@wallet-standard/app`, `@wallet-standard/base`, wallet discovery/connect
 
 ## Modules
 
@@ -55,7 +55,7 @@ page changes.
 | --------------------------------------- | --------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `src/lib/solana/client.ts`              | `stellar/client.ts`   | `export const solanaRpc = createSolanaRpc(SOLANA.rpcUrl)`                                                                                                                                                                                                      |
 | `src/lib/solana/wallet.ts`              | `evm/wallet.ts`       | `SolanaWallet` type; `discoverSolanaWallets()` (filter to `solana:`-capable wallets); `connectSolana(info)` (invoke `standard:connect`, take `accounts[0]`); `detectExistingSolana()` (silent reconnect keyed on a stored wallet name, like EVM's stored-rdns) |
-| `src/lib/solana/usdc.ts`                | `stellar/usdc.ts`     | `getUsdcBalance(owner)` — derive ATA from (owner, mint), call `solanaRpc.getTokenAccountBalance`; format helpers                                                                                                                                               |
+| `src/lib/solana/usdc.ts`                | `stellar/usdc.ts`     | `getUsdcBalance(owner)`, derive ATA from (owner, mint), call `solanaRpc.getTokenAccountBalance`; format helpers                                                                                                                                               |
 | `src/lib/components/SolanaPanel.svelte` | `StellarPanel.svelte` | Connect button → show address + USDC balance. Throwaway.                                                                                                                                                                                                       |
 
 ## Data flow

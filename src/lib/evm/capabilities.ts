@@ -4,7 +4,7 @@ import type { EvmWallet } from './wallet';
 // What we ask about per chain: whether the wallet does EIP-5792 at all, and
 // if so whether it executes the batched calls atomically (one tx) or just
 // bundles the UX (still multiple txs under the hood). Both forms are useful
-// — atomic gives "1 tx, 1 click", sequential gives "n tx, 1 click" — but we
+// (atomic gives "1 tx, 1 click", sequential gives "n tx, 1 click"), but we
 // only enable the toggle for `supported` since that's where the demo story
 // holds up cleanly.
 export type SendCallsCapability = {
@@ -15,7 +15,7 @@ export type SendCallsCapability = {
 const UNSUPPORTED: SendCallsCapability = { supported: false, atomic: false };
 
 // EIP-5792 capability discovery. Wallets that don't implement the method
-// throw — we treat any error or absence as "unsupported" rather than
+// throw, so we treat any error or absence as "unsupported" rather than
 // surfacing it, because the UI just disables a chip in that case.
 //
 // `atomic.status` per spec:

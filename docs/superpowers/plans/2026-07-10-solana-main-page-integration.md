@@ -2,17 +2,17 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development or superpowers:executing-plans. Steps use checkbox (`- [ ]`).
 
-> **ADVERSARIAL-REVIEW CORRECTIONS (apply these — they override the task bodies below):**
+> **ADVERSARIAL-REVIEW CORRECTIONS (apply these. They override the task bodies below):**
 >
-> - **B1 (Task 4 DestinationPanel `pick`):** do NOT pre-assign `evmChainId = id` before `setChain` — `evmChainId` is bound two-way into EvmPanel, so its `chainId` updates instantly and `setChain`'s `if (id === chainId) return` early-returns, dropping ALL side effects. Instead: `chain = id; if (id !== 'solana') { await tick(); if (evmRef) await evmRef.setChain(id); else evmChainId = id; }` (import `tick` from 'svelte'). `setChain` owns the write (it sets `chainId`, which flows back through the binding).
-> - **B2 (Task 1 store):** `start()` must ALSO make `outboundFlow?`, `forwarding?`, `inboundFlow?` optional and default them (`args.outboundFlow ?? DEFAULT_OUTBOUND_FLOW`, `args.forwarding ?? false`, `args.inboundFlow ?? 'two-tx'`) — else the Solana `send()` (which omits them) fails typecheck and writes `undefined` into required `TransferState` fields. Import the defaults in the store.
+> - **B1 (Task 4 DestinationPanel `pick`):** do NOT pre-assign `evmChainId = id` before `setChain`. `evmChainId` is bound two-way into EvmPanel, so its `chainId` updates instantly and `setChain`'s `if (id === chainId) return` early-returns, dropping ALL side effects. Instead: `chain = id; if (id !== 'solana') { await tick(); if (evmRef) await evmRef.setChain(id); else evmChainId = id; }` (import `tick` from 'svelte'). `setChain` owns the write (it sets `chainId`, which flows back through the binding).
+> - **B2 (Task 1 store):** `start()` must ALSO make `outboundFlow?`, `forwarding?`, `inboundFlow?` optional and default them (`args.outboundFlow ?? DEFAULT_OUTBOUND_FLOW`, `args.forwarding ?? false`, `args.inboundFlow ?? 'two-tx'`), else the Solana `send()` (which omits them) fails typecheck and writes `undefined` into required `TransferState` fields. Import the defaults in the store.
 > - **B3 (Task 1 Step 4):** guard `TransferProgress.svelte:16` too (not just `:19`): `transfer.direction === 'evm-to-stellar' && transfer.evmChainId ? EVM_CHAINS[transfer.evmChainId].attestationEtaMs : undefined`. The runtime ternary does NOT narrow the type.
-> - **M4 (Task 1):** make `initialState()`'s `evmChainId` param optional too — `reset()` passes `state.evmChainId` which is now `EvmChainId | undefined`.
-> - **M5 (Task 4 TransferForm):** pass a `fastAllowed: boolean` prop from the page (`fastAllowed = rightChain !== 'solana' && !stellarIsSource`) and DROP the `direction` prop (remove it at the `+page.svelte` call site too, or `svelte-check` flags an excess prop). Update EVERY `stellarSource` use: `etaCaption` (reword — "Standard only" copy must not say "Stellar finalizes" since `solana-to-stellar` is Solana-source), Standard chip `class:active`/`aria-selected` → `!fastAllowed || speed==='standard'`, Fast chip `class:active`/`aria-selected` → `fastAllowed && speed==='fast'`, Fast `disabled` → `disabled || !fastAllowed`, Fast `title`. `stellarIsSource` alone is WRONG for the Fast gate (it's false for `solana-to-stellar`, which would enable Fast).
-> - **M6 (Task 3):** do NOT overload the 695-line `StellarBurnPreview` (its eager module-level `$derived` — `chain`/`destDomain`/`feePromise`/`forwardFeePromise` — would index `EVM_CHAINS[undefined]` even if the template branches). Instead create a SEPARATE **`StellarToSolanaBurnPreview.svelte`** for the `stellar-to-solana` direction (Stellar burn → Solana ATA, domain 5, `await solanaAtaToBytes32(solanaRecipient)` for mintRecipient, `fetchBurnFee(STELLAR.domain, SOLANA.domain)`, `STELLAR_MAX_FEE`). Leave `StellarBurnPreview` EVM-only, untouched.
+> - **M4 (Task 1):** make `initialState()`'s `evmChainId` param optional too, `reset()` passes `state.evmChainId` which is now `EvmChainId | undefined`.
+> - **M5 (Task 4 TransferForm):** pass a `fastAllowed: boolean` prop from the page (`fastAllowed = rightChain !== 'solana' && !stellarIsSource`) and DROP the `direction` prop (remove it at the `+page.svelte` call site too, or `svelte-check` flags an excess prop). Update EVERY `stellarSource` use: `etaCaption` (reword, "Standard only" copy must not say "Stellar finalizes" since `solana-to-stellar` is Solana-source), Standard chip `class:active`/`aria-selected` → `!fastAllowed || speed==='standard'`, Fast chip `class:active`/`aria-selected` → `fastAllowed && speed==='fast'`, Fast `disabled` → `disabled || !fastAllowed`, Fast `title`. `stellarIsSource` alone is WRONG for the Fast gate (it's false for `solana-to-stellar`, which would enable Fast).
+> - **M6 (Task 3):** do NOT overload the 695-line `StellarBurnPreview` (its eager module-level `$derived`, `chain`/`destDomain`/`feePromise`/`forwardFeePromise`, would index `EVM_CHAINS[undefined]` even if the template branches). Instead create a SEPARATE **`StellarToSolanaBurnPreview.svelte`** for the `stellar-to-solana` direction (Stellar burn → Solana ATA, domain 5, `await solanaAtaToBytes32(solanaRecipient)` for mintRecipient, `fetchBurnFee(STELLAR.domain, SOLANA.domain)`, `STELLAR_MAX_FEE`). Leave `StellarBurnPreview` EVM-only, untouched.
 > - **M8:** `SolanaBurnPreview` must NOT import `toHex` (unused → lint fails); `strkeyToBytes32`/`encodeStellarForwarderHookData` already return `Hex`.
-> - **M9 (minor):** drop the redundant `rightChain !== 'solana'` guards on the EVM/Stellar burn-preview blocks — the `direction === 'evm-to-stellar'`/`'stellar-to-evm'` checks already imply it.
-> - Fund-safety wiring (preview args vs actual burn) was verified correct for both directions — no change.
+> - **M9 (minor):** drop the redundant `rightChain !== 'solana'` guards on the EVM/Stellar burn-preview blocks, the `direction === 'evm-to-stellar'`/`'stellar-to-evm'` checks already imply it.
+> - Fund-safety wiring (preview args vs actual burn) was verified correct for both directions, no change.
 
 **Goal:** Make Solana a first-class chain in the main page's top-right selector (Arc · Base · Ethereum · Solana), functioning like Stellar↔EVM, and delete `/solana-spike`.
 
@@ -24,7 +24,7 @@
 
 - Svelte 5 runes, **no `$effect`** (explicit dataflow). Run `svelte-autofixer` on every `.svelte` file until clean.
 - `pnpm check` + `pnpm lint` must pass after each task.
-- Fund-safety: per-direction burn args must be exact — `stellar-to-solana` burns on Stellar to the recipient's Solana USDC **ATA** (domain 5); `solana-to-stellar` burns on Solana to the **forwarder** (domain 27) with the G-address hook. Never cross them.
+- Fund-safety: per-direction burn args must be exact, `stellar-to-solana` burns on Stellar to the recipient's Solana USDC **ATA** (domain 5); `solana-to-stellar` burns on Solana to the **forwarder** (domain 27) with the G-address hook. Never cross them.
 - No test runner; final gate is a real main-page transfer both Solana directions + an EVM regression + `/solana-spike` gone.
 - `RightChain = EvmChainId | 'solana'`.
 
@@ -39,17 +39,17 @@
 
 **Interfaces produced:** `RightChain` type; `start()`/`resume()`/`TransferState` accept optional `evmWallet`/`evmChainId`.
 
-- [ ] **Step 1 — config:** add after the `Direction` type in `config.ts`:
+- [ ] **Step 1, config:** add after the `Direction` type in `config.ts`:
 
 ```ts
 export type RightChain = EvmChainId | 'solana';
 ```
 
-- [ ] **Step 2 — store types:** in `transfer.svelte.ts`, make `TransferState.evmChainId` optional (`evmChainId?: EvmChainId`), and in `start()`'s arg type make `evmWallet?: EvmWallet` and `evmChainId?: EvmChainId`. In the EVM branches of `start()` (the `stellar-to-evm` and final `else`), guard: `if (!args.evmWallet || !args.evmChainId) throw new Error('EVM wallet/chain not connected.');` before calling `runStellarToEvm`/`runEvmToStellar` (which still receive the narrowed values). Set `state.evmChainId = args.evmChainId` (may be undefined).
+- [ ] **Step 2, store types:** in `transfer.svelte.ts`, make `TransferState.evmChainId` optional (`evmChainId?: EvmChainId`), and in `start()`'s arg type make `evmWallet?: EvmWallet` and `evmChainId?: EvmChainId`. In the EVM branches of `start()` (the `stellar-to-evm` and final `else`), guard: `if (!args.evmWallet || !args.evmChainId) throw new Error('EVM wallet/chain not connected.');` before calling `runStellarToEvm`/`runEvmToStellar` (which still receive the narrowed values). Set `state.evmChainId = args.evmChainId` (may be undefined).
 
-- [ ] **Step 3 — stepsFor:** move the eager `const evmLabel = EVM_CHAINS[evmChainId].label;` (currently `transfer.svelte.ts:108`) INSIDE the EVM branches that use it (`stellar-to-evm` and the EVM fallthrough), so the Solana branches never index `EVM_CHAINS[undefined]`. Make the `stepsFor` `evmChainId` param optional. Where an EVM branch needs the label, compute `EVM_CHAINS[evmChainId!].label` guarded by the branch (that branch only runs for EVM directions where it's defined).
+- [ ] **Step 3, stepsFor:** move the eager `const evmLabel = EVM_CHAINS[evmChainId].label;` (currently `transfer.svelte.ts:108`) INSIDE the EVM branches that use it (`stellar-to-evm` and the EVM fallthrough), so the Solana branches never index `EVM_CHAINS[undefined]`. Make the `stepsFor` `evmChainId` param optional. Where an EVM branch needs the label, compute `EVM_CHAINS[evmChainId!].label` guarded by the branch (that branch only runs for EVM directions where it's defined).
 
-- [ ] **Step 4 — TransferProgress guard:** `TransferProgress.svelte:19` — change `longWaitChainLabel = EVM_CHAINS[transfer.evmChainId].label` to `transfer.evmChainId ? EVM_CHAINS[transfer.evmChainId].label : ''`. Confirm no other unguarded `EVM_CHAINS[transfer.evmChainId]` read remains (the `:16` one is already behind an `evm-to-stellar` ternary).
+- [ ] **Step 4, TransferProgress guard:** `TransferProgress.svelte:19`, change `longWaitChainLabel = EVM_CHAINS[transfer.evmChainId].label` to `transfer.evmChainId ? EVM_CHAINS[transfer.evmChainId].label : ''`. Confirm no other unguarded `EVM_CHAINS[transfer.evmChainId]` read remains (the `:16` one is already behind an `evm-to-stellar` ternary).
 
 - [ ] **Step 5:** `pnpm check` → PASS. `pnpm lint` → PASS. Commit:
 
@@ -68,13 +68,13 @@ Deletion first (review M6) so stripping SolanaPanel props doesn't break the spik
 
 **Interfaces produced:** `SolanaPanel` props `{ wallet?: SolanaWallet | null (bindable); disabled?: boolean }`, `export function refresh()`.
 
-- [ ] **Step 1 — delete the spike:**
+- [ ] **Step 1, delete the spike:**
 
 ```bash
 git rm -r src/routes/solana-spike
 ```
 
-- [ ] **Step 2 — rewrite `SolanaPanel.svelte`** to mirror EvmPanel's structure/styling (badge, connect button, addr row, balance, refresh/disconnect), connect-only + balance (no burn form). Full file:
+- [ ] **Step 2, rewrite `SolanaPanel.svelte`** to mirror EvmPanel's structure/styling (badge, connect button, addr row, balance, refresh/disconnect), connect-only + balance (no burn form). Full file:
 
 ```svelte
 <script lang="ts">
@@ -299,7 +299,7 @@ Both burn previews are source-side. `solana-to-stellar` burns on Solana → new 
 - `SolanaBurnPreview` props: `{ solanaAddress: string; stellarRecipient: string; amount: string }`.
 - `StellarBurnPreview` gains an optional `solanaRecipient?: string` (a Solana owner address). When set, the preview targets Solana: `destinationDomain = SOLANA.domain`, `mint_recipient = solanaAtaToBytes32(solanaRecipient)` (async → shown once resolved), no wrapper/forwarding, `evmChainId`/`evmRecipient` become optional.
 
-- [ ] **Step 1 — `SolanaBurnPreview.svelte`** (Solana-source burn = `depositForBurnWithHook` to the forwarder, domain 27, G-address hook). Mirror the burn-preview card styling (reuse the same class names/`<style>` block as `StellarBurnPreview` for visual parity — copy that `<style>`). Script:
+- [ ] **Step 1, `SolanaBurnPreview.svelte`** (Solana-source burn = `depositForBurnWithHook` to the forwarder, domain 27, G-address hook). Mirror the burn-preview card styling (reuse the same class names/`<style>` block as `StellarBurnPreview` for visual parity, copy that `<style>`). Script:
 
 ```svelte
 <script lang="ts">
@@ -385,7 +385,7 @@ Both burn previews are source-side. `solana-to-stellar` burns on Solana → new 
             <span class="arg-type">Pubkey</span>
             <code class="arg-hex">{forwarderHex}</code>
             <span class="arg-note"
-                >the Stellar CctpForwarder — real recipient rides in hookData</span
+                >the Stellar CctpForwarder, real recipient rides in hookData</span
             >
         </li>
         <li class="row">
@@ -430,9 +430,9 @@ Both burn previews are source-side. `solana-to-stellar` burns on Solana → new 
 </style>
 ```
 
-(In implementation, paste `StellarBurnPreview`'s full `<style>` block into the marked spot — same class names are used.)
+(In implementation, paste `StellarBurnPreview`'s full `<style>` block into the marked spot, same class names are used.)
 
-- [ ] **Step 2 — extend `StellarBurnPreview.svelte`** for the Solana destination, keeping EVM behavior default. Add an optional `solanaRecipient?: string` prop and make `evmRecipient`/`evmChainId` optional. When `solanaRecipient` is set: derive `mintRecipientHex` from `await solanaAtaToBytes32(solanaRecipient)` (use an `{#await}`); set the destination row to `destination_domain = SOLANA.domain` with note "Solana", and the `mint_recipient` note to "→ your Solana USDC ATA". Force `outboundFlow='two-tx'`/`forwarding=false` for this mode (no wrapper to Solana). Guard every `EVM_CHAINS[evmChainId]` read behind `!solanaRecipient`. Import `SOLANA` + `solanaAtaToBytes32`.
+- [ ] **Step 2, extend `StellarBurnPreview.svelte`** for the Solana destination, keeping EVM behavior default. Add an optional `solanaRecipient?: string` prop and make `evmRecipient`/`evmChainId` optional. When `solanaRecipient` is set: derive `mintRecipientHex` from `await solanaAtaToBytes32(solanaRecipient)` (use an `{#await}`); set the destination row to `destination_domain = SOLANA.domain` with note "Solana", and the `mint_recipient` note to "→ your Solana USDC ATA". Force `outboundFlow='two-tx'`/`forwarding=false` for this mode (no wrapper to Solana). Guard every `EVM_CHAINS[evmChainId]` read behind `!solanaRecipient`. Import `SOLANA` + `solanaAtaToBytes32`.
 
 - [ ] **Step 3:** `svelte-autofixer` on both; `pnpm check && pnpm lint` PASS. Commit:
 
@@ -449,7 +449,7 @@ These change props across the panel↔page boundary together, so they land as on
 
 **Files:** Create `src/lib/components/DestinationPanel.svelte`. Modify `EvmPanel.svelte`, `DirectionSwitcher.svelte`, `TransferForm.svelte`, `src/routes/+page.svelte`.
 
-- [ ] **Step 1 — EvmPanel controlled + `setChain`:** in `EvmPanel.svelte`, delete the chip-selector markup block (`<div class="chain-picker">…</div>`, lines ~167-181) and the `.chain-picker` style. Rename `pickChain` → and expose it:
+- [ ] **Step 1, EvmPanel controlled + `setChain`:** in `EvmPanel.svelte`, delete the chip-selector markup block (`<div class="chain-picker">…</div>`, lines ~167-181) and the `.chain-picker` style. Rename `pickChain` → and expose it:
 
 ```ts
 // Imperative: called by DestinationPanel when the chip row picks an EVM chain.
@@ -470,7 +470,7 @@ export async function setChain(id: EvmChainId) {
 
 Keep `switchChain`, `refreshBalance`, `refreshSendCallsCap`, `refresh`, connect flow, and the `{#if direction === 'evm-to-stellar'}` inbound-flow picker. `chainId` stays a bindable prop.
 
-- [ ] **Step 2 — `DestinationPanel.svelte`** (new). Owns the chip row (EVM chains + trailing Solana), holds `bind:this` refs to the active body, exposes `refresh()`, and calls `evmRef.setChain(id)` on EVM chip clicks:
+- [ ] **Step 2, `DestinationPanel.svelte`** (new). Owns the chip row (EVM chains + trailing Solana), holds `bind:this` refs to the active body, exposes `refresh()`, and calls `evmRef.setChain(id)` on EVM chip clicks:
 
 ```svelte
 <script lang="ts">
@@ -611,9 +611,9 @@ Keep `switchChain`, `refreshBalance`, `refreshSendCallsCap`, `refresh`, connect 
 </style>
 ```
 
-> **Note (verify at build):** the `pick()` EVM path sets `evmChainId` then calls `evmRef.setChain(id)`; since EvmPanel is already mounted for any EVM chip (only unmounts when switching to Solana), `evmRef` is present. When switching Solana→EVM, EvmPanel remounts and its `onMount` reconnect + the bound `chainId` handle it; the `setChain` call still runs after the `await Promise.resolve()` tick. If `evmRef` is momentarily undefined on the Solana→EVM transition, the optional-chain `?.` no-ops and the bound `chainId`/onMount path covers it — verify chain switching works in the Task 4 manual check.
+> **Note (verify at build):** the `pick()` EVM path sets `evmChainId` then calls `evmRef.setChain(id)`; since EvmPanel is already mounted for any EVM chip (only unmounts when switching to Solana), `evmRef` is present. When switching Solana→EVM, EvmPanel remounts and its `onMount` reconnect + the bound `chainId` handle it; the `setChain` call still runs after the `await Promise.resolve()` tick. If `evmRef` is momentarily undefined on the Solana→EVM transition, the optional-chain `?.` no-ops and the bound `chainId`/onMount path covers it, verify chain switching works in the Task 4 manual check.
 
-- [ ] **Step 3 — DirectionSwitcher orientation-based:**
+- [ ] **Step 3, DirectionSwitcher orientation-based:**
 
 ```svelte
 <script lang="ts">
@@ -641,7 +641,7 @@ Keep `switchChain`, `refreshBalance`, `refreshSendCallsCap`, `refresh`, connect 
 
 (Keep the existing `<style>` block.)
 
-- [ ] **Step 4 — TransferForm source-aware:** replace `evmLabel` prop with `otherLabel`, and take `stellarIsSource: boolean` as a prop (page-derived) instead of inferring from `direction`. Update:
+- [ ] **Step 4, TransferForm source-aware:** replace `evmLabel` prop with `otherLabel`, and take `stellarIsSource: boolean` as a prop (page-derived) instead of inferring from `direction`. Update:
 
 ```ts
 let otherShort = $derived(otherLabel.split(' ')[0]);
@@ -654,16 +654,16 @@ let buttonLabel = $derived(
 );
 ```
 
-Replace the internal `let stellarSource = $derived(direction === 'stellar-to-evm')` usage with the `stellarIsSource` prop everywhere it gated Fast (so Fast is disabled whenever Stellar is the source OR the right chain is Solana). Add a `fastAllowed` prop from the page (`fastAllowed = rightChain !== 'solana' && !stellarIsSource`) and gate the Fast chip on `!fastAllowed` (disabled) — simplest: pass `fastAllowed: boolean` and use it in place of `!stellarSource`. Keep `direction` only if still needed for copy; otherwise drop it.
+Replace the internal `let stellarSource = $derived(direction === 'stellar-to-evm')` usage with the `stellarIsSource` prop everywhere it gated Fast (so Fast is disabled whenever Stellar is the source OR the right chain is Solana). Add a `fastAllowed` prop from the page (`fastAllowed = rightChain !== 'solana' && !stellarIsSource`) and gate the Fast chip on `!fastAllowed` (disabled), simplest: pass `fastAllowed: boolean` and use it in place of `!stellarSource`. Keep `direction` only if still needed for copy; otherwise drop it.
 
-- [ ] **Step 5 — `+page.svelte` rewiring:**
+- [ ] **Step 5, `+page.svelte` rewiring:**
     - Imports: drop `EvmPanel` import, add `DestinationPanel` and `SolanaBurnPreview` + `type SolanaWallet` + `type RightChain`. Keep `StellarBurnPreview`.
     - State: replace `evmChainId`/`direction` with `rightChain = $state<RightChain>('arc')`, `stellarIsSource = $state(true)`, add `solana = $state<SolanaWallet | null>(null)`. Keep `evm`. Add `evmChainId = $state<EvmChainId>(DEFAULT_EVM_CHAIN)` (still needed for the EVM body + store).
     - Derived: `direction` from `(rightChain, stellarIsSource)` per Global Constraints; `rightLabel = rightChain === 'solana' ? 'Solana' : EVM_CHAINS[rightChain].label`; `rightConnected = rightChain === 'solana' ? !!solana : !!evm`; `bothConnected = !!stellar.address && rightConnected`; `effectiveSpeed = (direction === 'stellar-to-evm' ... )` → coerce to `standard` when `!(rightChain !== 'solana' && !stellarIsSource)` (i.e. standard unless EVM-source).
     - Replace `<EvmPanel .../>` with `<DestinationPanel bind:this={destPanel} bind:chain={rightChain} bind:evmWallet={evm} bind:evmChainId bind:solanaWallet={solana} bind:inboundFlow bind:sendCallsCap {direction} disabled={busy} />` and rename the `evmPanel` handle to `destPanel` (type `{ refresh }`).
     - `DirectionSwitcher`: `<DirectionSwitcher bind:stellarIsSource otherLabel={rightLabel} disabled={busy} />`.
     - `TransferForm`: pass `otherLabel={rightLabel}`, `stellarIsSource`, `fastAllowed={rightChain !== 'solana' && !stellarIsSource}` (+ keep amount/speed/etc).
-    - `send()`: branch — Solana: `if (!stellar.address || !solana) return; await transfer.start({ direction, stellarAddress: stellar.address, solanaWallet: solana, amount: amount.trim(), speed: 'standard' });`. EVM: unchanged (`evmWallet: evm`, `evmChainId`). After done: `await Promise.all([stellarPanel?.refresh(), destPanel?.refresh()])`.
+    - `send()`: branch. Solana: `if (!stellar.address || !solana) return; await transfer.start({ direction, stellarAddress: stellar.address, solanaWallet: solana, amount: amount.trim(), speed: 'standard' });`. EVM: unchanged (`evmWallet: evm`, `evmChainId`). After done: `await Promise.all([stellarPanel?.refresh(), destPanel?.refresh()])`.
     - `resume()`: `if (rightChain === 'solana') return;` at top (plus keep the EVM path).
     - Resume form: `{#if transfer.state.phase === 'idle' && rightChain !== 'solana'}<ResumeForm .../>{/if}`.
     - Burn previews: keep the two EVM/Stellar blocks gated additionally on `rightChain !== 'solana'`. Add:
@@ -673,15 +673,15 @@ Replace the internal `let stellarSource = $derived(direction === 'stellar-to-evm
 
 - [ ] **Step 6:** `svelte-autofixer` on every changed/new `.svelte` (DestinationPanel, EvmPanel, DirectionSwitcher, TransferForm, +page) until clean. `pnpm check && pnpm lint` PASS.
 
-- [ ] **Step 7 — manual verification (the gate):** `pnpm dev`, open `/`:
+- [ ] **Step 7, manual verification (the gate):** `pnpm dev`, open `/`:
     1. Selector shows Arc · Base · Ethereum · Solana. Pick Solana → body swaps to Phantom connect + balance.
     2. Switch EVM chips arc→base with an EVM wallet connected → wallet network switches, balance/cap refresh; picking Ethereum drops a `wrapper` inbound flow.
     3. Connect Freighter + Phantom, Solana selected: flip direction; Resume form hidden; Fast chip absent; button label correct both ways; correct burn preview per direction.
     4. Run Stellar→Solana and Solana→Stellar to completion; balances update.
-    5. Run a Base↔Stellar EVM transfer — unchanged.
+    5. Run a Base↔Stellar EVM transfer, unchanged.
     6. `/solana-spike` → 404.
 
-- [ ] **Step 8 — commit:**
+- [ ] **Step 8, commit:**
 
 ```bash
 git add src/lib/components/DestinationPanel.svelte src/lib/components/EvmPanel.svelte src/lib/components/DirectionSwitcher.svelte src/lib/components/TransferForm.svelte src/routes/+page.svelte
@@ -692,6 +692,6 @@ git commit -m "feat: Solana in main-page destination selector (DestinationPanel)
 
 ## Verification summary
 
-- Tasks 1–3 gate on `pnpm check` + `pnpm lint`.
+- Tasks 1 to 3 gate on `pnpm check` + `pnpm lint`.
 - Task 4 gates on the full manual run: both Solana directions complete, EVM regression intact, chain-switch side effects work, Resume/Fast hidden for Solana, correct per-direction burn preview, `/solana-spike` gone.
 - Highest risk: the DestinationPanel↔EvmPanel `setChain` timing on body swap (Step 2 note) and the two burn previews rendering the correct per-direction args. Only the live run settles these.

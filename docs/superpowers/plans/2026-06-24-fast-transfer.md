@@ -4,15 +4,15 @@
 
 **Goal:** Add a Standard/Fast toggle to the CCTP demo that switches the burn between Standard (finalized, threshold 2000) and Fast (threshold 1000) transfers, computing `maxFee` from Circle's live fee API.
 
-**Architecture:** Speed is `$state` in `+page.svelte`, passed down via props (toggle in `TransferForm`) and into `transfer.start()`. A new `circle/fees.ts` module quotes the route fee (bps) from Circle's fee API and derives `maxFee`. Burn functions stop importing the threshold/maxFee constants and accept them as arguments; the runner computes them per transfer. No `$effect` — previews use `$derived` + `{#await}`.
+**Architecture:** Speed is `$state` in `+page.svelte`, passed down via props (toggle in `TransferForm`) and into `transfer.start()`. A new `circle/fees.ts` module quotes the route fee (bps) from Circle's fee API and derives `maxFee`. Burn functions stop importing the threshold/maxFee constants and accept them as arguments; the runner computes them per transfer. No `$effect`, previews use `$derived` + `{#await}`.
 
 **Tech Stack:** SvelteKit 5 (Svelte 5 runes), TypeScript, viem, @stellar/stellar-sdk, Circle Iris/fee API.
 
 ## Global Constraints
 
-- No `$effect` in Svelte components — explicit dataflow only (props down, `bind:` up, `$derived` for computed).
+- No `$effect` in Svelte components, explicit dataflow only (props down, `bind:` up, `$derived` for computed).
 - Every `.svelte` / `.svelte.ts` edit must pass the Svelte MCP `svelte-autofixer` (run until no issues) before commit, per project CLAUDE.md.
-- No new test toolchain (vitest etc.) — verification is `npm run check` + `npm run lint` + manual testnet runs.
+- No new test toolchain (vitest etc.), verification is `npm run check` + `npm run lint` + manual testnet runs.
 - `maxFee = ceil(amount * bps / 10000) + floor`; floor = `STELLAR_MAX_FEE` (7-dp Stellar subunits) when Stellar is the source, `EVM_MAX_FEE` (6-dp) when an EVM chain is.
 - Thresholds: Standard = 2000, Fast = 1000. Fee API: `GET {IRIS_API}/v2/burn/USDC/fees/{srcDomain}/{dstDomain}` → `[{finalityThreshold, minimumFee}]`, `minimumFee` in basis points.
 - Keep `npm run check` green after every task (temporary `FINALIZED_THRESHOLD` alias in config until Task 3 removes it).
@@ -23,7 +23,7 @@
 
 **Files:**
 
-- Modify: `src/lib/config.ts` (around lines 97–115)
+- Modify: `src/lib/config.ts` (around lines 97 to 115)
 - Create: `src/lib/circle/fees.ts`
 
 **Interfaces:**
@@ -35,7 +35,7 @@
 
 - [ ] **Step 1: Edit `src/lib/config.ts`**
 
-Replace the threshold block (lines ~97–101) with:
+Replace the threshold block (lines ~97 to 101) with:
 
 ```ts
 // CCTP V2 finality thresholds for the burn.
@@ -133,8 +133,8 @@ Co-Authored-By: Claude Opus 4.8 (1M context) <noreply@anthropic.com>"
 
 **Files:**
 
-- Modify: `src/lib/stellar/cctp.ts` (lines 10, 21–95)
-- Modify: `src/lib/evm/cctp.ts` (lines 3–10, 138–297)
+- Modify: `src/lib/stellar/cctp.ts` (lines 10, 21 to 95)
+- Modify: `src/lib/evm/cctp.ts` (lines 3 to 10, 138 to 297)
 - Modify: `src/lib/stores/transfer.svelte.ts` (imports + runners + `start`)
 - Modify: `src/routes/+page.svelte` (add `speed` state + pass into `start`)
 
@@ -146,7 +146,7 @@ Co-Authored-By: Claude Opus 4.8 (1M context) <noreply@anthropic.com>"
     - `evm/cctp.ts`: `buildBurnToStellar(chainId, amount, stellarRecipient, maxFee, finalityThreshold)`; `depositForBurnWithHookToStellar`, `bridgeWithPermitToStellar`, `sendCallsBridgeToStellar` arg objects gain `maxFee: bigint`, `finalityThreshold: number`.
     - `transfer.svelte.ts`: `start(args)` and `runStellarToEvm`/`runEvmToStellar` args gain `speed: TransferSpeed`.
 
-- [ ] **Step 1: `src/lib/stellar/cctp.ts` — drop constant imports, take args**
+- [ ] **Step 1: `src/lib/stellar/cctp.ts`, drop constant imports, take args**
 
 Change the import on line 10 from:
 
@@ -173,26 +173,26 @@ export async function depositForBurnToEvm(args: {
 }): Promise<{ hash: string; sourceDomain: number }> {
 ```
 
-and replace lines 45–46 (`nativeToScVal(STELLAR_MAX_FEE, ...)` / `nativeToScVal(FINALIZED_THRESHOLD, ...)`) with:
+and replace lines 45 to 46 (`nativeToScVal(STELLAR_MAX_FEE, ...)` / `nativeToScVal(FINALIZED_THRESHOLD, ...)`) with:
 
 ```ts
                 nativeToScVal(args.maxFee, { type: 'i128' }),
                 nativeToScVal(args.finalityThreshold, { type: 'u32' }),
 ```
 
-Do the same for `bridgeUsdcToEvm`: add `maxFee: bigint; finalityThreshold: number;` to its args type, and replace lines 86–87 with the same two `args.maxFee` / `args.finalityThreshold` lines.
+Do the same for `bridgeUsdcToEvm`: add `maxFee: bigint; finalityThreshold: number;` to its args type, and replace lines 86 to 87 with the same two `args.maxFee` / `args.finalityThreshold` lines.
 
-(`mintAndForward` is unchanged — it's the destination mint, no burn params.)
+(`mintAndForward` is unchanged. It's the destination mint, no burn params.)
 
-- [ ] **Step 2: `src/lib/evm/cctp.ts` — drop constant imports, take args**
+- [ ] **Step 2: `src/lib/evm/cctp.ts`, drop constant imports, take args**
 
-Change the import (lines 3–10) to remove `FINALIZED_THRESHOLD` and `EVM_MAX_FEE`:
+Change the import (lines 3 to 10) to remove `FINALIZED_THRESHOLD` and `EVM_MAX_FEE`:
 
 ```ts
 import { EVM_CCTP_CONTRACTS, EVM_CHAINS, STELLAR, type EvmChainId } from '$lib/config';
 ```
 
-Update `buildBurnToStellar` (lines 138–153):
+Update `buildBurnToStellar` (lines 138 to 153):
 
 ```ts
 function buildBurnToStellar(
@@ -208,7 +208,7 @@ function buildBurnToStellar(
     const burnArgs = [
         amount, //                  amount
         STELLAR.domain, //          destinationDomain (Stellar's CCTP domain)
-        forwarderBytes32, //        mintRecipient (the forwarder — see invariant)
+        forwarderBytes32, //        mintRecipient (the forwarder, see invariant)
         cfg.usdc, //                burnToken (per-chain USDC address)
         forwarderBytes32, //        destinationCaller (MUST equal mintRecipient)
         maxFee, //                  maxFee
@@ -261,7 +261,7 @@ export async function bridgeWithPermitToStellar(args: {
     );
 ```
 
-and in its `args: [...]` array (lines 226–238) replace `EVM_MAX_FEE` with `args.maxFee` and `FINALIZED_THRESHOLD` with `args.finalityThreshold`.
+and in its `args: [...]` array (lines 226 to 238) replace `EVM_MAX_FEE` with `args.maxFee` and `FINALIZED_THRESHOLD` with `args.finalityThreshold`.
 
 `sendCallsBridgeToStellar` (line 257) args + the `buildBurnToStellar` call at line 263:
 
@@ -283,9 +283,9 @@ export async function sendCallsBridgeToStellar(args: {
     );
 ```
 
-- [ ] **Step 3: `src/lib/stores/transfer.svelte.ts` — compute and pass**
+- [ ] **Step 3: `src/lib/stores/transfer.svelte.ts`, compute and pass**
 
-Add imports near the top (after the existing `$lib/config` import block, lines 2–10) — extend the config import with the floor constants + speed type, and add the fees import:
+Add imports near the top (after the existing `$lib/config` import block, lines 2 to 10), extend the config import with the floor constants + speed type, and add the fees import:
 
 ```ts
 import {
@@ -311,7 +311,7 @@ const maxFee = computeMaxFee(stellarAmount, feeBpsFor(feeRows, args.speed), STEL
 const finalityThreshold = thresholdFor(args.speed);
 ```
 
-Then pass `maxFee, finalityThreshold` into both `bridgeUsdcToEvm({...})` (line 196) and `depositForBurnToEvm({...})` (line 236) calls — add the two fields to each call's object:
+Then pass `maxFee, finalityThreshold` into both `bridgeUsdcToEvm({...})` (line 196) and `depositForBurnToEvm({...})` (line 236) calls, add the two fields to each call's object:
 
 ```ts
                     maxFee,
@@ -332,9 +332,9 @@ In `start(args)` (line 407), add `speed: TransferSpeed;` to the args type. The r
 
 `resume()` is unchanged (no burn).
 
-- [ ] **Step 4: `src/routes/+page.svelte` — add speed state, pass into start**
+- [ ] **Step 4: `src/routes/+page.svelte`, add speed state, pass into start**
 
-Add `DEFAULT_SPEED` and `TransferSpeed` to the config import (lines 15–24):
+Add `DEFAULT_SPEED` and `TransferSpeed` to the config import (lines 15 to 24):
 
 ```ts
         DEFAULT_SPEED,
@@ -384,8 +384,8 @@ Co-Authored-By: Claude Opus 4.8 (1M context) <noreply@anthropic.com>"
 
 - Modify: `src/lib/components/TransferForm.svelte` (add toggle + `bind:speed`)
 - Modify: `src/routes/+page.svelte` (pass `speed` to `TransferForm` + both previews)
-- Modify: `src/lib/components/StellarBurnPreview.svelte` (lines 5–7, 18–24, 188–197, 304–311)
-- Modify: `src/lib/components/EvmBurnPreview.svelte` (lines 5–6, 25–32, 368–377)
+- Modify: `src/lib/components/StellarBurnPreview.svelte` (lines 5 to 7, 18 to 24, 188 to 197, 304 to 311)
+- Modify: `src/lib/components/EvmBurnPreview.svelte` (lines 5 to 6, 25 to 32, 368 to 377)
 - Modify: `src/lib/config.ts` (remove the temporary `FINALIZED_THRESHOLD` alias)
 
 **Interfaces:**
@@ -408,19 +408,19 @@ Run the Svelte autofixer on the file until clean:
 
 - [ ] **Step 3: Pass `speed` from `+page.svelte` into `TransferForm` and the previews**
 
-In the `<TransferForm ... />` usage (lines 129–137) add:
+In the `<TransferForm ... />` usage (lines 129 to 137) add:
 
 ```svelte
 bind:speed
 ```
 
-In `<EvmBurnPreview ... />` (lines 145–152) add:
+In `<EvmBurnPreview ... />` (lines 145 to 152) add:
 
 ```svelte
 {speed}
 ```
 
-In `<StellarBurnPreview ... />` (lines 156–162) add:
+In `<StellarBurnPreview ... />` (lines 156 to 162) add:
 
 ```svelte
 {speed}
@@ -428,7 +428,7 @@ In `<StellarBurnPreview ... />` (lines 156–162) add:
 
 - [ ] **Step 4: Make `StellarBurnPreview.svelte` speed-aware**
 
-Replace the `FINALIZED_THRESHOLD` / `STELLAR_MAX_FEE` config imports (lines 5–7) with the fee helpers + floor + speed type:
+Replace the `FINALIZED_THRESHOLD` / `STELLAR_MAX_FEE` config imports (lines 5 to 7) with the fee helpers + floor + speed type:
 
 ```ts
         STELLAR,
@@ -448,7 +448,7 @@ let feePromise = $derived(fetchBurnFee(STELLAR.domain, destDomain));
 let threshold = $derived(thresholdFor(speed));
 ```
 
-Where the burn amount is parsed in this component (the existing `amount`-parsing `$derived` near line 35), expose the parsed bigint (e.g. `parsedAmount`). Then render the `max_fee` and `minFinalityThreshold` rows (lines ~188–197 and ~304–311) inside an `{#await feePromise}` block:
+Where the burn amount is parsed in this component (the existing `amount`-parsing `$derived` near line 35), expose the parsed bigint (e.g. `parsedAmount`). Then render the `max_fee` and `minFinalityThreshold` rows (lines ~188 to 197 and ~304 to 311) inside an `{#await feePromise}` block:
 
 ```svelte
 {#await feePromise then rows}
@@ -468,7 +468,7 @@ Run the Svelte autofixer until clean.
 
 - [ ] **Step 5: Make `EvmBurnPreview.svelte` speed-aware**
 
-Replace the `EVM_MAX_FEE` / `FINALIZED_THRESHOLD` imports (lines 5–6) with:
+Replace the `EVM_MAX_FEE` / `FINALIZED_THRESHOLD` imports (lines 5 to 6) with:
 
 ```ts
         EVM_MAX_FEE,
@@ -505,9 +505,9 @@ Expected: PASS.
 
 Run: `npm run dev`, connect Freighter + an EVM wallet, then:
 
-1. **Stellar→Base, Fast** — preview shows `minFinalityThreshold 1000`, fee 0 bps, `maxFee` = floor (`100000`). Run it; attestation returns quickly; mint lands on Base.
-2. **Base→Stellar, Fast, $10** — preview shows `1000`, fee 1.3 bps, `maxFee` = `1800` (`ceil(10_000_000*1.3/10000)=1300 + 500`). Run it; burn does NOT revert with `InsufficientMaxFee`; `mint_and_forward` lands on Stellar.
-3. **Stellar→Base, Standard** — preview shows `2000`, `maxFee` = floor; confirms no regression of the original path.
+1. **Stellar→Base, Fast**, preview shows `minFinalityThreshold 1000`, fee 0 bps, `maxFee` = floor (`100000`). Run it; attestation returns quickly; mint lands on Base.
+2. **Base→Stellar, Fast, $10**, preview shows `1000`, fee 1.3 bps, `maxFee` = `1800` (`ceil(10_000_000*1.3/10000)=1300 + 500`). Run it; burn does NOT revert with `InsufficientMaxFee`; `mint_and_forward` lands on Stellar.
+3. **Stellar→Base, Standard**, preview shows `2000`, `maxFee` = floor; confirms no regression of the original path.
 
 - [ ] **Step 9: Commit**
 
@@ -524,16 +524,16 @@ Co-Authored-By: Claude Opus 4.8 (1M context) <noreply@anthropic.com>"
 
 **Spec coverage:**
 
-- Speed state in `+page.svelte`, toggle in `TransferForm` → Task 2 Step 4, Task 3 Steps 2–3. ✓
+- Speed state in `+page.svelte`, toggle in `TransferForm` → Task 2 Step 4, Task 3 Steps 2 to 3. ✓
 - `config.ts` types/thresholds → Task 1 Step 1. ✓
 - `circle/fees.ts` (fetch/memo/feeBps/threshold/computeMaxFee) → Task 1 Step 2. ✓
-- Burn fns take maxFee+threshold → Task 2 Steps 1–2. ✓
+- Burn fns take maxFee+threshold → Task 2 Steps 1 to 2. ✓
 - Runner computes + threads, resume untouched → Task 2 Step 3. ✓
-- Previews live fee via `$derived` + `{#await}`, no `$effect` → Task 3 Steps 4–5. ✓
+- Previews live fee via `$derived` + `{#await}`, no `$effect` → Task 3 Steps 4 to 5. ✓
 - ETA copy → Task 3 Step 2. ✓
 - Floor = per-source constant → Task 2 Step 3 (STELLAR_MAX_FEE / EVM_MAX_FEE). ✓
-- Verification (check/lint/manual, incl. 1.3 bps Base→Stellar) → Task 3 Steps 7–8. ✓
+- Verification (check/lint/manual, incl. 1.3 bps Base→Stellar) → Task 3 Steps 7 to 8. ✓
 
 **Placeholder scan:** Component-internal markup (toggle, preview rows) is described against exact line anchors with the runes/`{#await}` code shown; `parsedAmount` exposure is specified. No TBD/TODO. ✓
 
-**Type consistency:** `TransferSpeed`, `BurnFeeRow`, `fetchBurnFee`/`feeBpsFor`/`thresholdFor`/`computeMaxFee` signatures, and the `maxFee: bigint` / `finalityThreshold: number` burn-fn fields are used identically across Tasks 1–3. `FINALIZED_THRESHOLD` alias is introduced (Task 1) and removed (Task 3) — green check held in between. ✓
+**Type consistency:** `TransferSpeed`, `BurnFeeRow`, `fetchBurnFee`/`feeBpsFor`/`thresholdFor`/`computeMaxFee` signatures, and the `maxFee: bigint` / `finalityThreshold: number` burn-fn fields are used identically across Tasks 1 to 3. `FINALIZED_THRESHOLD` alias is introduced (Task 1) and removed (Task 3), green check held in between. ✓

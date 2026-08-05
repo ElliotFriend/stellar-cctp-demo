@@ -39,7 +39,7 @@ function patchGenerated(dir) {
 for (const { idl, out } of PROGRAMS) {
     const tmp = `${out}-tmp`;
     const codama = createFromRoot(rootNodeFromAnchor(JSON.parse(readFileSync(idl, 'utf8'))));
-    // The JS renderer writes files asynchronously — await it before relocating.
+    // The JS renderer writes files asynchronously, so await it before relocating.
     await codama.accept(renderVisitor(tmp, { formatCode: false }));
     // renderVisitor scaffolds a package: <tmp>/src/generated/<modules>. Lift the
     // module dir up to OUT so consumers import from a clean per-program path.

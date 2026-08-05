@@ -24,7 +24,7 @@
 
     // The outbound burn preview, reused for either destination. Pass EVM
     // fields for a Stellar→EVM burn, or `solanaRecipient` (a Solana owner
-    // address) for a Stellar→Solana burn — the two are mutually exclusive.
+    // address) for a Stellar→Solana burn. The two are mutually exclusive.
     let {
         stellarAddress,
         evmRecipient,
@@ -64,13 +64,13 @@
         })(),
     );
 
-    // EVM-only chain config — undefined for a Solana destination. Every read is
+    // EVM-only chain config, undefined for a Solana destination. Every read is
     // guarded by `toSolana` (template + deriveds) so it never indexes with undefined.
     let chain = $derived(toSolana ? undefined : EVM_CHAINS[evmChainId!]);
 
     // Destination domain: Solana (5) or the selected EVM chain's domain.
     let destDomain = $derived(toSolana ? SOLANA.domain : EVM_CHAINS[evmChainId!].domain);
-    // Route-keyed fee promise — re-runs when the route changes, NOT per keystroke.
+    // Route-keyed fee promise, re-runs when the route changes, NOT per keystroke.
     let feePromise = $derived(fetchBurnFee(STELLAR.domain, destDomain));
     let threshold = $derived(thresholdFor(speed));
 
@@ -99,17 +99,17 @@
     // forwarding service fee), keyed by route (works for the Solana dest too).
     let forwardFeePromise = $derived(fetchForwardFee(STELLAR.domain, destDomain));
 
-    // The exact 32-byte hookData submitted on-chain, rendered as hex — single
+    // The exact 32-byte hookData submitted on-chain, rendered as hex. The single
     // source of truth is the encoder in cctp.ts.
     const hookDataHex = toHex(encodeCctpForwardHookData());
 
-    // mint_recipient (32 bytes): an EVM address left-padded to 32, OR — for a
-    // Solana destination — the recipient's Solana USDC ATA (async; resolved via
+    // mint_recipient (32 bytes): an EVM address left-padded to 32, OR (for a
+    // Solana destination) the recipient's Solana USDC ATA (async; resolved via
     // {#await} in the template).
     let mintRecipientHex = $derived(evmRecipient ? pad(evmRecipient, { size: 32 }) : undefined);
     let solanaAtaPromise = $derived(solanaRecipient ? solanaAtaToBytes32(solanaRecipient) : null);
 
-    // 32 zero bytes signals "open" — anyone can call receiveMessage on the
+    // 32 zero bytes signals "open", so anyone can call receiveMessage on the
     // destination. Restricting it to a specific caller is a different mode we
     // don't expose in the demo.
     const ZERO_BYTES_32_HEX = `0x${'0'.repeat(64)}` as const;

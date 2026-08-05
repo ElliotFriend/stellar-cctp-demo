@@ -9,7 +9,7 @@ set -euo pipefail
 command -v rustc >/dev/null 2>&1 || \
   curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
 
-# ── 2. Solana CLI (Anza/Agave — the maintained fork of the old Solana Labs CLI)
+# ── 2. Solana CLI (Anza/Agave, the maintained fork of the old Solana Labs CLI)
 # Gives you: solana, solana-keygen, solana-test-validator (local chain).
 # Analogous to the `stellar` CLI.
 sh -c "$(curl -sSfL https://release.anza.xyz/stable/install)"
@@ -29,7 +29,7 @@ if [ ! -f "$HOME/.config/solana/id.json" ]; then
 fi
 echo "CLI address: $(solana address)"
 
-# ── 5. Fund with devnet SOL (gas). ~1–2 SOL is plenty. ───────────────────────
+# ── 5. Fund with devnet SOL (gas). ~1-2 SOL is plenty. ───────────────────────
 # Rate-limited; re-run if it fails, or use https://faucet.solana.com
 solana airdrop 2 || true
 echo "SOL balance: $(solana balance)"
@@ -39,7 +39,7 @@ echo "SOL balance: $(solana balance)"
 #   https://faucet.circle.com
 # Paste your CLI address above, or your Phantom address (set Phantom to Devnet).
 # USDC lives in an Associated Token Account (ATA), not on the wallet address
-# directly — the faucet/first transfer creates it for you.
+# directly; the faucet/first transfer creates it for you.
 echo
 echo "Next: grab devnet USDC from https://faucet.circle.com (network: Solana Devnet)"
 echo "Then verify token accounts with:  spl-token accounts   (needs: solana-install spl-token, optional)"

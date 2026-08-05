@@ -2,7 +2,7 @@
 
 Date: 2026-06-24 (resolved 2026-07-09)
 Branch: `experiment/forwarder-stellar-source`
-Status: **RESOLVED** — Circle enabled outbound forwarding; verified working
+Status: **RESOLVED**. Circle enabled outbound forwarding; verified working
 end-to-end on 2026-07-09 (EVM destinations) and 2026-07-24 (Solana destination).
 See [Resolution](#resolution-2026-07-09). Our implementation was correct
 throughout; the gap was entirely Circle-side.
@@ -17,7 +17,7 @@ all: `hookData` = `0x636374702d666f727761726400000000000000000000000000000000000
 mint recipient `0xb636ce5b2f8959978568a2c9865da750811e273c`, forwarding-fee
 collector `0xc17d06b66fb2f308bb3af99231a45380a28563a2`.
 
-**Run 1 — 2026-07-09 ~17:35 UTC (first confirmation, two-tx path)**
+**Run 1, 2026-07-09 ~17:35 UTC (first confirmation, two-tx path)**
 
 - **Stellar → Arc** (domain 26), 5.0 USDC, minted 4.969225 (fee 0.030775)
     - burn: `245956ca8688a88fa8e1e6db3eba33e8bdcee24834db202ab858e4f9e15ccd42`
@@ -26,23 +26,23 @@ collector `0xc17d06b66fb2f308bb3af99231a45380a28563a2`.
     - burn: `9f6b909c1e76be89d77dddc9c1bcfa93496d44b6386cbc0f149991a0409e2bf0`
     - forward mint (Base Sepolia): `0x1d979cfcc797c670df983f5e033bc328838e958cf990b579d6a55c9ab909907c`
 
-**Run 2 — 2026-07-09 ~21:00 UTC (wrapper `approve_and_deposit_with_hook` validated)**
+**Run 2, 2026-07-09 ~21:00 UTC (wrapper `approve_and_deposit_with_hook` validated)**
 
-- **Stellar → Arc** (domain 26), 2.9 USDC, minted 2.882766 (fee 0.017234) — _two-tx forwarder_
+- **Stellar → Arc** (domain 26), 2.9 USDC, minted 2.882766 (fee 0.017234), _two-tx forwarder_
     - burn (`deposit_for_burn_with_hook` on TMM): `e16ae34b61c596a889852d636e0ae9cd44641293560caabb05ff06ead078c9e3`
     - forward mint (Arc): `0x2e744c4ad065589ea2e92c543cdb45b7c40c48ae9644a63c1fba02521243c5ca`
-- **Stellar → Base** (domain 6), 2.8 USDC, minted 2.595982 (fee 0.204018) — _1-tx wrapper forwarder_
+- **Stellar → Base** (domain 6), 2.8 USDC, minted 2.595982 (fee 0.204018), _1-tx wrapper forwarder_
     - burn (`approve_and_deposit_with_hook` on wrapper `CDC4EGIJSQU4I7LBER3CRMSTBAVR6JMCQXKJHZZU7WB2R32WQJDGKTN6`): `b22f1c922c43bf725bc295c701aaa867129f9eab0b68b555786b8cbcd1b2d98a`
     - forward mint (Base Sepolia): `0x514e161eec728a0c6e4ce8f64f9bf0b2b1b2144b9da6bb50224c52c71f7483bb`
 
-**Run 3 — 2026-07-24 (Solana destination — first non-EVM forward)**
+**Run 3, 2026-07-24 (Solana destination, first non-EVM forward)**
 
 - **Stellar → Solana** (domain 5), 3.0 USDC, `maxFee` 128946, `feeExecuted` 128946
     - burn (Stellar testnet): `0d4fcd21ce8cfbe98f3e2bc9441a472c7cf9e28e886e516fbabfd696dc0b09aa`
     - nonce: `0x6ba6ec6938fdd4241513ba6c00f8df18456b20ea8b199e031f9eb46d8d7633d0`
     - `forwardState` COMPLETE; forward mint (Solana devnet, `finalized`, `err: null`): `3WertUfbKQA22CobQ7uh3mKDQegfw5ZKGKPsdpk45gRPq8PCiGZddfkgiKtpLFrkvcoYye9jnf5awRevKqfj1xqF`
     - `destinationCaller` zero (all-1s system pubkey), `finalityThresholdExecuted` 2000
-    - Iris surfaces the message-envelope recipient as the Solana TokenMessengerMinter program (`CCTPV2vP…gUMQe`), _not_ the end ATA — the real `mintRecipient` (the recipient's USDC ATA, set by `runStellarToSolanaForwarded` via `solanaAtaToBytes32`) rides in the burn-message body, and the relayer delivered there (recipient balance rose, no user tx)
+    - Iris surfaces the message-envelope recipient as the Solana TokenMessengerMinter program (`CCTPV2vP…gUMQe`), _not_ the end ATA. The real `mintRecipient` (the recipient's USDC ATA, set by `runStellarToSolanaForwarded` via `solanaAtaToBytes32`) rides in the burn-message body, and the relayer delivered there (recipient balance rose, no user tx)
 
 ## Goal
 
@@ -55,10 +55,10 @@ a supported forwarder chain.
 
 - Burn with `hookData` = the 32-byte `cctp-forward` magic
   (`0x636374702d666f72776172640000000000000000000000000000000000000000`
-  = ascii "cctp-forward" in bytes 0–23, u32 version 0 in 24–27, u32 length 0 in
-  28–31).
+  = ascii "cctp-forward" in bytes 0 to 23, u32 version 0 in 24 to 27, u32 length 0 in
+  28 to 31).
 - `maxFee` must cover protocol fee (bps of amount) + the forwarding fee.
-- `destinationCaller` **must be zero** — setting it _disables_ forwarding
+- `destinationCaller` **must be zero**, setting it _disables_ forwarding
   (Circle docs: "Forwarding Service doesn't support forwarding ... when
   `destinationCaller` is set").
 - No API registration; the relayer watches source chains for the magic and
@@ -71,12 +71,12 @@ a supported forwarder chain.
 Burn succeeded, Iris attested, but no relayer mint. Decoded BurnMessage from the
 Fast attempt confirmed everything on our side was correct:
 
-- `hookData` = `cctp-forward` magic — present and correct.
-- `destinationCaller` = zero — correct for forwarding.
-- `maxFee` = 212769 (6-dp, ~$0.21) — ample for the ~$0.20 forward fee.
-- `feeExecuted` = **0** — the relayer never processed it (no forwarding fee
+- `hookData` = `cctp-forward` magic, present and correct.
+- `destinationCaller` = zero, correct for forwarding.
+- `maxFee` = 212769 (6-dp, ~$0.21), ample for the ~$0.20 forward fee.
+- `feeExecuted` = **0**, the relayer never processed it (no forwarding fee
   taken).
-- `finalityThresholdExecuted` = 2000 despite `minFinalityThreshold` = 1000 —
+- `finalityThresholdExecuted` = 2000 despite `minFinalityThreshold` = 1000.
   Stellar attests at finalized regardless. This is expected, not a limitation:
   Stellar finalizes in seconds, so Fast Transfer (mint-before-finality for a fee)
   is moot and the chain only offers Standard (same as Arc, Avalanche, and other
@@ -107,7 +107,7 @@ forwarding by _destination_.
 
 1. **The forwarder consumes ~the full `maxFee`** (feeExecuted ≈ maxFee on both
    EVM runs, including our arbitrary buffer). Unlike standard CCTP (feeExecuted
-   usually < maxFee), so size `maxFee` tightly to the quote — padding is paid.
+   usually < maxFee), so size `maxFee` tightly to the quote; padding is paid.
    `forwardedMaxFeeStellar` was tightened accordingly: protocol-bps + forwardFee
    ×10 (6-dp→7-dp unit conversion) + a tiny fixed margin, no large floor.
 2. **forwardFee ≈ destination gas**, and it varies a lot by destination chain
@@ -115,17 +115,17 @@ forwarding by _destination_.
 3. **Stellar→EVM forwarder support is the only viable direction** to retry:
    EVM→Stellar is hard-blocked ("destination does not support forwarding").
 
-## Second trial: Stellar→Ethereum Sepolia — also NOT forwarded
+## Second trial: Stellar→Ethereum Sepolia, also NOT forwarded
 
 Added Ethereum Sepolia (domain 0) as a destination and re-ran the forwarder
 flow. Same outcome, decoded from the burn message (Stellar 27 → Ethereum 0):
 
 - `hookData` = `cctp-forward`, `destinationCaller` = 0, recipient =
-  TokenMessengerV2 — all correct.
-- amount = 2,000,000 ($2.00); `maxFee` = 1,445,108 (6-dp norm, ~$1.445) —
+  TokenMessengerV2, all correct.
+- amount = 2,000,000 ($2.00); `maxFee` = 1,445,108 (6-dp norm, ~$1.445),
   ample for the ~$1.45 Ethereum forward fee.
-- `feeExecuted` = **0** — relayer did not process it.
-- `finalityThresholdExecuted` = 2000 despite `minFinalityThreshold` = 1000 —
+- `feeExecuted` = **0**, relayer did not process it.
+- `finalityThresholdExecuted` = 2000 despite `minFinalityThreshold` = 1000.
   Stellar attests at finalized (consistent with the Base run); expected for a
   fast-finality chain where Fast Transfer is moot, not a deficiency.
 - Raw attestation = two concatenated 65-byte attester signatures (valid), so the
@@ -135,17 +135,17 @@ flow. Same outcome, decoded from the burn message (Stellar 27 → Ethereum 0):
 So outbound forwarding fails identically against **both** supported
 destinations (Base and Ethereum Sepolia). Combined with the EVM↔EVM control
 succeeding, this isolates the cause to Circle's relayer not watching a **Stellar
-source** — not a destination, fee, threshold, caller, or encoding issue on our
+source**, not a destination, fee, threshold, caller, or encoding issue on our
 side.
 
-## Third trial: flat $0.20 service fee added to maxFee — still NOT forwarded
+## Third trial: flat $0.20 service fee added to maxFee, still NOT forwarded
 
 Hypothesis: the quoted `forwardFee` is destination gas only, and Circle's docs
 cite a flat ~$0.20 forwarding *service* fee on all chains that the quote might
-omit — leaving the relayer silently underpaid. Folded a flat $0.20
+omit, leaving the relayer silently underpaid. Folded a flat $0.20
 (`2_000_000` in 7-dp Stellar subunits) into `forwardedMaxFeeStellar` and re-ran.
 
-Two burns, Stellar→Arc (26) and Stellar→Base (6). The add landed correctly —
+Two burns, Stellar→Arc (26) and Stellar→Base (6). The add landed correctly.
 maxFee in the burn message normalizes 7-dp→6-dp (÷10), so e.g. the Base burn
 carried maxFee = 403,716 (~$0.40 = ~$0.20 forwardFee + $0.20 service + margin).
 Decimals verified sound: `amount` and `maxFee` are both 6-dp-normalized in the
@@ -165,10 +165,10 @@ outbound message to a working EVM↔EVM forward (Base→Eth, control):
 
 Two structural tells beyond `feeExecuted`:
 
-1. **`forwardState` is entirely absent** on the Stellar message — the EVM burn
+1. **`forwardState` is entirely absent** on the Stellar message, the EVM burn
    has it because the message entered the forwarding pipeline. Absent = never
    enrolled. Circle's API surfaces no forward lifecycle for a Stellar source.
-2. **`decodedMessageBody` = `null` and `sender` = `null`** — Iris's own decoder
+2. **`decodedMessageBody` = `null` and `sender` = `null`**. Iris's own decoder
    choked on the Stellar source.s burn body (decoded the EVM one fully). Stellar
    source is second-class even in the parsing layer, not just the relayer.
 
@@ -180,12 +180,12 @@ Source messages for the record:
 Aside (not a forwarding signal): Circle's supported-chains table lists Fast
 Transfer as **N/A for Stellar**, which explains every outbound burn
 attesting at threshold 2000 regardless of `minFinalityThreshold`. This is
-expected — Stellar finalizes in seconds, so Fast Transfer (mint-before-finality
+expected. Stellar finalizes in seconds, so Fast Transfer (mint-before-finality
 for a fee) is moot; the chain only offers Standard, same as Arc, Avalanche, and
 other fast-finality chains. Standard _is_ the fast path. It is orthogonal to the
 forwarding gap, not corroboration of it.
 
-The $0.20 add was reverted — `forwardedMaxFeeStellar` is back to
+The $0.20 add was reverted, `forwardedMaxFeeStellar` is back to
 `protocol + forwardFee×10 + margin`. maxFee was moved twice (tightened, then
 +$0.20) with zero change in `feeExecuted`/`forwardState`, proving maxFee was
 never the lever.
@@ -194,32 +194,32 @@ never the lever.
 
 Cross-checked the on-chain findings against Circle's published spec
 (`https://developers.circle.com/openapi/cctp.yaml`). It corroborates the
-wrap-up from a different angle — Circle's own contract says the fee was fine and
+wrap-up from a different angle. Circle's own contract says the fee was fine and
 no forward was ever created:
 
 1. **The $0.20 service-fee add was double-counting.** `forwardFee` is documented
    as *"Gas **and forwarding fees** for using the Circle Forwarder in USDC minor
    units"*, with `high` = *"the high gas estimate **plus forwarding fee**"*. The
-   quoted fee already includes the service fee — our flat $0.20 add sat on top of
+   quoted fee already includes the service fee, our flat $0.20 add sat on top of
    a number that already had it. (Harmless, since the relayer never ran; reverted
    regardless.)
 2. **maxFee semantics confirm folding `forwardFee` in is correct.** `maxFee` =
    _"Maximum fee to pay on the **destination domain**, in units of `burnToken`"_;
    `feeExecuted` = the actual destination-domain fee charged. maxFee bounds the
-   destination-side fee the forwarder takes — exactly what `forwardedMaxFeeStellar`
+   destination-side fee the forwarder takes, exactly what `forwardedMaxFeeStellar`
    sizes it to.
 3. **`delayReason` proves maxFee was never the blocker.** The spec defines a
    `DelayReason` enum whose `insufficient_fee` value means _"The max fee specified
    is insufficient for fast processing."_ Our Stellar message returned
-   `delayReason: null` — Circle did not flag the fee as low. If maxFee were the
+   `delayReason: null`. Circle did not flag the fee as low. If maxFee were the
    problem, this field would say `insufficient_fee`.
 4. **`forwardState` absent = never enrolled.** `forwardState` is an optional
    free-form string (example `PENDING`); the example response pairs it with
    `forwardTxHash`. Iris attaches both only when a forward record exists. Our
-   Stellar message has neither field — no record was ever created.
+   Stellar message has neither field, no record was ever created.
 5. **The API surface is EVM-shaped by construction.** `transactionHash` /
    `sourceTxHash` are pattern-locked to `^0x[a-fA-F0-9]{64}$` (Stellar hashes are
-   64 hex _without_ `0x` — ours didn't match, though the endpoint accepted them);
+   64 hex _without_ `0x`, ours didn't match, though the endpoint accepted them);
    the `Address` schema and message decoder assume EVM-style addresses, which is
    why `decodedMessageBody` / `sender` came back `null` for the Stellar source
    burn. Nothing in the spec enumerates supported forwarder sources or models a
@@ -230,31 +230,31 @@ no forward was ever created:
 - Our forwarding implementation is correct (proven by the EVM↔EVM control).
 - Outbound forwarding is unsupported by Circle's relayer on sandbox as of
   2026-06-24, across all tested destinations. The fee API quoting the route and
-  the docs gating only by destination are both misleading — the relayer simply
+  the docs gating only by destination are both misleading, the relayer simply
   doesn't act on a Stellar source.
 - Aside, not a forwarding signal: outbound burns always attest at
   finalized / threshold 2000, and Circle's table lists Fast Transfer as **N/A for
-  Stellar**. Expected — Stellar finalizes in seconds, so Fast Transfer is moot;
+  Stellar**. Expected. Stellar finalizes in seconds, so Fast Transfer is moot;
   Standard is the only (and effectively the fast) path, same as Arc/Avalanche.
   Orthogonal to the forwarding gap.
 - Cleanest proof the relayer never enrolls a Stellar source: Iris omits the
   `forwardState`/`forwardTxHash` fields entirely (present + `CONFIRMED` on a
   working EVM forward) and returns `decodedMessageBody`/`sender` = `null` for the
-  outbound message. maxFee is not the lever — moved twice with no effect on
+  outbound message. maxFee is not the lever, moved twice with no effect on
   `feeExecuted` (stayed 0) or `forwardState` (stayed absent).
 - Forwarder economics: `feeExecuted` ≈ full `maxFee`; forward fee tracks
-  destination gas (~$0.20 Base, ~$1.45 Ethereum) — size `maxFee` tightly.
+  destination gas (~$0.20 Base, ~$1.45 Ethereum), size `maxFee` tightly.
 
 Worth reporting to Circle: confirm whether/when outbound forwarding will be
 enabled (the relayer watching a Stellar source). Outbound Fast is _not_ a
-gap to chase — Fast Transfer is moot on a fast-finality chain. Parked until then.
+gap to chase, Fast Transfer is moot on a fast-finality chain. Parked until then.
 The Ethereum Sepolia chain addition is a separate, general-purpose commit
 (cherry-pickable onto `main`).
 
 ## Resolution (2026-07-09)
 
 Circle stated the forwarder issue "has been fixed." Re-ran the exact same flow
-from the same source account (`GA4XQJFT…`, Stellar domain 27) — two burns,
+from the same source account (`GA4XQJFT…`, Stellar domain 27), two burns,
 Stellar→Arc (26) and Stellar→Base (6), unchanged code. **Both forwarded and
 minted with no manual `receiveMessage`.** Confirmed on-chain on both destinations.
 
@@ -270,7 +270,7 @@ minted with no manual `receiveMessage`.** Confirmed on-chain on both destination
   (amount − feeExecuted = minted).
 
 Every structural tell from the third trial has flipped for the outbound
-message — the mirror image of the table in that section:
+message, the mirror image of the table in that section:
 
 | field                | 2026-06-24 (ignored) | 2026-07-09 (forwarded)  |
 | -------------------- | -------------------- | ----------------------- |
@@ -280,16 +280,16 @@ message — the mirror image of the table in that section:
 | `feeExecuted`        | 0                    | **= maxFee** (full)     |
 
 Iris now enrolls the outbound burn into the forwarding pipeline and its
-decoder parses the outbound body — both the relayer and parsing layers were
+decoder parses the outbound body. Both the relayer and parsing layers were
 fixed. `feeExecuted` = full `maxFee` on both legs, consistent with the earlier
 EVM-control finding (the forwarder consumes ~the full cap; size `maxFee` tightly).
 
 One thing to keep an eye on, not a bug: the Base leg's `maxFee` (203987, ~$0.20,
 ~4% of a $5.1 transfer) was ~6.6× the Arc leg's (30775, ~0.6%), and `feeExecuted`
-= `maxFee` on both — so any slack in the cap is paid, not refunded. Confirm the
+= `maxFee` on both, so any slack in the cap is paid, not refunded. Confirm the
 Base cap is intentionally that much looser than Arc's.
 
-`finalityThresholdExecuted` = 2000 on both, unchanged and expected — Stellar
+`finalityThresholdExecuted` = 2000 on both, unchanged and expected. Stellar
 attests at finalized (Fast Transfer is N/A on a fast-finality chain).
 
 ### Wrapper path forwarding (2026-07-09 ~21:00)
@@ -305,7 +305,7 @@ forwarding now runs through either the two-tx path or the wrapper contract's
 - **Wrapper forwarder → Base** (`approve_and_deposit_with_hook`, one Soroban tx):
   2.8 USDC burned, relayer minted 2.595982 (fee 0.204018), `forwardState`
   CONFIRMED (destination mint landed, status 1; flips to COMPLETE after Base
-  finality). This was the first on-chain run of the wrapper + forwarder combo — it
+  finality). This was the first on-chain run of the wrapper + forwarder combo. It
   works: the wrapper carries the `cctp-forward` hookData through and the relayer
   picks it up identically to the direct TMM burn.
 
@@ -316,7 +316,7 @@ Follow-up: report the confirmed fix back to Circle in Discord (pending).
 
 ### Solana destination forwarding (2026-07-24)
 
-Extended the forwarder past EVM to a **Solana devnet** destination — worth
+Extended the forwarder past EVM to a **Solana devnet** destination, worth
 checking explicitly because Circle's published forwarding-destination list
 doesn't (yet) name Solana. It works: the sandbox relayer services
 Stellar→Solana exactly as it does Stellar→EVM.
@@ -329,18 +329,18 @@ Stellar→Solana exactly as it does Stellar→EVM.
       `finalityThresholdExecuted` 2000, `delayReason` null.
     - forward mint (Solana devnet):
       `3WertUfbKQA22CobQ7uh3mKDQegfw5ZKGKPsdpk45gRPq8PCiGZddfkgiKtpLFrkvcoYye9jnf5awRevKqfj1xqF`
-      — `getSignatureStatuses` → `confirmationStatus: finalized`, `err: null`,
+     , `getSignatureStatuses` → `confirmationStatus: finalized`, `err: null`,
       `status: Ok`. No user `receiveMessage`.
 
 Same invariants as the EVM legs (`cctp-forward` hookData, `destinationCaller`
-zero, `feeExecuted` == `maxFee`), and the economics carry over — the full
+zero, `feeExecuted` == `maxFee`), and the economics carry over. The full
 `maxFee` was consumed.
 
 One Solana-specific _reporting_ wrinkle (not a bug): Iris's decoded message
 shows the envelope `recipient` / `mintRecipient` as the Solana
 **TokenMessengerMinter program** (`CCTPV2vPZJS2u2BBsUoscuikbYjnpFmbFsvVuJdgUMQe`),
-not the recipient's ATA. That's the message-level recipient — a CCTP token
-message is always addressed to the destination TokenMessenger — while the real
+not the recipient's ATA. That's the message-level recipient, a CCTP token
+message is always addressed to the destination TokenMessenger, while the real
 `mintRecipient` (the recipient's USDC ATA, set by `runStellarToSolanaForwarded`
 via `solanaAtaToBytes32`) lives in the burn-message body. The relayer delivered
 there (the recipient's USDC balance rose with no user tx). Consistent with

@@ -12,14 +12,14 @@
 
 - Svelte 5 runes, **no `$effect`**; browser code guarded with `browser`.
 - `@solana/kit` pinned `^6.5.0`. Generated code must import from `@solana/kit` (the gen script already remaps `@solana/program-client-core` → `@solana/kit/program-client-core` and strips `process.env.NODE_ENV`).
-- Standard finality only (`minFinalityThreshold = STANDARD_THRESHOLD = 2000`). outbound burn fee uses the **7-dp `STELLAR_MAX_FEE`** floor and `fetchBurnFee(STELLAR.domain, SOLANA.domain)` — NOT `SOLANA_MAX_FEE`.
-- **Fund-safety:** the burn `mintRecipient` is the recipient's **USDC ATA** (32 raw bytes, left-aligned — Solana pubkeys fill all 32), NOT the wallet and NOT right-aligned. `destinationCaller = ZERO_BYTES_32` (permissionless mint).
+- Standard finality only (`minFinalityThreshold = STANDARD_THRESHOLD = 2000`). Outbound burn fee uses the **7-dp `STELLAR_MAX_FEE`** floor and `fetchBurnFee(STELLAR.domain, SOLANA.domain)`, NOT `SOLANA_MAX_FEE`.
+- **Fund-safety:** the burn `mintRecipient` is the recipient's **USDC ATA** (32 raw bytes, left-aligned. Solana pubkeys fill all 32), NOT the wallet and NOT right-aligned. `destinationCaller = ZERO_BYTES_32` (permissionless mint).
 - Addresses (config): Stellar domain 27, USDC `CBIELTK6YBZJU5UP2WWQEUCYKLPU6AUNZ2BQ4WWFEIE3USCIHMXQDAMA`, TMM `CDNG7HXAPBWICI2E3AUBP3YZWZELJLYSB6F5CC7WLDTLTHVM74SLRTHP`. Solana domain 5, USDC mint `4zMMC9srt5Ri5X14GAgXhaHii3GnPAEERYPJgZJDncDU`, TMM program `CCTPV2vPZJS2u2BBsUoscuikbYjnpFmbFsvVuJdgUMQe`, MessageTransmitter program `CCTPV2Sm4AdWt5296sk4P66VBZ7bEhcARwFaaS9YPbeC`.
 - `pnpm check` + `pnpm lint` pass; run `svelte-autofixer` on `.svelte` files.
 
-**CCTP V2 message layout** (byte offsets — needed for the mint): version 0–3, sourceDomain 4–7, destinationDomain 8–11, **nonce 12–43 (32 bytes)**, sender 44–75, recipient 76–107, destinationCaller 108–139, minFinalityThreshold 140–143, finalityThresholdExecuted 144–147, **burn message body from 148**. Burn body: version 0–3 then **burnToken at body 4–35** → absolute message bytes **152–183**.
+**CCTP V2 message layout** (byte offsets, needed for the mint): version 0 to 3, sourceDomain 4 to 7, destinationDomain 8 to 11, **nonce 12 to 43 (32 bytes)**, sender 44 to 75, recipient 76 to 107, destinationCaller 108 to 139, minFinalityThreshold 140 to 143, finalityThresholdExecuted 144 to 147, **burn message body from 148**. Burn body: version 0 to 3 then **burnToken at body 4 to 35** → absolute message bytes **152 to 183**.
 
-**Testing note:** no test runner; the spec's verification is a real Stellar-testnet→Solana-devnet transfer. Tasks 1–4 gate on `pnpm check`; Task 5 is the manual run. `pnpm check` proves nothing about the CPI account list — only the live run does. The mint task is expected to iterate.
+**Testing note:** no test runner; the spec's verification is a real Stellar-testnet→Solana-devnet transfer. Tasks 1 to 4 gate on `pnpm check`; Task 5 is the manual run. `pnpm check` proves nothing about the CPI account list, only the live run does. The mint task is expected to iterate.
 
 ---
 
@@ -155,7 +155,7 @@ import { SOLANA } from '$lib/config';
 
 // A Solana owner's USDC ATA as raw 32 bytes, for use as the CCTP burn
 // mintRecipient when the destination is Solana. Solana pubkeys already fill
-// all 32 bytes (left-aligned) — do NOT right-pad like the EVM helper.
+// all 32 bytes (left-aligned), do NOT right-pad like the EVM helper.
 export async function solanaAtaToBytes32(ownerAddress: string): Promise<Uint8Array> {
     const [ata] = await findAssociatedTokenPda({
         owner: address(ownerAddress),
@@ -173,11 +173,11 @@ In `src/lib/stellar/cctp.ts`, after `depositForBurnToEvm` (mirrors it; recipient
 ```ts
 // Burn USDC on Stellar bound for Solana (domain 5). mintRecipient is the
 // recipient's Solana USDC ATA as raw 32 bytes (see solanaAtaToBytes32).
-// destinationCaller stays zero — the Solana mint is permissionless. No hook.
+// destinationCaller stays zero, the Solana mint is permissionless. No hook.
 export async function depositForBurnToSolana(args: {
     caller: string;
     amount: bigint; // Stellar 7-decimal subunits
-    mintRecipient: Uint8Array; // 32 bytes — recipient's Solana USDC ATA
+    mintRecipient: Uint8Array; // 32 bytes, recipient's Solana USDC ATA
     maxFee: bigint;
     finalityThreshold: number;
 }): Promise<{ hash: string; sourceDomain: number }> {
@@ -242,7 +242,7 @@ git commit -m "feat: Stellar deposit_for_burn targeting Solana (domain 5)"
 - Consumes: generated `getReceiveMessageInstructionAsync` + `MESSAGE_TRANSMITTER_V2_PROGRAM_ADDRESS` (`./generated/message-transmitter`); `TOKEN_MESSENGER_MINTER_V2_PROGRAM_ADDRESS` (`./generated/token-messenger-minter`); `getCreateAssociatedTokenIdempotentInstructionAsync`, `findAssociatedTokenPda`, `TOKEN_PROGRAM_ADDRESS` (`@solana-program/token`); `address`, `getProgramDerivedAddress`, `getAddressEncoder`, `createNoopSigner`, `fetchEncodedAccount`, `AccountRole`, `type Instruction` (`@solana/kit`); `fetchTokenMessenger` decoder (`./generated/token-messenger-minter/accounts`); `solanaRpc`; `SOLANA`; `hexToBytes`/`Hex` (viem); `SolanaWallet`.
 - Produces: `receiveMessageOnSolana(args: { wallet: SolanaWallet; recipientOwner: string; message: Hex; attestation: Hex }): Promise<{ signature: string }>`.
 
-> **What the mint actually does (review correction):** on Solana the receive is NOT a `mint_to` — `handle_receive_finalized_message` **transfers USDC from Circle's shared `custody_token_account` to the recipient ATA** (and a fee to the fee-recipient ATA). So there is no mint account in the CPI list (correctly omitted), and success depends on Circle-side devnet state: the `token_pair(27, StellarUSDC)`, `remote_token_messenger(27)`, and a funded custody. **Pre-flight already run: `remote_token_messenger(27)` and `token_pair(27, StellarUSDC)` both EXIST on devnet** (and the `token_pair` seed encoding `["token_pair","27",decodeContract(usdc)]` is thereby confirmed). Custody funding can still cause a runtime failure — if the mint reverts with an insufficient-funds/custody error, that's Circle's devnet liquidity, not our code.
+> **What the mint actually does (review correction):** on Solana the receive is NOT a `mint_to`, `handle_receive_finalized_message` **transfers USDC from Circle's shared `custody_token_account` to the recipient ATA** (and a fee to the fee-recipient ATA). So there is no mint account in the CPI list (correctly omitted), and success depends on Circle-side devnet state: the `token_pair(27, StellarUSDC)`, `remote_token_messenger(27)`, and a funded custody. **Pre-flight already run: `remote_token_messenger(27)` and `token_pair(27, StellarUSDC)` both EXIST on devnet** (and the `token_pair` seed encoding `["token_pair","27",decodeContract(usdc)]` is thereby confirmed). Custody funding can still cause a runtime failure. If the mint reverts with an insufficient-funds/custody error, that's Circle's devnet liquidity, not our code.
 
 - [ ] **Step 1: Generalize the signer to take multiple instructions**
 
@@ -361,7 +361,7 @@ export async function receiveMessageOnSolana(args: {
     const custody = await pda(TMM, ['custody', new Uint8Array(enc.encode(mint))]);
     const tmmEventAuthority = await pda(TMM, ['__event_authority']);
 
-    // fee_recipient ATA — read TokenMessenger.feeRecipient from chain, derive its ATA.
+    // fee_recipient ATA, read TokenMessenger.feeRecipient from chain, derive its ATA.
     const tmAcct = await fetchTokenMessenger(solanaRpc, tokenMessenger);
     const [feeRecipientAta] = await findAssociatedTokenPda({
         owner: tmAcct.data.feeRecipient,
@@ -421,13 +421,13 @@ export async function receiveMessageOnSolana(args: {
 
 > **Fragile spots to reconcile at build/run (adversarial-review-informed):**
 >
-> - **(critical) event-CPI alignment.** `receive_message` uses `#[event_cpi]`, so MessageTransmitter's OWN `event_authority` (`["__event_authority"]` under the MT program) + `program` (the MT program address) must be the **last two fixed accounts** in `base.accounts`. Codama normally auto-resolves them — but **verify they're present** before appending the CPI accounts. If they're missing, every hand-appended CPI account is shifted by two and the tx fails cryptically. (This `event_authority` is the MT program's, distinct from the `tmmEventAuthority` in the CPI list, which is TMM's.)
+> - **(critical) event-CPI alignment.** `receive_message` uses `#[event_cpi]`, so MessageTransmitter's OWN `event_authority` (`["__event_authority"]` under the MT program) + `program` (the MT program address) must be the **last two fixed accounts** in `base.accounts`. Codama normally auto-resolves them, but **verify they're present** before appending the CPI accounts. If they're missing, every hand-appended CPI account is shifted by two and the tx fails cryptically. (This `event_authority` is the MT program's, distinct from the `tmmEventAuthority` in the CPI list, which is TMM's.)
 > - Generated `getReceiveMessageInstructionAsync` field names + which of authorityPda/usedNonce/messageTransmitter it auto-resolves (adjust per Task 1 Step 4).
 > - `receiver: TMM` as an `Address` is confirmed correct (deepwiki: `receiver` is an `UncheckedAccount`, and `authority_pda` seeds are `["message_transmitter_authority", receiver.key()]`).
 > - `fetchTokenMessenger` field name confirmed `feeRecipient`; its ATA (not the wallet) is `fee_recipient_token_account`.
 > - Account roles: signer flags come from the generated base ix; every hand-appended CPI account is non-signer (READONLY/WRITABLE only). `tokenMinter` is WRITABLE (matches Circle's client even though the Rust field isn't `mut`).
 >
-> The CPI account **order + roles below are a verified exact match to Circle's `test_client.ts`** — do not reorder them.
+> The CPI account **order + roles below are a verified exact match to Circle's `test_client.ts`**, do not reorder them.
 
 - [ ] **Step 3: Typecheck + commit**
 
@@ -509,7 +509,7 @@ async function runStellarToSolana(args: {
     const attest = await performStep<IrisMessage>('attesting', 'attest', async () => {
         const msg = await pollAttestation(STELLAR.domain, burnHash, {
             onProgress: ({ elapsedMs, status }) => {
-                patchStep('attest', { detail: `${Math.round(elapsedMs / 1000)}s — ${status}` });
+                patchStep('attest', { detail: `${Math.round(elapsedMs / 1000)}s, ${status}` });
             },
         });
         return { result: msg };
@@ -635,7 +635,7 @@ Run `svelte-autofixer` on the route until clean. Then `pnpm check && pnpm lint` 
 
 - [ ] **Step 3: End-to-end manual verification (the real gate)**
 
-Preconditions: Freighter on Stellar testnet with USDC + a trustline; Phantom on devnet with some SOL for the mint fee. (Phantom's USDC ATA need not pre-exist — the idempotent create handles it.)
+Preconditions: Freighter on Stellar testnet with USDC + a trustline; Phantom on devnet with some SOL for the mint fee. (Phantom's USDC ATA need not pre-exist, the idempotent create handles it.)
 
 1. `pnpm dev`, open `/solana-spike`, switch Direction to **Stellar → Solana**.
 2. Connect both wallets. Amount `5`. Burn (approve + burn prompts in Freighter).
@@ -648,13 +648,13 @@ Preconditions: Freighter on Stellar testnet with USDC + a trustline; Phantom on 
 
 ```bash
 git add src/routes/solana-spike/+page.svelte src/lib/components/SolanaPanel.svelte
-git commit -m "feat: /solana-spike direction toggle — Stellar -> Solana transfer"
+git commit -m "feat: /solana-spike direction toggle. Stellar -> Solana transfer"
 ```
 
 ---
 
 ## Verification summary
 
-- Tasks 1–4: `pnpm check` after each.
+- Tasks 1 to 4: `pnpm check` after each.
 - Task 5: a real 5-USDC Stellar-testnet→Solana-devnet transfer, confirmed by Phantom's devnet USDC balance.
-- Highest-risk, in order: (a) the `receiveMessage` CPI account list/order/roles (Task 3), (b) `used_nonce` (msg[12:44]) + `token_pair` remote-token (msg[152:184]) seeds, (c) fee-recipient ATA derivation. None are provable by typecheck — Task 5 is the gate. This is why an adversarial review of the account assembly precedes execution.
+- Highest-risk, in order: (a) the `receiveMessage` CPI account list/order/roles (Task 3), (b) `used_nonce` (msg[12:44]) + `token_pair` remote-token (msg[152:184]) seeds, (c) fee-recipient ATA derivation. None are provable by typecheck, Task 5 is the gate. This is why an adversarial review of the account assembly precedes execution.

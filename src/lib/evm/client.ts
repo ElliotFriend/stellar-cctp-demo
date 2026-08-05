@@ -6,7 +6,7 @@ const cache = new Map<EvmChainId, PublicClient>();
 // Arc's testnet RPC intermittently fails the CORS preflight. The same OPTIONS
 // request usually gets 200 with `access-control-allow-origin`, but every so
 // often it falls through to the node itself, which answers a bare JSON-RPC
-// `invalid params` 400 with no CORS headers at all — and failures come in
+// `invalid params` 400 with no CORS headers at all, and failures come in
 // bursts, so viem's retries land on the same bad path and the read surfaces as
 // `Failed to fetch`. Sending `text/plain` keeps the POST inside the CORS
 // "simple request" rules, so the browser issues no preflight and the broken

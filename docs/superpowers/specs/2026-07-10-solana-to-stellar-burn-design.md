@@ -1,4 +1,4 @@
-# Solana → Stellar CCTP burn path — design
+# Solana → Stellar CCTP burn path, design
 
 **Date:** 2026-07-10
 **Status:** approved, pre-implementation
@@ -11,7 +11,7 @@ existing `/solana-spike` route. This is the first real transfer path for Solana
 (the balance spike proved the wallet + RPC + ATA stack; see
 `2026-07-10-solana-balance-spike-design.md`).
 
-Scope is **Solana ↔ Stellar only** — this spec covers the Solana → Stellar
+Scope is **Solana ↔ Stellar only**. This spec covers the Solana → Stellar
 (burn-on-Solana) half. The reverse (Stellar → Solana) is a later spec.
 
 ## Context
@@ -19,7 +19,7 @@ Scope is **Solana ↔ Stellar only** — this spec covers the Solana → Stellar
 The repo already bridges Stellar ↔ EVM. The map that informs this design:
 
 - **Mint side is already built.** Completing a burn on Stellar is
-  `mintAndForward({ caller, message, attestation })` in `stellar/cctp.ts` — a
+  `mintAndForward({ caller, message, attestation })` in `stellar/cctp.ts`, a
   permissionless call to the `CctpForwarder` contract. The recipient is carried
   in the burn's `hookData`, not as a call argument. No new Stellar code.
 - **Attestation is already built.** `pollAttestation(sourceDomain, txHash, opts)`
@@ -29,11 +29,11 @@ The repo already bridges Stellar ↔ EVM. The map that informs this design:
 - **Orchestration is reusable.** `stores/transfer.svelte.ts` exposes
   `performStep`/`Step`/`Phase` machinery that is direction-agnostic.
   `runEvmToStellar` (burn → attest → mint) is the template to mirror.
-- **Recipient encoding is solved for EVM** and portable — see below.
+- **Recipient encoding is solved for EVM** and portable, see below.
 
 Solana → Stellar is _simpler_ than EVM → Stellar: Solana `deposit_for_burn`
 burns directly under the owner's signature via CPI, so there is **no approve
-step** — a single burn transaction (plus one ephemeral co-signer).
+step**, a single burn transaction (plus one ephemeral co-signer).
 
 The hard part is the one thing not yet built: constructing and signing the
 Solana `deposit_for_burn_with_hook` instruction (~15 accounts, several PDAs,
@@ -49,9 +49,9 @@ of hand-encoding a discriminator + borsh + a long account list.
 
 Rejected alternatives:
 
-- **Hand-roll with Kit** — minimal deps, but most error-prone on the ~15-account
+- **Hand-roll with Kit**, minimal deps, but most error-prone on the ~15-account
   list; the generated client removes that risk.
-- **Anchor + @solana/web3.js v1** — Circle's documented path, but drags a second
+- **Anchor + @solana/web3.js v1**. Circle's documented path, but drags a second
   Solana SDK into the Kit foundation just built. The consistency wart deliberately
   avoided when Wallet Standard was chosen over the legacy provider.
 
@@ -69,20 +69,20 @@ burn ATA, mint, ephemeral event-data) and args.
 | ------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `src/lib/solana/generated/`    | Codama-generated Kit client (typed instruction builder + PDA finders + program address). Committed. Regenerated via a documented script, not edited by hand.               |
 | `src/lib/stellar/recipient.ts` | **Extracted** `strkeyToBytes32` and `encodeStellarForwarderHookData` from `evm/cctp.ts` (pure `@stellar/stellar-sdk`, no viem). Imported by both `evm/cctp.ts` and Solana. |
-| `src/lib/solana/cctp.ts`       | `burnUsdcToStellar(args)` — derive ATA + PDAs, encode mintRecipient/destinationCaller/hookData, build → sign → submit, return `{ signature }`.                             |
+| `src/lib/solana/cctp.ts`       | `burnUsdcToStellar(args)`, derive ATA + PDAs, encode mintRecipient/destinationCaller/hookData, build → sign → submit, return `{ signature }`.                             |
 | `src/lib/solana/signer.ts`     | Bridge Wallet Standard `solana:signTransaction` for use with Kit, plus the ephemeral `message_sent_event_data` keypair co-signer.                                          |
 
 Modified:
 
-- `src/lib/solana/wallet.ts` — retain the Wallet Standard account on the connected
+- `src/lib/solana/wallet.ts`, retain the Wallet Standard account on the connected
   wallet so it can sign (today `SolanaWallet` holds only name/icon/address).
-- `src/lib/evm/cctp.ts` — swap the two moved helpers to imports from
+- `src/lib/evm/cctp.ts`, swap the two moved helpers to imports from
   `stellar/recipient.ts` (no behavior change).
-- `src/lib/config.ts` — add `Direction` member `'solana-to-stellar'`; add
+- `src/lib/config.ts`, add `Direction` member `'solana-to-stellar'`; add
   `SOLANA_MAX_FEE = 500n` (6-dp, mirroring `EVM_MAX_FEE`).
-- `src/lib/stores/transfer.svelte.ts` — add `runSolanaToStellar`; thread a
+- `src/lib/stores/transfer.svelte.ts`, add `runSolanaToStellar`; thread a
   `SolanaWallet` through `start`.
-- `src/routes/solana-spike/+page.svelte` + `SolanaPanel.svelte` — minimal burn
+- `src/routes/solana-spike/+page.svelte` + `SolanaPanel.svelte`, minimal burn
   harness.
 
 ## Codegen
@@ -97,16 +97,16 @@ has no runtime dep beyond `@solana/kit`, which is already present.
 
 Replicating the EVM burn invariant exactly (`evm/cctp.ts`):
 
-- `amount` — 6-dp USDC subunits.
-- `destinationDomain` — `STELLAR.domain` = 27.
-- `burnToken` — `SOLANA.usdc.mint`.
+- `amount`, 6-dp USDC subunits.
+- `destinationDomain`, `STELLAR.domain` = 27.
+- `burnToken`, `SOLANA.usdc.mint`.
 - `mintRecipient` = `destinationCaller` = `strkeyToBytes32(STELLAR.contracts.cctpForwarder)`
-  — the forwarder contract's raw 32 bytes. **These MUST be equal and MUST be the
+ , the forwarder contract's raw 32 bytes. **These MUST be equal and MUST be the
   forwarder**; any other value permanently bricks the funds. Implementation asserts
   a valid contract decode.
 - `maxFee` = `SOLANA_MAX_FEE` (500n, 6-dp).
 - `minFinalityThreshold` = `STANDARD_THRESHOLD` (2000).
-- `hookData` = `encodeStellarForwarderHookData(gAddress)` — carries the real
+- `hookData` = `encodeStellarForwarderHookData(gAddress)`, carries the real
   G-address recipient (24 magic zero bytes + version u32 + len u32 + ASCII strkey).
 
 Standard speed only for this spec; fast (threshold 1000 + fast fee) is deferred.
@@ -126,9 +126,9 @@ Standard speed only for this spec; fast (threshold 1000 + fast fee) is deferred.
 
 - `Direction` gains `'solana-to-stellar'`.
 - `runSolanaToStellar(args)` mirrors `runEvmToStellar` without the approve step:
-    1. **burn** — `performStep('burning','burn', … burnUsdcToStellar(...))` → signature.
-    2. **attest** — `performStep('attesting','attest', … pollAttestation(SOLANA.domain, signature, { onProgress }))`.
-    3. **mint** — `performStep('minting','mint', … mintAndForward({ caller: stellarAddress, message: hexToBytes(attest.message), attestation: hexToBytes(attest.attestation) }))`, then phase `'done'`.
+    1. **burn**, `performStep('burning','burn', … burnUsdcToStellar(...))` → signature.
+    2. **attest**, `performStep('attesting','attest', … pollAttestation(SOLANA.domain, signature, { onProgress }))`.
+    3. **mint**, `performStep('minting','mint', … mintAndForward({ caller: stellarAddress, message: hexToBytes(attest.message), attestation: hexToBytes(attest.attestation) }))`, then phase `'done'`.
 - `start` accepts a `SolanaWallet` and the destination G-address; dispatches to
   `runSolanaToStellar` when `direction === 'solana-to-stellar'`.
 - Fee route: `fetchBurnFee(SOLANA.domain, STELLAR.domain)`; `maxFee` via
@@ -169,7 +169,7 @@ Green means the full Solana → Stellar path works end-to-end.
 
 ## Out of scope
 
-- Stellar → Solana (reverse direction) — later spec.
+- Stellar → Solana (reverse direction), later spec.
 - Fast-transfer speed on Solana.
 - Main-page UI integration / `Direction` selector in the real panels.
 - Any EVM ↔ Solana pairing (scope is Solana ↔ Stellar).

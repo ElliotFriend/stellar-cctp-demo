@@ -23,8 +23,8 @@ export const STELLAR = {
     },
 } as const;
 
-// Solana CCTP V2. Program IDs are deterministic — identical on devnet and
-// mainnet — so only the cluster + USDC mint differ. Domain 5. This demo only
+// Solana CCTP V2. Program IDs are deterministic (identical on devnet and
+// mainnet), so only the cluster + USDC mint differ. Domain 5. This demo only
 // bridges Solana <-> Stellar, so Solana is both a burn source and a mint
 // destination but never pairs with the EVM chains.
 export const SOLANA = {
@@ -43,7 +43,7 @@ export const SOLANA = {
 } as const;
 
 // CCTP V2 deploys to the same addresses on every supported EVM chain via
-// deterministic deployment, so these are constants — only USDC and the
+// deterministic deployment, so these are constants. Only USDC and the
 // chain/domain differ per chain.
 export const EVM_CCTP_CONTRACTS = {
     tokenMessengerV2: '0x8FE6B999Dc680CcFDD5Bf7EB0974218be2542DAA',
@@ -197,10 +197,10 @@ export const DEFAULT_OUTBOUND_FLOW: OutboundFlow = 'two-tx';
 export const DEFAULT_FORWARDING = false;
 
 // EVM→Stellar mirror of OutboundFlow. Values:
-//   'two-tx'     plain CCTP — approve, then depositForBurnWithHook.
-//   'wrapper'    CctpWrapper — EIP-2612 permit + bundled depositForBurnWithHook
+//   'two-tx'     plain CCTP: approve, then depositForBurnWithHook.
+//   'wrapper'    CctpWrapper: EIP-2612 permit + bundled depositForBurnWithHook
 //                in one user-submitted tx.
-//   'send-calls' EIP-5792 wallet_sendCalls — the WALLET bundles approve +
+//   'send-calls' EIP-5792 wallet_sendCalls: the WALLET bundles approve +
 //                depositForBurnWithHook into a single user confirmation. May
 //                run atomically (smart wallets, EIP-7702) or sequentially.
 export type InboundFlow = 'wrapper' | 'two-tx' | 'send-calls';

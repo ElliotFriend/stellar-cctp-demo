@@ -8,7 +8,7 @@ user mentions a new wrapper or helper contract for this repo, propose the
 design and offer to wire it into the frontend, but don't scaffold the Rust /
 `stellar contract` workflow unless they ask.
 
-This split is project-scoped, not a universal preference — on other projects
+This split is project-scoped, not a universal preference. On other projects
 they may want help authoring Soroban contracts.
 
 ## Direction vocabulary (use this consistently)

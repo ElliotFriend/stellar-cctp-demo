@@ -4,21 +4,21 @@
 
 **Goal:** Prove the `@solana/kit` + Wallet Standard (Phantom) + Associated Token Account stack works in this app by reading a devnet USDC balance on a throwaway `/solana-spike` route.
 
-**Architecture:** Mirror the existing `evm/` + `stellar/` module shape — plain-function wallet/client/usdc modules plus a Svelte panel. Wallet state is component-local `$state` passed into the panel via `$bindable`. Balance reads use the app's own devnet Kit RPC, so Phantom's cluster setting can't cause a wrong-network read. Everything lives under an isolated route and is deletable.
+**Architecture:** Mirror the existing `evm/` + `stellar/` module shape, plain-function wallet/client/usdc modules plus a Svelte panel. Wallet state is component-local `$state` passed into the panel via `$bindable`. Balance reads use the app's own devnet Kit RPC, so Phantom's cluster setting can't cause a wrong-network read. Everything lives under an isolated route and is deletable.
 
 **Tech Stack:** SvelteKit (Svelte 5 runes), `@solana/kit`, `@solana-program/token`, `@wallet-standard/app`, `@wallet-standard/base`, TypeScript.
 
 ## Global Constraints
 
-- Svelte 5 runes only. **No `$effect`** — repo convention is explicit dataflow (use `onMount` + handlers).
+- Svelte 5 runes only. **No `$effect`**, repo convention is explicit dataflow (use `onMount` + handlers).
 - All wallet/browser code guarded with `browser` from `$app/environment` (SSR-safe).
 - Wallet modules export plain functions + a state type. No stores, no classes.
-- Keep Wallet Standard feature types local (cast) rather than adding `@wallet-standard/features` — mirrors how `evm/wallet.ts` keeps EIP-6963 types local.
+- Keep Wallet Standard feature types local (cast) rather than adding `@wallet-standard/features`, mirrors how `evm/wallet.ts` keeps EIP-6963 types local.
 - `pnpm check` (svelte-check) must pass. `pnpm lint` (prettier + eslint) must pass.
 - Run the Svelte MCP `svelte-autofixer` on every `.svelte` file until clean (per project CLAUDE.md).
-- Scope: Solana devnet only. USDC mint `4zMMC9srt5Ri5X14GAgXhaHii3GnPAEERYPJgZJDncDU`, 6 decimals, domain 5 — already in `SOLANA` in `src/lib/config.ts`.
+- Scope: Solana devnet only. USDC mint `4zMMC9srt5Ri5X14GAgXhaHii3GnPAEERYPJgZJDncDU`, 6 decimals, domain 5, already in `SOLANA` in `src/lib/config.ts`.
 
-**Testing note:** This repo has no test runner and the spec defines verification as manual. Tasks 1–3 gate on `pnpm check` (typecheck). Task 4 is the real end-to-end verification: connect Phantom on devnet and confirm the displayed balance matches the Circle faucet. Do not scaffold a test framework for throwaway code.
+**Testing note:** This repo has no test runner and the spec defines verification as manual. Tasks 1 to 3 gate on `pnpm check` (typecheck). Task 4 is the real end-to-end verification: connect Phantom on devnet and confirm the displayed balance matches the Circle faucet. Do not scaffold a test framework for throwaway code.
 
 ---
 
@@ -32,7 +32,7 @@
 **Interfaces:**
 
 - Consumes: `SOLANA.rpcUrl` from `src/lib/config.ts`.
-- Produces: `solanaRpc` — a Kit RPC client used by `solana/usdc.ts`.
+- Produces: `solanaRpc`, a Kit RPC client used by `solana/usdc.ts`.
 
 - [ ] **Step 1: Install dependencies**
 
@@ -42,7 +42,7 @@ Run:
 pnpm add '@solana/kit@^6.5.0' @solana-program/token @wallet-standard/app @wallet-standard/base
 ```
 
-**Pin Kit to `^6.5.0`** — `@solana-program/token@0.14.0` declares `peerDependencies: { "@solana/kit": "^6.5.0" }`. Installing bare `@solana/kit` pulls the latest major (7.x), which drops `getMinimumBalanceForRentExemption` from its browser entry — token imports it, so `vite dev` crashes at dependency optimization with `[MISSING_EXPORT]` even though `pnpm check` passes. Typecheck does NOT catch this; only running the dev server does.
+**Pin Kit to `^6.5.0`**, `@solana-program/token@0.14.0` declares `peerDependencies: { "@solana/kit": "^6.5.0" }`. Installing bare `@solana/kit` pulls the latest major (7.x), which drops `getMinimumBalanceForRentExemption` from its browser entry. Token imports it, so `vite dev` crashes at dependency optimization with `[MISSING_EXPORT]` even though `pnpm check` passes. Typecheck does NOT catch this; only running the dev server does.
 
 Expected: four packages in `dependencies`, lockfile updated, and the resolved `@solana/kit` is a 6.x (e.g. 6.10.0). A residual peer warning is acceptable; a `MISSING_EXPORT` at dev-server start is not.
 
@@ -82,7 +82,7 @@ git commit -m "feat: add Solana Kit deps + devnet RPC client"
 **Interfaces:**
 
 - Consumes: `solanaRpc` from `solana/client.ts`; `SOLANA.usdc.mint` from config; `address`/`createSolanaRpc` types from `@solana/kit`; `findAssociatedTokenPda`, `TOKEN_PROGRAM_ADDRESS` from `@solana-program/token`.
-- Produces: `getUsdcBalance(owner: string): Promise<string>` — returns a decimal UI string (e.g. `"12.5"`), `"0"` when the owner has no USDC token account yet.
+- Produces: `getUsdcBalance(owner: string): Promise<string>`, returns a decimal UI string (e.g. `"12.5"`), `"0"` when the owner has no USDC token account yet.
 
 - [ ] **Step 1: Implement `getUsdcBalance`**
 
@@ -117,7 +117,7 @@ export async function getUsdcBalance(owner: string): Promise<string> {
 - [ ] **Step 2: Typecheck**
 
 Run: `pnpm check`
-Expected: PASS. The tuple destructure `const [ata] = await findAssociatedTokenPda(...)` is correct — `findAssociatedTokenPda` returns `Promise<ProgramDerivedAddress>` and `ProgramDerivedAddress` is `readonly [Address, bump]` (verified against `@solana-program/token` generated source). Do NOT "fix" it to `[0]`; some AI-generated docs wrongly claim it returns `Promise<Address>`.
+Expected: PASS. The tuple destructure `const [ata] = await findAssociatedTokenPda(...)` is correct, `findAssociatedTokenPda` returns `Promise<ProgramDerivedAddress>` and `ProgramDerivedAddress` is `readonly [Address, bump]` (verified against `@solana-program/token` generated source). Do NOT "fix" it to `[0]`; some AI-generated docs wrongly claim it returns `Promise<Address>`.
 
 - [ ] **Step 3: Commit**
 
@@ -171,7 +171,7 @@ export type SolanaWallet = {
 };
 
 // Minimal shape of the standard:connect feature. Kept local rather than
-// pulling @wallet-standard/features just for the type — mirrors how
+// pulling @wallet-standard/features just for the type, mirrors how
 // evm/wallet.ts keeps its EIP-6963 types local.
 type ConnectableAccount = { address: string };
 type ConnectFeature = {
@@ -200,7 +200,7 @@ function writeStoredName(name: string): void {
     try {
         window.localStorage.setItem(NAME_STORAGE_KEY, name);
     } catch {
-        // private windows / sandboxed iframes can throw — non-fatal.
+        // private windows / sandboxed iframes can throw, non-fatal.
     }
 }
 
@@ -221,13 +221,13 @@ export async function connectSolana(info: SolanaWalletInfo): Promise<SolanaWalle
 
 // Silent reconnect: standard:connect with { silent: true } asks the wallet to
 // return previously-authorized accounts without prompting. `silent` is a HINT
-// per the Wallet Standard spec — a wallet MAY prompt anyway. Null if the user
+// per the Wallet Standard spec, a wallet MAY prompt anyway. Null if the user
 // never connected, the wallet is gone, or it declines.
 //
 // Timing: this runs on page load, when the wallet extension may not have
 // registered yet. Wallet Standard's app-ready/register handshake usually makes
 // getWallets().get() synchronously complete, but a late-injecting extension can
-// miss the first pass — so if our stored wallet isn't present, wait briefly and
+// miss the first pass, so if our stored wallet isn't present, wait briefly and
 // look again once (mirrors the EIP-6963 sleep in evm/wallet.ts) before giving up.
 export async function detectExistingSolana(): Promise<SolanaWallet | null> {
     if (!browser) return null;
@@ -401,7 +401,7 @@ Expected: both PASS.
 
 - [ ] **Step 6: End-to-end manual verification (the point of the spike)**
 
-Precondition: Phantom installed and the connecting account funded with devnet USDC from https://faucet.circle.com (Solana Devnet). Phantom's own cluster setting does NOT matter — balance reads go through the app's pinned devnet RPC and the account address is cluster-independent (that's the design point).
+Precondition: Phantom installed and the connecting account funded with devnet USDC from https://faucet.circle.com (Solana Devnet). Phantom's own cluster setting does NOT matter, balance reads go through the app's pinned devnet RPC and the account address is cluster-independent (that's the design point).
 
 1. Run: `pnpm dev`
 2. Open `http://localhost:5173/solana-spike` (port 5173 is Vite's default; use whatever URL `pnpm dev` prints)
@@ -411,20 +411,20 @@ Precondition: Phantom installed and the connecting account funded with devnet US
 
 **Pass criterion:** step 5 balance matches the faucet. Green = RPC + Wallet Standard + ATA resolution all work end-to-end.
 
-**Nice-to-have (not a pass gate):** reload the page and see the wallet + balance reappear without a prompt. `silent` reconnect is a Wallet Standard hint Phantom may ignore depending on version / trusted-app state — if it re-prompts or doesn't auto-restore, that's acceptable, not a bug in the stack.
+**Nice-to-have (not a pass gate):** reload the page and see the wallet + balance reappear without a prompt. `silent` reconnect is a Wallet Standard hint Phantom may ignore depending on version / trusted-app state. If it re-prompts or doesn't auto-restore, that's acceptable, not a bug in the stack.
 
 - [ ] **Step 7: Commit**
 
 ```bash
 git add src/lib/components/SolanaPanel.svelte src/routes/solana-spike/+page.svelte
-git commit -m "feat: /solana-spike panel — connect Phantom + read USDC balance"
+git commit -m "feat: /solana-spike panel, connect Phantom + read USDC balance"
 ```
 
 ---
 
 ## Verification summary
 
-- Task 1–3: `pnpm check` passes after each.
+- Task 1 to 3: `pnpm check` passes after each.
 - Task 4: `/solana-spike` connects Phantom and displays a devnet USDC balance matching the Circle faucet; reload silently reconnects.
 
 Once green, the spike has de-risked the stack and the CCTP burn/mint work can build on `solana/client.ts`, `solana/wallet.ts`, and `solana/usdc.ts`.

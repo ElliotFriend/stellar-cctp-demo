@@ -240,7 +240,7 @@ export function createTransferStore(
     // Generic wrapper around a single step in the runner. Owns the active/done
     // status transitions and error funnel so the per-direction sequence below
     // is just a list of `await performStep(...)` calls. Returns null on
-    // failure — callers bail out of the runner immediately when that happens.
+    // failure, so callers bail out of the runner immediately when that happens.
     async function performStep<T>(
         phase: Phase,
         key: Step['key'],
@@ -271,7 +271,7 @@ export function createTransferStore(
         const stellarAmount = parseUsdcStellar(args.amount);
         const evmCfg = EVM_CHAINS[args.evmChainId];
 
-        // EXPERIMENTAL forwarding path — burn with the Circle forwarding hookData
+        // EXPERIMENTAL forwarding path: burn with the Circle forwarding hookData
         // (via the wrapper or two-tx shape), then *observe* whether Circle's
         // relayer mints on the EVM side (no user receiveMessage). Isolated as an
         // early return to keep the standard wrapper/two-tx flow untouched.
@@ -391,7 +391,7 @@ export function createTransferStore(
         state.phase = 'done';
     }
 
-    // EXPERIMENTAL — Stellar→EVM burn that triggers Circle's Crosschain
+    // EXPERIMENTAL: Stellar→EVM burn that triggers Circle's Crosschain
     // Forwarding Service via hookData, then observes whether the relayer mints
     // on the EVM destination without the user submitting receiveMessage.
     async function runStellarToEvmForwarded(
@@ -432,7 +432,7 @@ export function createTransferStore(
             if (approved === null) return;
         }
 
-        // Recipient balance before the burn — the observe step watches for an
+        // Recipient balance before the burn, since the observe step watches for an
         // increase to detect a relayer-completed mint.
         let baseline: bigint;
         try {
@@ -480,7 +480,7 @@ export function createTransferStore(
 
         // OBSERVE: poll the recipient balance for a relayer-completed mint. If it
         // never lands, the burn is still attested and recoverable via the resume
-        // flow (manual receiveMessage) — destination_caller was left zero.
+        // flow (manual receiveMessage), since destination_caller was left zero.
         const minted = await performStep('minting', 'mint', async () => {
             const start = Date.now();
             const timeout = 3 * 60_000;
@@ -498,12 +498,12 @@ export function createTransferStore(
                 await sleep(5_000);
             }
             throw new Error(
-                'Circle relayer did not mint within 3 min — burn is attested and funds are recoverable: use the resume flow with the burn hash to mint manually.',
+                'Circle relayer did not mint within 3 min. The burn is attested and the funds are recoverable: use the resume flow with the burn hash to mint manually.',
             );
         });
         if (minted === null) return;
 
-        // Refresh the Iris message now that the relayer has minted — forwardState
+        // Refresh the Iris message now that the relayer has minted, since forwardState
         // and forwardTxHash populate after the forward completes, not at
         // attestation time, so the CCTP message display would otherwise omit them.
         // Non-fatal: the mint already succeeded, so keep the earlier message on any
@@ -512,7 +512,7 @@ export function createTransferStore(
             const finalMsg = await fetchAttestation(STELLAR.domain, burnHash);
             if (finalMsg) state.attestation = finalMsg;
         } catch {
-            // ignore — display keeps the attestation-time message
+            // ignore; display keeps the attestation-time message
         }
 
         state.phase = 'done';
@@ -544,7 +544,7 @@ export function createTransferStore(
         if (args.inboundFlow === 'wrapper') {
             // EIP-2612 permit + transferFrom + approve + depositForBurnWithHook
             // bundled into one tx by the CctpWrapper. User signs a typed-data
-            // permit and then submits a single transaction — no separate approve.
+            // permit and then submits a single transaction, with no separate approve.
             const h = await performStep('burning', 'burn', async () => {
                 const { maxFee, finalityThreshold } = await burnParams();
                 const hash = await bridgeWithPermitToStellar({
@@ -702,7 +702,7 @@ export function createTransferStore(
             const msg = await pollAttestation(SOLANA.domain, burnHash, {
                 onProgress: ({ elapsedMs, status }) => {
                     patchStep('attest', {
-                        detail: `${Math.round(elapsedMs / 1000)}s — ${status}`,
+                        detail: `${Math.round(elapsedMs / 1000)}s · ${status}`,
                     });
                 },
             });
@@ -826,7 +826,7 @@ export function createTransferStore(
         const attest = await performStep<IrisMessage>('attesting', 'attest', async () => {
             const msg = await pollAttestation(STELLAR.domain, burnHash, {
                 onProgress: ({ elapsedMs, status }) => {
-                    patchStep('attest', { detail: `${Math.round(elapsedMs / 1000)}s — ${status}` });
+                    patchStep('attest', { detail: `${Math.round(elapsedMs / 1000)}s · ${status}` });
                 },
             });
             return { result: msg };
@@ -937,7 +937,7 @@ export function createTransferStore(
                 await sleep(5_000);
             }
             throw new Error(
-                'Circle relayer did not mint within 3 min — burn is attested and recoverable: use the resume flow with the burn hash to mint manually.',
+                'Circle relayer did not mint within 3 min. The burn is attested and recoverable: use the resume flow with the burn hash to mint manually.',
             );
         });
         if (minted === null) return;
@@ -948,7 +948,7 @@ export function createTransferStore(
     async function start(args: {
         direction: Direction;
         stellarAddress: string;
-        // EVM inputs are optional — Solana transfers omit them entirely.
+        // EVM inputs are optional, since Solana transfers omit them entirely.
         evmWallet?: EvmWallet;
         evmChainId?: EvmChainId;
         outboundFlow?: OutboundFlow;
@@ -1027,8 +1027,8 @@ export function createTransferStore(
     }
 
     // Pick up an interrupted (or third-party) transfer at the attest step.
-    // Which flow originally produced the burn is irrelevant here — we're
-    // skipping straight to attest + mint — so we render the two-tx step
+    // Which flow originally produced the burn is irrelevant here (we're
+    // skipping straight to attest + mint), so we render the two-tx step
     // list with approve + burn pre-marked done, regardless of whether the
     // original transfer used the wrapper, permit, or send-calls path.
     async function resume(args: {
@@ -1156,7 +1156,7 @@ export function createTransferStore(
 function finalityHint(chainId: EvmChainId): string {
     const cfg = EVM_CHAINS[chainId];
     if (!cfg.attestationEtaMs) {
-        return `${cfg.label} finality is fast — typically under a minute.`;
+        return `${cfg.label} finality is fast, typically under a minute.`;
     }
     const minutes = Math.round(cfg.attestationEtaMs / 60_000);
     return `${cfg.label} finality is ~${minutes} min for Standard transfers.`;

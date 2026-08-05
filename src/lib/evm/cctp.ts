@@ -11,7 +11,7 @@ import type { EvmWallet } from './wallet';
 //
 // CCTP V2 burns USDC on the source EVM chain and emits a signed message
 // Circle attests. The destination calls `receiveMessage` to mint fresh
-// USDC. For Stellar this can't deliver directly to a G-address — CCTP
+// USDC. For Stellar this can't deliver directly to a G-address, because CCTP
 // messages address a 32-byte slot and there's no way to tell a G-account
 // from a C-contract on the wire. So the flow is:
 //
@@ -30,7 +30,7 @@ import type { EvmWallet } from './wallet';
 //   3. sendCallsBridgeToStellar          1 wallet confirmation via EIP-5792
 //
 // All three end up calling `TokenMessengerV2.depositForBurnWithHook` with
-// the same 8-arg payload — they differ only in who submits the tx and
+// the same 8-arg payload. They differ only in who submits the tx and
 // whether the approve is bundled into the same on-chain action.
 
 // Minimal ABIs for the V2 contracts. Full ABIs are large and we only call
@@ -57,7 +57,7 @@ export const tokenMessengerV2Abi = [
 // User-deployed wrapper (contracts/evm/cctp-wrapper). Bundles
 // `usdc.permit` + `transferFrom` + `approve` + `depositForBurnWithHook`
 // into one tx so the user signs an EIP-712 permit message and submits one
-// transaction — analogous to the Soroban `approve_and_deposit` wrapper.
+// transaction, analogous to the Soroban `approve_and_deposit` wrapper.
 export const cctpWrapperAbi = [
     {
         type: 'function',
@@ -110,7 +110,7 @@ function buildBurnToStellar(
     const burnArgs = [
         amount, //                  amount
         STELLAR.domain, //          destinationDomain (Stellar's CCTP domain)
-        forwarderBytes32, //        mintRecipient (the forwarder — see invariant)
+        forwarderBytes32, //        mintRecipient (the forwarder, see invariant)
         cfg.usdc, //                burnToken (per-chain USDC address)
         forwarderBytes32, //        destinationCaller (MUST equal mintRecipient)
         maxFee, //                  maxFee
@@ -120,7 +120,7 @@ function buildBurnToStellar(
     return { cfg, forwarderBytes32, hookData, burnArgs };
 }
 
-// Flow 1 — direct: caller pre-approves TokenMessengerV2 as a USDC spender
+// Flow 1, direct: caller pre-approves TokenMessengerV2 as a USDC spender
 // (in a separate tx, handled by the store), then this fn submits the burn.
 // Two on-chain transactions total.
 //
@@ -154,7 +154,7 @@ export async function depositForBurnWithHookToStellar(args: {
     return hash;
 }
 
-// Flow 2 — wrapper + permit: one EIP-712 signature (no on-chain tx) + one
+// Flow 2, wrapper + permit: one EIP-712 signature (no on-chain tx) + one
 // transaction. The wrapper calls `usdc.permit → transferFrom → approve →
 // depositForBurnWithHook` atomically. Falls back with a clear error if no
 // CctpWrapper has been deployed for this chain (see config.ts).
@@ -164,7 +164,7 @@ export async function depositForBurnWithHookToStellar(args: {
 //   minFinalityThreshold, hookData, permitDeadline, permitV, permitR, permitS
 // )
 //
-// Note: the wrapper's argument list omits `burnToken` — it's an immutable
+// Note: the wrapper's argument list omits `burnToken`, since it's an immutable
 // stored on the contract. On the underlying TokenMessengerV2 call burnToken
 // is still passed (= cfg.usdc), matching the standard 8-arg payload.
 //
@@ -221,18 +221,18 @@ export async function bridgeWithPermitToStellar(args: {
     return hash;
 }
 
-// Flow 3 — EIP-5792 wallet_sendCalls: the WALLET bundles approve +
+// Flow 3, EIP-5792 wallet_sendCalls: the WALLET bundles approve +
 // depositForBurnWithHook into a single user confirmation. On EIP-7702 EOAs
 // or smart wallets this executes atomically in one transaction; on plain
 // EOAs the wallet still presents one prompt but submits the two txs
-// sequentially. Capability is detected per (wallet, chain) — see
+// sequentially. Capability is detected per (wallet, chain), see
 // `src/lib/evm/capabilities.ts`.
 //
 // Wire calls (bundled by the wallet):
 //   1. USDC.approve(TokenMessengerV2, amount)
 //   2. TokenMessengerV2.depositForBurnWithHook(...burnArgs)
 //
-// Returns the burn tx hash — the LAST receipt in the bundle, which is
+// Returns the burn tx hash, the LAST receipt in the bundle, which is
 // always the depositForBurnWithHook regardless of atomicity.
 export async function sendCallsBridgeToStellar(args: {
     chainId: EvmChainId;
@@ -288,7 +288,7 @@ export async function sendCallsBridgeToStellar(args: {
 // submit the message + signature to MessageTransmitterV2 and mint USDC
 // to the embedded recipient. `receiveMessage` is permissionless when
 // the burn's `destinationCaller` was set to zero (our convention for
-// outbound transfers from Stellar — see stellar/cctp.ts).
+// outbound transfers from Stellar, see stellar/cctp.ts).
 //
 // Wire call:  MessageTransmitterV2.receiveMessage(message, attestation)
 //

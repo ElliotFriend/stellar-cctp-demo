@@ -4,16 +4,16 @@
 
 **Goal:** Upgrade the Solana client stack from `@solana/kit` 6 to 7 (and `@solana-program/token` 0.14→0.15), keeping the generated CCTP clients reproducible and the tree static-green, for a live devnet transfer test.
 
-**Architecture:** The Solana surface is two layers. ~68 files under `src/lib/solana/generated/**` are codama output from `pnpm gen:solana-cctp` — never hand-edited. 6 hand-written files consume `@solana/kit` / `@solana-program/token` directly. **Key fact (verified against kit@7.0.0):** the committed generated code imports `@solana/kit/program-client-core`, a subpath kit 7 still exports (`export * from '@solana/program-client-core'`) with correct browser/node conditions, and kit pins that standalone package to exact `7.0.0`. So the generated code already resolves — and stays a single shared module instance — under kit 7 with **no generator change**. The migration therefore reduces to a two-package dependency bump plus typecheck-driven fixes to the hand-written files. Regen is retained only as a reproducibility check. Runtime parity is confirmed by the user driving a live devnet CCTP transfer.
+**Architecture:** The Solana surface is two layers. ~68 files under `src/lib/solana/generated/**` are codama output from `pnpm gen:solana-cctp`, never hand-edited. 6 hand-written files consume `@solana/kit` / `@solana-program/token` directly. **Key fact (verified against kit@7.0.0):** the committed generated code imports `@solana/kit/program-client-core`, a subpath kit 7 still exports (`export * from '@solana/program-client-core'`) with correct browser/node conditions, and kit pins that standalone package to exact `7.0.0`. So the generated code already resolves, and stays a single shared module instance, under kit 7 with **no generator change**. The migration therefore reduces to a two-package dependency bump plus typecheck-driven fixes to the hand-written files. Regen is retained only as a reproducibility check. Runtime parity is confirmed by the user driving a live devnet CCTP transfer.
 
 **Tech Stack:** pnpm 11 workspace, SvelteKit 2 / Svelte 5 / Vite 8, TypeScript 6, `@solana/kit`, `@solana-program/token`, codama, `@stellar/stellar-sdk`, viem.
 
 ## Global Constraints
 
-- **Only two packages cross a major:** `@solana/kit` 6→7 and `@solana-program/token` 0.14→0.15 (0.x minor = breaking). **No other package crosses its major** — `@types/node` stays 24, `typescript` stays 6, everything else stays within its existing caret range.
-- **Do NOT add `@solana/program-client-core` or `@solana-program/system` as direct deps.** `program-client-core` resolves via kit's `./program-client-core` subpath (single instance, pinned by kit); adding it direct with a caret would float against kit's exact pin and risk a dual-package/type-identity hazard. `@solana-program/system` is a transitive dep of `token@0.15` and is imported nowhere in this repo — leave it transitive.
-- **Do NOT modify `scripts/gen-solana-cctp.mjs`.** Both `patchGenerated()` replacements are load-bearing under kit 7: the `@solana/kit/program-client-core` rewrite keeps the single-instance subpath import, and the `process.env['NODE_ENV']` → `true` rewrite strips a Node-only guard that throws in the browser (renderers-js 2.3.0 still emits it — confirmed by the `if (true)` remnants in committed output).
-- **Respect `minimumReleaseAge: 4320`** (72h) from `pnpm-workspace.yaml`. All target versions clear it comfortably (kit 7.0.0 + program-client-core 7.0.0: 2026-06-30; token 0.15.0 + system 0.13.0: 2026-07-15). The only realistic gate risk is a too-fresh *transitive* patch — detected by an install failure, not a pre-check.
+- **Only two packages cross a major:** `@solana/kit` 6→7 and `@solana-program/token` 0.14→0.15 (0.x minor = breaking). **No other package crosses its major**, `@types/node` stays 24, `typescript` stays 6, everything else stays within its existing caret range.
+- **Do NOT add `@solana/program-client-core` or `@solana-program/system` as direct deps.** `program-client-core` resolves via kit's `./program-client-core` subpath (single instance, pinned by kit); adding it direct with a caret would float against kit's exact pin and risk a dual-package/type-identity hazard. `@solana-program/system` is a transitive dep of `token@0.15` and is imported nowhere in this repo, leave it transitive.
+- **Do NOT modify `scripts/gen-solana-cctp.mjs`.** Both `patchGenerated()` replacements are load-bearing under kit 7: the `@solana/kit/program-client-core` rewrite keeps the single-instance subpath import, and the `process.env['NODE_ENV']` → `true` rewrite strips a Node-only guard that throws in the browser (renderers-js 2.3.0 still emits it, confirmed by the `if (true)` remnants in committed output).
+- **Respect `minimumReleaseAge: 4320`** (72h) from `pnpm-workspace.yaml`. All target versions clear it comfortably (kit 7.0.0 + program-client-core 7.0.0: 2026-06-30; token 0.15.0 + system 0.13.0: 2026-07-15). The only realistic gate risk is a too-fresh *transitive* patch, detected by an install failure, not a pre-check.
 - **Keep the tree static-green at every task boundary:** `pnpm run check`, `pnpm run build`, `pnpm run lint` must all pass.
 - **Never hand-edit `src/lib/solana/generated/**`.** Changes go through the generator.
 - **Work in an isolated git worktree** (Task 1), branch `solana-kit-7`.
@@ -22,26 +22,26 @@
 
 ## File Structure
 
-**Modified (config — hand-edited):**
-- `package.json` — two version bumps, no additions.
-- `pnpm-lock.yaml` — regenerated by `pnpm install`.
+**Modified (config, hand-edited):**
+- `package.json`, two version bumps, no additions.
+- `pnpm-lock.yaml`, regenerated by `pnpm install`.
 
-**NOT modified:** `scripts/gen-solana-cctp.mjs` (both patches stay — see Global Constraints).
+**NOT modified:** `scripts/gen-solana-cctp.mjs` (both patches stay, see Global Constraints).
 
 **Regenerated as a reproducibility check (codama output, NOT hand-edited):**
 - `src/lib/solana/generated/token-messenger-minter/**` (~40 files)
 - `src/lib/solana/generated/message-transmitter/**` (~28 files)
-- Expectation: the regen diff is empty or trivial. A large diff means an assumption broke — investigate, don't wave through.
+- Expectation: the regen diff is empty or trivial. A large diff means an assumption broke, investigate, don't wave through.
 
 **Modified only if the typechecker flags them (hand-written kit consumers):**
-- `src/lib/solana/client.ts` (6 lines) — `createSolanaRpc`
-- `src/lib/solana/signer.ts` (105 lines) — tx-message builders + `TransactionSigner`, `Base64EncodedWireTransaction`, `Instruction`
-- `src/lib/solana/usdc.ts` (30 lines) — `address`; token `findAssociatedTokenPda`, `TOKEN_PROGRAM_ADDRESS`
-- `src/lib/solana/cctp.ts` (109 lines) — `address`, `createNoopSigner`, `generateKeyPairSigner`, `getAddressDecoder`, `getProgramDerivedAddress`, `Address`; token helpers
-- `src/lib/solana/mint.ts` (146 lines) — `AccountRole`, `address`, `createNoopSigner`, `fetchEncodedAccount`, `getAddressEncoder`, `getProgramDerivedAddress`, `Address`, `Instruction`; token `getCreateAssociatedTokenIdempotentInstructionAsync`
-- `src/lib/stellar/recipient.ts` (50 lines) — `address`, `getAddressEncoder`; token helpers
+- `src/lib/solana/client.ts` (6 lines), `createSolanaRpc`
+- `src/lib/solana/signer.ts` (105 lines), tx-message builders + `TransactionSigner`, `Base64EncodedWireTransaction`, `Instruction`
+- `src/lib/solana/usdc.ts` (30 lines), `address`; token `findAssociatedTokenPda`, `TOKEN_PROGRAM_ADDRESS`
+- `src/lib/solana/cctp.ts` (109 lines), `address`, `createNoopSigner`, `generateKeyPairSigner`, `getAddressDecoder`, `getProgramDerivedAddress`, `Address`; token helpers
+- `src/lib/solana/mint.ts` (146 lines), `AccountRole`, `address`, `createNoopSigner`, `fetchEncodedAccount`, `getAddressEncoder`, `getProgramDerivedAddress`, `Address`, `Instruction`; token `getCreateAssociatedTokenIdempotentInstructionAsync`
+- `src/lib/stellar/recipient.ts` (50 lines), `address`, `getAddressEncoder`; token helpers
 
-**Compatibility note (verified with `tsc --strict` against kit@7.0.0 / token@0.15.0 typings):** all 17 kit value exports, 4 kit type exports (incl. `Instruction` — no `IInstruction` rename), and 3 token exports the code uses still exist and typecheck clean. So the hand-written files may need **zero** changes. The genuine residual risk is call-site *shape* drift in token 0.15 (a 0.x minor = breaking): argument-object or return-shape changes in `getCreateAssociatedTokenIdempotentInstructionAsync` / `findAssociatedTokenPda` at their use sites. `pnpm run check` catches these; Task 4 does not assume it comes back empty.
+**Compatibility note (verified with `tsc --strict` against kit@7.0.0 / token@0.15.0 typings):** all 17 kit value exports, 4 kit type exports (incl. `Instruction`, no `IInstruction` rename), and 3 token exports the code uses still exist and typecheck clean. So the hand-written files may need **zero** changes. The genuine residual risk is call-site *shape* drift in token 0.15 (a 0.x minor = breaking): argument-object or return-shape changes in `getCreateAssociatedTokenIdempotentInstructionAsync` / `findAssociatedTokenPda` at their use sites. `pnpm run check` catches these; Task 4 does not assume it comes back empty.
 
 ---
 
@@ -50,7 +50,7 @@
 **Files:** none (workspace setup)
 
 **Interfaces:**
-- Produces: a clean worktree on branch `solana-kit-7`, deps installed, static-green — the reference point for every later task.
+- Produces: a clean worktree on branch `solana-kit-7`, deps installed, static-green, the reference point for every later task.
 
 - [ ] **Step 1: Create the worktree**
 
@@ -90,14 +90,14 @@ Do not add `@solana/program-client-core` or `@solana-program/system` (see Global
 - [ ] **Step 2: Install**
 
 Run: `pnpm install`
-Expected: resolves the new versions; `svelte-kit sync` runs. If it fails with `ERR_PNPM_NO_MATCHING_VERSION` or a `minimumReleaseAge` holdback on any package (top-level or transitive), STOP and report to the user — that is the only realistic gate risk. Do not lower the gate.
+Expected: resolves the new versions; `svelte-kit sync` runs. If it fails with `ERR_PNPM_NO_MATCHING_VERSION` or a `minimumReleaseAge` holdback on any package (top-level or transitive), STOP and report to the user. That is the only realistic gate risk. Do not lower the gate.
 
 - [ ] **Step 3: Assert a single, correctly-pinned resolution**
 
 Run: `pnpm why @solana/kit && pnpm why @solana/program-client-core`
-Expected: exactly one `@solana/kit@7.x`; `@solana/program-client-core@7.0.0` present (pulled by kit), no second copy. A second `@solana/kit@6.x` or a divergent `program-client-core` is a red flag — investigate before continuing.
+Expected: exactly one `@solana/kit@7.x`; `@solana/program-client-core@7.0.0` present (pulled by kit), no second copy. A second `@solana/kit@6.x` or a divergent `program-client-core` is a red flag, investigate before continuing.
 
-- [ ] **Step 4: Commit the bump (do not gate on check yet — it may be green or red)**
+- [ ] **Step 4: Commit the bump (do not gate on check yet. It may be green or red)**
 
 Per the compatibility note, `check` may already be green here; it is not asserted either way. Commit the config change so it lands separately from any regen/consumer edits.
 ```bash
@@ -124,12 +124,12 @@ Expected: `Generated Solana CCTP client → …token-messenger-minter` and `→ 
 - [ ] **Step 2: Confirm the diff is trivial**
 
 Run: `git diff --stat src/lib/solana/generated`
-Expected: empty, or only cosmetic/formatting churn. A large semantic diff (changed instruction/account/arg structure) means codama output shifted — STOP and investigate; do not commit blindly.
+Expected: empty, or only cosmetic/formatting churn. A large semantic diff (changed instruction/account/arg structure) means codama output shifted, STOP and investigate; do not commit blindly.
 
 - [ ] **Step 3: Confirm both patches still held (browser-safety + single-instance)**
 
 Run: `grep -rc "process.env" src/lib/solana/generated | grep -v ':0'`
-Expected: **no output** (0 raw `process.env` — the guard was stripped to `if (true)`).
+Expected: **no output** (0 raw `process.env`. The guard was stripped to `if (true)`).
 Run: `grep -rln "@solana/kit/program-client-core" src/lib/solana/generated | head`
 Expected: matches present (subpath import retained → single shared instance).
 Run: `grep -rln "'@solana/program-client-core'" src/lib/solana/generated`
@@ -137,7 +137,7 @@ Expected: **no matches** (raw standalone import was rewritten to the subpath by 
 
 - [ ] **Step 4: Commit only if the regen produced a real diff**
 
-If Step 2 showed changes: `git add src/lib/solana/generated && git commit -m "chore(solana): regenerate CCTP clients under kit 7"`. If the diff was empty, nothing to commit — note it and move on.
+If Step 2 showed changes: `git add src/lib/solana/generated && git commit -m "chore(solana): regenerate CCTP clients under kit 7"`. If the diff was empty, nothing to commit, note it and move on.
 
 ---
 
@@ -155,12 +155,12 @@ If Step 2 showed changes: `git add src/lib/solana/generated && git commit -m "ch
 - [ ] **Step 1: Get the exact break list**
 
 Run: `pnpm run check 2>&1 | grep -iE "error" | head -60`
-- If empty / `0 errors`: skip to Task 5 — no consumer changes needed. (This is a likely outcome; do not manufacture edits.)
+- If empty / `0 errors`: skip to Task 5, no consumer changes needed. (This is a likely outcome; do not manufacture edits.)
 - Otherwise: record the errors; they are scoped to the 6 files above and are the work list.
 
 - [ ] **Step 2: Fix each flagged item, file by file**
 
-Apply the matching minimal fix per error — do not refactor surrounding logic:
+Apply the matching minimal fix per error, do not refactor surrounding logic:
 - **Call-site shape change** (most likely, token 0.15): a helper's argument object or the destructured return shape changed. Adjust the call to match the kit-7/token-0.15 typings (follow the type error's expected shape; confirm field names in `node_modules/@solana-program/token/dist` typings). Watch the hand-appended `AccountRole` metas in `mint.ts` and the `findAssociatedTokenPda` return usage in `usdc.ts`/`recipient.ts`/`cctp.ts`.
 - **Renamed/moved export:** update to the kit-7 name per the "did you mean" hint or the typings. Do not invent names.
 - **Type annotation mismatch:** update the `type` import / annotation to the typings.
@@ -168,7 +168,7 @@ Apply the matching minimal fix per error — do not refactor surrounding logic:
 - [ ] **Step 3: Loop check until clean**
 
 Run: `pnpm run check`
-Expected: iterate Steps 1–2 until `0 errors`. Fix per error; don't batch-guess.
+Expected: iterate Steps 1 to 2 until `0 errors`. Fix per error; don't batch-guess.
 
 - [ ] **Step 4: Commit (only if files changed)**
 
@@ -184,16 +184,16 @@ git commit -m "fix(solana): update hand-written consumers for kit 7 / token 0.15
 **Files:** none (verification only)
 
 **Interfaces:**
-- Consumes: Tasks 2–4.
+- Consumes: Tasks 2 to 4.
 - Produces: a static-green tree ready for the live test.
 
-- [ ] **Step 1: Typecheck** — Run: `pnpm run check` → Expected: `0 errors 0 warnings`.
-- [ ] **Step 2: Build** — Run: `pnpm run build` → Expected: `✔ done`, site → `build`.
-- [ ] **Step 3: Lint** — Run: `pnpm run lint` → Expected: prettier + eslint clean. If prettier flags regenerated files, run `pnpm run format` and re-commit.
+- [ ] **Step 1: Typecheck**, Run: `pnpm run check` → Expected: `0 errors 0 warnings`.
+- [ ] **Step 2: Build**, Run: `pnpm run build` → Expected: `✔ done`, site → `build`.
+- [ ] **Step 3: Lint**, Run: `pnpm run lint` → Expected: prettier + eslint clean. If prettier flags regenerated files, run `pnpm run format` and re-commit.
 - [ ] **Step 4: Guard against stray major crossings**
 
 Run: `pnpm why @types/node typescript | grep -E "@types/node@|typescript@" | head`
-Expected: `@types/node@24.x`, `typescript@6.x` — unchanged. Confirms the bump stayed scoped to the two Solana packages.
+Expected: `@types/node@24.x`, `typescript@6.x`, unchanged. Confirms the bump stayed scoped to the two Solana packages.
 
 - [ ] **Step 5: Commit if verification changed anything (e.g. format)**
 
@@ -209,7 +209,7 @@ git add -A && git commit -m "chore(solana): kit 7 / token 0.15 migration static-
 
 - [ ] **Step 1: State the runtime-risk surface**
 
-Report to the user: static checks cannot catch on-chain ABI drift. Runtime-sensitive paths are the regenerated instruction builders — chiefly `depositForBurn` and `receiveMessage`/mint — plus ATA derivation (`findAssociatedTokenPda`). Note anything flagged in Task 3 Step 2 or Task 4.
+Report to the user: static checks cannot catch on-chain ABI drift. Runtime-sensitive paths are the regenerated instruction builders, chiefly `depositForBurn` and `receiveMessage`/mint, plus ATA derivation (`findAssociatedTokenPda`). Note anything flagged in Task 3 Step 2 or Task 4.
 
 - [ ] **Step 2: User drives a live devnet CCTP transfer**
 
@@ -225,7 +225,7 @@ On success, use the `superpowers:finishing-a-development-branch` skill for `sola
 
 **Adversarial-review reconciliation** (a skeptic attacked the prior draft; verified findings folded in):
 - process.env grep on post-patch output could never detect the guard → would delete a load-bearing browser patch. **Fixed:** generator is now explicitly not-modified; Task 3 Step 3 asserts both patches held (positive checks), no removal branch.
-- "Holdback patch is the linchpin" was false — kit 7 still re-exports the subpath and pins the standalone exact. **Fixed:** patch retained, no direct `program-client-core`/`system` deps, migration reduced to a two-package bump; dual-package hazard avoided.
+- "Holdback patch is the linchpin" was false, kit 7 still re-exports the subpath and pins the standalone exact. **Fixed:** patch retained, no direct `program-client-core`/`system` deps, migration reduced to a two-package bump; dual-package hazard avoided.
 - Age-gate ceremony guarded a 23-day-old package. **Fixed:** replaced with a post-install failure check + transitive-freshness note.
 - `@solana-program/system` as a direct dep was unjustified (imported nowhere). **Fixed:** left transitive.
 - "check WILL be red after bump" was likely false. **Fixed:** Task 2 Step 4 asserts neither.

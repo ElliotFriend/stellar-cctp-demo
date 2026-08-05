@@ -39,7 +39,7 @@
 
     let cfg = $derived(EVM_CHAINS[evmChainId]);
 
-    // Route-keyed fee promise — re-runs when evmChainId changes, NOT per keystroke.
+    // Route-keyed fee promise, re-runs when evmChainId changes, NOT per keystroke.
     let srcDomain = $derived(EVM_CHAINS[evmChainId].domain);
     let feePromise = $derived(fetchBurnFee(srcDomain, STELLAR.domain));
     let threshold = $derived(thresholdFor(speed));
@@ -61,7 +61,7 @@
         })(),
     );
 
-    // bytes32-padded forwarder address — the same value goes into BOTH
+    // bytes32-padded forwarder address. The same value goes into BOTH
     // `mintRecipient` and `destinationCaller`. CCTPv2 uses the raw 32-byte
     // pubkey, not the strkey string.
     let forwarderBytes32 = $derived(strkeyToBytes32(STELLAR.contracts.cctpForwarder));
@@ -93,7 +93,7 @@
     // immutable for a deployed FiatToken proxy so we read once per chain and
     // share across instances. Re-runs only when evmChainId changes (the
     // {#await} block in the template keys on the returned Promise identity).
-    // Plain object cache to keep this non-reactive — Svelte's SvelteMap would
+    // Plain object cache to keep this non-reactive. Svelte's SvelteMap would
     // also work but adds reactivity we don't need for a pure memo.
     const domainCache: Partial<Record<EvmChainId, Promise<EvmUsdcEip712Domain>>> = {};
     function getDomain(chainId: EvmChainId): Promise<EvmUsdcEip712Domain> {

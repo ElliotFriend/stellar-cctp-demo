@@ -4,26 +4,26 @@
 
 **Goal:** Burn USDC on Solana devnet and mint native USDC on Stellar testnet, driven from a minimal harness on `/solana-spike`.
 
-**Architecture:** Build the Solana `deposit_for_burn_with_hook` instruction from a Codama-generated `@solana/kit` client (from Circle's TokenMessengerMinterV2 IDL). Sign with Phantom (Wallet Standard) + an ephemeral event-data keypair, submit via our pinned devnet RPC. Everything downstream — Circle attestation (`pollAttestation`) and the Stellar mint (`mintAndForward`) — is reused unchanged. Orchestration mirrors the existing `runEvmToStellar` minus the approve step.
+**Architecture:** Build the Solana `deposit_for_burn_with_hook` instruction from a Codama-generated `@solana/kit` client (from Circle's TokenMessengerMinterV2 IDL). Sign with Phantom (Wallet Standard) + an ephemeral event-data keypair, submit via our pinned devnet RPC. Everything downstream. Circle attestation (`pollAttestation`) and the Stellar mint (`mintAndForward`), is reused unchanged. Orchestration mirrors the existing `runEvmToStellar` minus the approve step.
 
 **Tech Stack:** SvelteKit (Svelte 5 runes), `@solana/kit` (6.x), `@solana-program/token`, `@wallet-standard/app`, Codama (`@codama/nodes-from-anchor`, `@codama/renderers-js`), Anchor CLI (IDL fetch, dev-only), `@stellar/stellar-sdk`, viem.
 
 ## Global Constraints
 
-- Svelte 5 runes only. **No `$effect`** — explicit dataflow (`onMount` + handlers).
+- Svelte 5 runes only. **No `$effect`**, explicit dataflow (`onMount` + handlers).
 - Browser code guarded with `browser` from `$app/environment`.
 - `@solana/kit` stays pinned to `^6.5.0` (required by `@solana-program/token@0.14.0`; a 7.x bump drops `getMinimumBalanceForRentExemption` and breaks `vite dev`). Generated code must import from `@solana/kit`, not `@solana/web3.js`.
 - **Fund-bricking invariant:** the burn's `mintRecipient` and `destinationCaller` MUST both equal `strkeyToBytes32(STELLAR.contracts.cctpForwarder)`. The real recipient goes only in `hookData`. Assert the contract decode before building the tx.
 - CCTP addresses (already in `SOLANA` config): domain 5, `tokenMessengerMinterV2 = CCTPV2vPZJS2u2BBsUoscuikbYjnpFmbFsvVuJdgUMQe`, `messageTransmitterV2 = CCTPV2Sm4AdWt5296sk4P66VBZ7bEhcARwFaaS9YPbeC`, USDC mint `4zMMC9srt5Ri5X14GAgXhaHii3GnPAEERYPJgZJDncDU` (6-dp). Stellar domain 27, `cctpForwarder = CA66Q2WFBND6V4UEB7RD4SAXSVIWMD6RA4X3U32ELVFGXV5PJK4T4VSZ`.
 - `pnpm check` and `pnpm lint` must pass. Run the Svelte MCP `svelte-autofixer` on every `.svelte` file until clean.
 
-**Testing note:** No test runner in this repo; the spec's verification is a real devnet→testnet transfer. Tasks 1–6 gate on `pnpm check` (+ `pnpm lint` where `.svelte`/formatting changes). Task 7 is the manual end-to-end run. Do not scaffold a test framework. **`pnpm check` passing does NOT prove runtime correctness** — the balance spike shipped green and still broke at `vite dev` on a version mismatch; only Task 7 proves the path.
+**Testing note:** No test runner in this repo; the spec's verification is a real devnet→testnet transfer. Tasks 1 to 6 gate on `pnpm check` (+ `pnpm lint` where `.svelte`/formatting changes). Task 7 is the manual end-to-end run. Do not scaffold a test framework. **`pnpm check` passing does NOT prove runtime correctness**, the balance spike shipped green and still broke at `vite dev` on a version mismatch; only Task 7 proves the path.
 
 ---
 
 ### Task 1: Extract shared Stellar-recipient encoders
 
-Pure refactor, no new deps — de-risks first. Moves two helpers out of `evm/cctp.ts` so Solana can reuse them without importing EVM code.
+Pure refactor, no new deps, de-risks first. Moves two helpers out of `evm/cctp.ts` so Solana can reuse them without importing EVM code.
 
 **Files:**
 
@@ -36,7 +36,7 @@ Pure refactor, no new deps — de-risks first. Moves two helpers out of `evm/cct
 
 - [ ] **Step 1: Create the shared module**
 
-Create `src/lib/stellar/recipient.ts` (verbatim move — these are pure `@stellar/stellar-sdk` + viem hex helpers):
+Create `src/lib/stellar/recipient.ts` (verbatim move. These are pure `@stellar/stellar-sdk` + viem hex helpers):
 
 ```ts
 import { concatHex, pad, stringToHex, toHex, type Hex } from 'viem';
@@ -45,9 +45,9 @@ import { StrKey } from '@stellar/stellar-sdk';
 // Hook data layout for routing CCTP funds to a Stellar G-address via
 // CctpForwarder. From Circle's Stellar CCTP docs:
 //
-//   bytes 0–23   : 24 magic bytes (zeros, Circle-reserved)
-//   bytes 24–27  : version (uint32, currently 0)
-//   bytes 28–31  : length of forwardRecipient in bytes (uint32)
+//   bytes 0 to 23   : 24 magic bytes (zeros, Circle-reserved)
+//   bytes 24 to 27  : version (uint32, currently 0)
+//   bytes 28 to 31  : length of forwardRecipient in bytes (uint32)
 //   bytes 32+    : forwardRecipient as UTF-8 encoded strkey (the G-address)
 //
 // Getting any byte of this wrong will permanently lose funds. Validate
@@ -76,7 +76,7 @@ export function strkeyToBytes32(strkey: string): Hex {
 
 - [ ] **Step 2: Update `evm/cctp.ts`**
 
-In `src/lib/evm/cctp.ts`: delete the `encodeStellarForwarderHookData` (lines ~96–116) and `strkeyToBytes32` (lines ~118–125) function definitions and their leading comment block. Remove now-unused imports from the viem import on line 1 (`concatHex`, `pad`, `stringToHex` — keep `encodeFunctionData`, `erc20Abi`, `toHex`, `type Hex` if still used elsewhere in the file; let `pnpm check` flag any unused). Remove the `StrKey` import on line 2. Add:
+In `src/lib/evm/cctp.ts`: delete the `encodeStellarForwarderHookData` (lines ~96 to 116) and `strkeyToBytes32` (lines ~118 to 125) function definitions and their leading comment block. Remove now-unused imports from the viem import on line 1 (`concatHex`, `pad`, `stringToHex`, keep `encodeFunctionData`, `erc20Abi`, `toHex`, `type Hex` if still used elsewhere in the file; let `pnpm check` flag any unused). Remove the `StrKey` import on line 2. Add:
 
 ```ts
 import { encodeStellarForwarderHookData, strkeyToBytes32 } from '$lib/stellar/recipient';
@@ -178,7 +178,7 @@ grep -rhoE "export (async )?function get[A-Za-z]*Instruction(Async)?" src/lib/so
 grep -rhoE "export function find[A-Za-z]*Pda" src/lib/solana/generated | sort -u
 ```
 
-Expected: a `deposit_for_burn_with_hook` builder (likely `getDepositForBurnWithHookInstructionAsync` and a sync `getDepositForBurnWithHookInstruction`) and PDA finders (e.g. `findRemoteTokenMessengerPda`, `findLocalTokenPda`). **Record the exact builder name and open `src/lib/solana/generated/instructions/depositForBurnWithHook.ts` to note the exact input field names (account + arg keys)** — Task 5 depends on these.
+Expected: a `deposit_for_burn_with_hook` builder (likely `getDepositForBurnWithHookInstructionAsync` and a sync `getDepositForBurnWithHookInstruction`) and PDA finders (e.g. `findRemoteTokenMessengerPda`, `findLocalTokenPda`). **Record the exact builder name and open `src/lib/solana/generated/instructions/depositForBurnWithHook.ts` to note the exact input field names (account + arg keys)**, Task 5 depends on these.
 
 - [ ] **Step 6: Typecheck**
 
@@ -271,9 +271,9 @@ git commit -m "feat: retain Wallet Standard account on SolanaWallet for signing"
 **Interfaces:**
 
 - Consumes: `SolanaWallet` from `$lib/solana/wallet`; `solanaRpc` from `$lib/solana/client`; `@solana/kit`.
-- Produces: `signAndSendBurnTx(args: { wallet: SolanaWallet; instruction: IInstruction; extraSigners: KeyPairSigner[] }): Promise<string>` — builds a tx with `instruction`, fee payer = wallet address, recent blockhash from `solanaRpc`; the wallet signs via Wallet Standard `solana:signTransaction`; `extraSigners` (the ephemeral event-data keypair) partial-sign; submits via `solanaRpc` and returns the base58 signature.
+- Produces: `signAndSendBurnTx(args: { wallet: SolanaWallet; instruction: IInstruction; extraSigners: KeyPairSigner[] }): Promise<string>`, builds a tx with `instruction`, fee payer = wallet address, recent blockhash from `solanaRpc`; the wallet signs via Wallet Standard `solana:signTransaction`; `extraSigners` (the ephemeral event-data keypair) partial-sign; submits via `solanaRpc` and returns the base58 signature.
 
-> **API-name caveat:** `@solana/kit` 6.x re-exports the modular `@solana/*` packages. The imports below are the current Kit surface; if `pnpm check` reports a missing export, find the equivalent in the installed `node_modules/@solana/kit` types and adjust the import — do NOT switch to `@solana/web3.js`.
+> **API-name caveat:** `@solana/kit` 6.x re-exports the modular `@solana/*` packages. The imports below are the current Kit surface; if `pnpm check` reports a missing export, find the equivalent in the installed `node_modules/@solana/kit` types and adjust the import, do NOT switch to `@solana/web3.js`.
 
 - [ ] **Step 1: Implement the signer**
 
@@ -356,7 +356,7 @@ export async function signAndSendBurnTx(args: {
 }
 ```
 
-> **Implementation reality check for the executor:** the exact mechanism for attaching `extraSigners` to the message and getting Kit to embed the ephemeral signature depends on whether the generated instruction marks `messageSentEventData` as a `TransactionSigner` account. Two known-good options — pick whichever the installed Kit + generated types support, verified by `pnpm check` and Task 7's run:
+> **Implementation reality check for the executor:** the exact mechanism for attaching `extraSigners` to the message and getting Kit to embed the ephemeral signature depends on whether the generated instruction marks `messageSentEventData` as a `TransactionSigner` account. Two known-good options, pick whichever the installed Kit + generated types support, verified by `pnpm check` and Task 7's run:
 >
 > 1. Pass the ephemeral signer as the `messageSentEventData` account **value** when building the instruction in Task 5 (a `KeyPairSigner`, not a bare `Address`). Then `partiallySignTransactionMessageWithSigners(message)` embeds its signature automatically and `extraSigners` is unused here.
 > 2. If the generated builder only accepts an `Address` for that account, generate the keypair, add it via `addSignersToTransactionMessage([ephemeral], message)` before partial-signing.
@@ -435,7 +435,7 @@ import { signAndSendBurnTx } from './signer';
 import { SOLANA, STELLAR } from '$lib/config';
 import type { SolanaWallet } from './wallet';
 
-// 32 raw bytes of the Stellar CctpForwarder contract id — used for BOTH
+// 32 raw bytes of the Stellar CctpForwarder contract id, used for BOTH
 // mintRecipient and destinationCaller. Getting this wrong bricks funds, so
 // derive it once from config via the shared strkey decoder.
 function forwarderBytes32(): Uint8Array {
@@ -493,7 +493,7 @@ export async function burnUsdcToStellar(args: {
 }
 ```
 
-> **Signer wiring note (resolve during build, confirmed by Task 7):** `owner`/`eventRentPayer` are the Phantom-signed fee payer. The generated builder may want these as a `TransactionSigner`. Since Phantom signs the assembled wire bytes (not via a Kit signer), pass the owner as an address-only account — if the generated type requires a signer object, wrap it as a no-op signer whose signing is deferred to the wallet, OR pass `owner` as the fee payer only (already set in the signer) and the account list as addresses. The `as never` casts above are placeholders to be replaced with whatever the generated input type actually requires; remove them once the real shape is known. This is the single most fragile spot — expect one iteration here against the generated types.
+> **Signer wiring note (resolve during build, confirmed by Task 7):** `owner`/`eventRentPayer` are the Phantom-signed fee payer. The generated builder may want these as a `TransactionSigner`. Since Phantom signs the assembled wire bytes (not via a Kit signer), pass the owner as an address-only account, if the generated type requires a signer object, wrap it as a no-op signer whose signing is deferred to the wallet, OR pass `owner` as the fee payer only (already set in the signer) and the account list as addresses. The `as never` casts above are placeholders to be replaced with whatever the generated input type actually requires; remove them once the real shape is known. This is the single most fragile spot, expect one iteration here against the generated types.
 
 - [ ] **Step 4: Typecheck**
 
@@ -568,7 +568,7 @@ async function runSolanaToStellar(args: {
     const attest = await performStep<IrisMessage>('attesting', 'attest', async () => {
         const msg = await pollAttestation(SOLANA.domain, burnHash, {
             onProgress: ({ elapsedMs, status }) => {
-                patchStep('attest', { detail: `${Math.round(elapsedMs / 1000)}s — ${status}` });
+                patchStep('attest', { detail: `${Math.round(elapsedMs / 1000)}s, ${status}` });
             },
         });
         return { result: msg };
@@ -637,7 +637,7 @@ if (direction === 'solana-to-stellar') {
 }
 ```
 
-(Match the exact `Step` object shape already used in `stepsFor` — copy the field style of the existing `evm-to-stellar` branch, adding `hashUrl`/`detail` only if that branch does.)
+(Match the exact `Step` object shape already used in `stepsFor`, copy the field style of the existing `evm-to-stellar` branch, adding `hashUrl`/`detail` only if that branch does.)
 
 - [ ] **Step 5: Typecheck**
 
@@ -804,7 +804,7 @@ Precondition: Phantom on devnet funded with USDC (from the balance spike); Freig
 6. Watch: **burn** completes (Solana tx link), **attest** progresses then completes, **mint** completes (Stellar tx link).
 7. **Confirm on stellar.expert/explorer/testnet** that the recipient G-address received ~5 USDC.
 
-**Iris risk checkpoint:** if the **attest** step hangs/errors with a 404-style "message not found", the Solana signature is likely being sent to Iris in the wrong encoding. Fix: in `circle/iris.ts` (or at the `pollAttestation` call), hex-encode the base58 signature before the Iris lookup, then re-run. Do this only if it actually fails — verify first.
+**Iris risk checkpoint:** if the **attest** step hangs/errors with a 404-style "message not found", the Solana signature is likely being sent to Iris in the wrong encoding. Fix: in `circle/iris.ts` (or at the `pollAttestation` call), hex-encode the base58 signature before the Iris lookup, then re-run. Do this only if it actually fails, verify first.
 
 Pass criterion: step 7 shows the USDC arrived. Green = the Solana → Stellar path works end-to-end.
 
@@ -812,13 +812,13 @@ Pass criterion: step 7 shows the USDC arrived. Green = the Solana → Stellar pa
 
 ```bash
 git add src/lib/components/SolanaPanel.svelte src/routes/solana-spike/+page.svelte src/lib/stores/transfer.svelte.ts
-git commit -m "feat: /solana-spike burn harness — Solana -> Stellar transfer"
+git commit -m "feat: /solana-spike burn harness. Solana -> Stellar transfer"
 ```
 
 ---
 
 ## Verification summary
 
-- Tasks 1–6: `pnpm check` passes after each (+ `pnpm lint` on 1 and 7).
+- Tasks 1 to 6: `pnpm check` passes after each (+ `pnpm lint` on 1 and 7).
 - Task 7: a real 5-USDC transfer burns on Solana devnet and mints to a Stellar testnet G-address, confirmed on stellar.expert.
-- Highest-risk spots, in order: (a) the generated builder's account/signer input shape (Task 5 signer-wiring note), (b) Phantom `solana:signTransaction` + ephemeral co-signer assembly (Task 4), (c) Iris signature encoding (Task 7 checkpoint). None are provable by typecheck — Task 7 is the gate.
+- Highest-risk spots, in order: (a) the generated builder's account/signer input shape (Task 5 signer-wiring note), (b) Phantom `solana:signTransaction` + ephemeral co-signer assembly (Task 4), (c) Iris signature encoding (Task 7 checkpoint). None are provable by typecheck, Task 7 is the gate.

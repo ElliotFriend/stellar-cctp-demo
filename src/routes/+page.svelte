@@ -119,7 +119,7 @@
                 speed: effectiveSpeed,
             });
         }
-        // Skip refetch on error — the burn may not have landed, and a failed RPC
+        // Skip refetch on error, since the burn may not have landed, and a failed RPC
         // call here would clobber the error state shown to the user.
         if (transfer.state.phase === 'done') {
             await Promise.all([stellarPanel?.refresh(), destPanel?.refresh()]);

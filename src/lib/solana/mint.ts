@@ -79,7 +79,7 @@ export async function receiveMessageOnSolana(args: {
     const custody = await pda(TMM, ['custody', mintBytes(mint)]);
     const tmmEventAuthority = await pda(TMM, ['__event_authority']);
 
-    // fee_recipient ATA — read TokenMessenger.feeRecipient from chain, derive ATA.
+    // fee_recipient ATA: read TokenMessenger.feeRecipient from chain, derive ATA.
     const tm = await fetchTokenMessenger(solanaRpc, tokenMessenger);
     const [feeRecipientAta] = await findAssociatedTokenPda({
         owner: tm.data.feeRecipient,
@@ -87,7 +87,7 @@ export async function receiveMessageOnSolana(args: {
         mint,
     });
 
-    // Ensure the recipient ATA exists — in its OWN transaction. Bundling the
+    // Ensure the recipient ATA exists, in its OWN transaction. Bundling the
     // create with receiveMessage overflows Solana's 1232-byte tx limit (Kit
     // throws "encoding overruns Uint8Array"). Only send it when missing, so the
     // common case stays a single signature.

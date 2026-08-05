@@ -216,7 +216,7 @@
             await srcPub.waitForTransactionReceipt({ hash: burnHash });
             log(`burned: ${burnHash}`);
 
-            // 4. attestation (informational) — forwarding relayer mints, not us
+            // 4. attestation (informational): forwarding relayer mints, not us
             log('polling Iris attestation...');
             const attStart = Date.now();
             let attested = false;

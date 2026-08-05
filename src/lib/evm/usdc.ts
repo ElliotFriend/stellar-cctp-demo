@@ -6,7 +6,7 @@ import type { EvmWallet } from './wallet';
 // EIP-2612 permit-specific reads on USDC. Circle's FiatTokenV2_2 (and Arc's
 // USDC proxy) expose `nonces`, `version`, and the standard `name` / `permit`.
 // We query name + version dynamically so the EIP-712 domain matches whatever
-// the chain actually deployed — guessing "USD Coin" vs "USDC" is a common
+// the chain actually deployed. Guessing "USD Coin" vs "USDC" is a common
 // source of "invalid signature" reverts.
 const usdcPermitAbi = [
     {
@@ -84,7 +84,7 @@ export type EvmUsdcPermitSignature = {
 
 // The four fields that go into the EIP-712 domain when signing a `Permit`
 // message. `name` and `version` come from the USDC contract itself (they
-// vary by deployment — typically "USDC"/"2" but worth reading rather than
+// vary by deployment, typically "USDC"/"2" but worth reading rather than
 // guessing); `chainId` and `verifyingContract` are static per chain.
 export type EvmUsdcEip712Domain = {
     name: string;
@@ -95,7 +95,7 @@ export type EvmUsdcEip712Domain = {
 
 // Reads USDC's `name()` and `version()` at runtime. Both values are
 // effectively immutable for a deployed FiatToken proxy, but we query
-// them rather than hardcode — a mismatched name/version produces the
+// them rather than hardcode, because a mismatched name/version produces the
 // notoriously opaque "EIP2612: invalid signature" revert.
 export async function fetchUsdcEip712Domain(chainId: EvmChainId): Promise<EvmUsdcEip712Domain> {
     const cfg = EVM_CHAINS[chainId];
@@ -109,7 +109,7 @@ export async function fetchUsdcEip712Domain(chainId: EvmChainId): Promise<EvmUsd
 
 // Produces an EIP-2612 permit signature authorizing `spender` to pull `value`
 // USDC from `wallet.address`. The signature is single-use (consumes a nonce)
-// and expires at `deadline`. No on-chain tx is sent — the wrapper contract
+// and expires at `deadline`. No on-chain tx is sent; the wrapper contract
 // calls `usdc.permit(...)` with these values in the same tx as the burn.
 export async function signEvmUsdcPermit(args: {
     chainId: EvmChainId;
