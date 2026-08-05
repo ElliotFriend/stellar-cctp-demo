@@ -118,7 +118,7 @@
         <div class="meta-row">
             <span class="meta-label">Contract</span>
             <code class="meta-value" title={contractAddress ?? ''}>
-                {contractAddress ? shortAddr(contractAddress, 6, 4) : '—'}
+                {contractAddress ? shortAddr(contractAddress, 6, 4) : 'n/a'}
             </code>
             <span class="meta-aside">{contractLabel}</span>
         </div>
@@ -130,41 +130,43 @@
             <span class="meta-label">Caller</span>
             <code class="meta-value" title={evmAddress}>{shortAddr(evmAddress, 6, 4)}</code>
             <span class="meta-aside">
-                msg.sender — your EVM wallet pays gas and (for the wrapper flow) is the permit
-                `owner`.
+                The <code>msg.sender</code>. Your EVM wallet pays the gas, and in the wrapper flow
+                it is also the permit <code>owner</code>.
             </span>
         </div>
     </div>
 
     {#if isWrapper}
         <p class="flow-note">
-            Wrapper flow — one EIP-712 signature (off-chain, no gas) + one tx. The wrapper calls <code
-                >usdc.permit → transferFrom → approve → depositForBurnWithHook</code
-            > atomically.
+            Wrapper flow: one EIP-712 signature (off-chain, so no gas) plus one transaction. The
+            wrapper runs <code>usdc.permit → transferFrom → approve → depositForBurnWithHook</code>
+            atomically.
         </p>
     {:else if isSendCalls}
         <p class="flow-note">
-            Batched flow — the wallet bundles <code>usdc.approve(...)</code> and
-            <code>depositForBurnWithHook(...)</code> behind one confirmation via EIP-5792
+            Batched flow: the wallet bundles <code>usdc.approve(...)</code> and
+            <code>depositForBurnWithHook(...)</code> behind one confirmation using EIP-5792's
             <code>wallet_sendCalls</code>.
             {#if sendCallsCap.atomic}
-                Wallet reports <strong>atomic</strong> execution — one on-chain tx.
+                Your wallet reports <strong>atomic</strong> execution, so this lands as one on-chain transaction.
             {:else if sendCallsCap.supported}
-                Wallet reports <strong>sequential</strong> execution — one prompt, two on-chain txs.
+                Your wallet reports <strong>sequential</strong> execution, so you get one prompt and two
+                on-chain transactions.
             {:else}
-                Wallet does not advertise this capability on this chain.
+                Your wallet doesn't advertise this capability on this chain, so your mileage may
+                vary.
             {/if}
         </p>
     {:else}
         <p class="flow-note">
-            Two-tx flow — a separate <code>usdc.approve(...)</code> precedes this burn (skipped if allowance
-            is sufficient).
+            Two-transaction flow: a separate <code>usdc.approve(...)</code> goes first, and it's skipped
+            when your existing allowance already covers the amount.
         </p>
     {/if}
 
     {#if isWrapper}
         <details class="signed-block" open>
-            <summary>EIP-712 Permit signature (off-chain — no gas)</summary>
+            <summary>EIP-712 permit signature (off-chain, so no gas)</summary>
             <div class="signed-body">
                 <h6 class="block-section">Domain</h6>
                 {#await getDomain(evmChainId)}
@@ -216,7 +218,7 @@
                         <span class="arg-name">spender</span>
                         <span class="arg-type">address</span>
                         <code class="arg-value" title={cfg.bridgeWrapper ?? ''}>
-                            {cfg.bridgeWrapper ? shortAddr(cfg.bridgeWrapper, 6, 4) : '—'}
+                            {cfg.bridgeWrapper ? shortAddr(cfg.bridgeWrapper, 6, 4) : 'n/a'}
                         </code>
                         <span class="arg-note">CctpWrapper</span>
                     </li>
@@ -266,10 +268,10 @@
             </summary>
             <div class="signed-body">
                 <p class="block-blurb">
-                    The wallet receives two encoded calls and routes them according to its
-                    capability response. The receipt order matches the calls order; the burn (call
-                    2) is always the last receipt — that's the hash used for the Iris attestation
-                    poll.
+                    The wallet receives two encoded calls and routes them according to the
+                    capabilities it reported. Receipts come back in the same order as the calls, so
+                    the burn (call 2) is always the last receipt, and that's the hash we poll Iris
+                    with for the attestation.
                 </p>
 
                 <div class="bundle-call">
@@ -313,8 +315,8 @@
                         <code class="bundle-fn">depositForBurnWithHook</code>
                     </div>
                     <p class="bundle-note">
-                        Same 8-arg payload as the table below — the wallet just hands the encoded
-                        calldata to the chain.
+                        The same eight-argument payload as the table below. The wallet just hands
+                        that encoded calldata to the chain.
                     </p>
                 </div>
             </div>
@@ -345,12 +347,13 @@
             <span class="arg-note">Stellar Testnet</span>
         </li>
 
-        <li class="row wide">
+        <li class="row">
             <span class="arg-name">mintRecipient</span>
             <span class="arg-type">bytes32</span>
             <code class="arg-hex">{forwarderBytes32}</code>
             <span class="arg-note">
-                → {STELLAR.contracts.cctpForwarder} (CctpForwarder — required for Stellar inbound)
+                The CctpForwarder contract ({STELLAR.contracts.cctpForwarder}), which every inbound
+                Stellar transfer has to mint to.
             </span>
         </li>
 
@@ -363,12 +366,13 @@
             </li>
         {/if}
 
-        <li class="row wide">
+        <li class="row">
             <span class="arg-name">destinationCaller</span>
             <span class="arg-type">bytes32</span>
             <code class="arg-hex">{forwarderBytes32}</code>
             <span class="arg-note">
-                MUST equal mintRecipient — only the forwarder can call mint_and_forward on Stellar.
+                This one <em>must</em> match <code>mintRecipient</code>, since only the forwarder
+                can call <code>mint_and_forward</code> on Stellar.
             </span>
         </li>
 
@@ -384,12 +388,14 @@
                 </code>
                 <span class="arg-note">
                     {bps > 0
-                        ? `${bps} bps fast fee + floor, canonical 6-decimal units`
-                        : 'floor (no fee at this speed), canonical 6-decimal units'}
+                        ? `${bps} bps fast fee on top of the floor, in canonical 6-decimal units.`
+                        : 'Floor only (this speed carries no fee), in canonical 6-decimal units.'}
                 </span>
             {:catch}
                 <code class="arg-value">{EVM_MAX_FEE.toString()}</code>
-                <span class="arg-note">floor (fee API unavailable), canonical 6-decimal units</span>
+                <span class="arg-note">
+                    Floor only (the fee API didn't answer), in canonical 6-decimal units.
+                </span>
             {/await}
         </li>
 
@@ -397,21 +403,21 @@
             <span class="arg-name">minFinalityThreshold</span>
             <span class="arg-type">uint32</span>
             <code class="arg-value">{threshold}</code>
-            <span class="arg-note"
-                >{speed === 'fast' ? 'Fast' : 'Standard'} / {speed === 'fast'
-                    ? 'fast'
-                    : 'finalized'}</span
-            >
+            <span class="arg-note">
+                {speed === 'fast'
+                    ? 'Fast Transfer, so Circle attests before finality.'
+                    : 'Standard, so Circle waits for source-chain finality.'}
+            </span>
         </li>
 
-        <li class="row wide">
+        <li class="row">
             <span class="arg-name">hookData</span>
             <span class="arg-type">bytes</span>
             {#if hookData.ok}
                 <code class="arg-hex">{hookData.hex}</code>
                 <span class="arg-note">
-                    Forwarder routing payload — see the Hook data preview below for the byte-level
-                    layout.
+                    The forwarder's routing payload. The hook data preview below breaks it down byte
+                    by byte.
                 </span>
             {:else}
                 <span class="arg-placeholder">{hookData.error}</span>
@@ -484,7 +490,7 @@
 
     .meta-row {
         display: grid;
-        grid-template-columns: max-content max-content 1fr;
+        grid-template-columns: max-content max-content minmax(0, 1fr);
         align-items: baseline;
         gap: 0.5rem;
     }
@@ -506,6 +512,12 @@
         font-size: 0.78rem;
         color: var(--text-muted);
         line-height: 1.4;
+        overflow-wrap: anywhere;
+    }
+
+    .meta-aside code {
+        font-family: var(--mono);
+        color: var(--text);
     }
 
     .flow-note {
@@ -548,9 +560,13 @@
         gap: 0.25rem;
     }
 
+    /* The third track must stay flexible: a `max-content` track would let the
+       full-width `arg-note` / `arg-hex` children (which span every column)
+       inflate the label and type tracks, blowing the row past the container
+       instead of wrapping. `minmax(0, 1fr)` keeps that contribution out. */
     .row {
         display: grid;
-        grid-template-columns: max-content max-content 1fr;
+        grid-template-columns: max-content max-content minmax(0, 1fr);
         align-items: baseline;
         gap: 0.2rem 0.6rem;
         padding: 0.4rem 0.5rem;
@@ -562,10 +578,6 @@
     .rows.tight .row {
         padding: 0.3rem 0.45rem;
         background: var(--bg-elev-2);
-    }
-
-    .row.wide {
-        grid-template-columns: max-content max-content;
     }
 
     .arg-name {
@@ -595,6 +607,12 @@
         font-size: 0.75rem;
         color: var(--text-muted);
         line-height: 1.4;
+        overflow-wrap: anywhere;
+    }
+
+    .arg-note code {
+        font-family: var(--mono);
+        color: var(--text);
     }
 
     .arg-placeholder {
@@ -603,6 +621,7 @@
         color: var(--text-dim);
         font-style: italic;
         justify-self: end;
+        overflow-wrap: anywhere;
     }
 
     .arg-hex {
@@ -611,7 +630,6 @@
         font-size: 0.75rem;
         color: var(--text);
         word-break: break-all;
-        overflow-x: auto;
     }
 
     .signed-block {

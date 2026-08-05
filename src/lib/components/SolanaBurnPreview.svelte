@@ -76,7 +76,7 @@
             <span class="arg-type">u64</span>
             {#if parsedAmount.ok}
                 <code class="arg-value">{parsedAmount.raw.toString()}</code>
-                <span class="arg-note">6-decimal USDC subunits</span>
+                <span class="arg-note">6-decimal USDC subunits.</span>
             {:else}
                 <span class="arg-placeholder">Enter an amount above</span>
             {/if}
@@ -87,12 +87,13 @@
             <code class="arg-value">{STELLAR.domain}</code>
             <span class="arg-note">Stellar</span>
         </li>
-        <li class="row wide">
+        <li class="row">
             <span class="arg-name">mintRecipient = destinationCaller</span>
             <span class="arg-type">Pubkey</span>
             <code class="arg-hex">{forwarderHex}</code>
             <span class="arg-note">
-                the Stellar CctpForwarder — the real recipient rides in hookData below.
+                The Stellar CctpForwarder. Your real recipient rides along in the
+                <code>hookData</code> below.
             </span>
         </li>
         <li class="row">
@@ -107,26 +108,35 @@
                         SOLANA_MAX_FEE,
                     ).toString()}
                 </code>
-                <span class="arg-note">{bps > 0 ? `${bps} bps + floor` : 'floor (no fee)'}</span>
+                <span class="arg-note">
+                    {bps > 0
+                        ? `${bps} bps fast fee on top of the floor.`
+                        : 'Floor only (this speed carries no fee).'}
+                </span>
             {:catch}
                 <code class="arg-value">{SOLANA_MAX_FEE.toString()}</code>
-                <span class="arg-note">floor (fee API unavailable)</span>
+                <span class="arg-note">Floor only (the fee API didn't answer).</span>
             {/await}
         </li>
         <li class="row">
             <span class="arg-name">minFinalityThreshold</span>
             <span class="arg-type">u32</span>
             <code class="arg-value">{threshold}</code>
-            <span class="arg-note"
-                >{speed === 'fast' ? 'fast (mint before finality)' : 'standard (finalized)'}</span
-            >
+            <span class="arg-note">
+                {speed === 'fast'
+                    ? 'Fast Transfer, so Circle attests before finality.'
+                    : 'Standard, so Circle waits for finality.'}
+            </span>
         </li>
-        <li class="row wide">
+        <li class="row">
             <span class="arg-name">hookData</span>
             <span class="arg-type">bytes</span>
             {#if hookHex}
                 <code class="arg-hex">{hookHex}</code>
-                <span class="arg-note">Stellar forwarder hook → {short(stellarRecipient)}</span>
+                <span class="arg-note">
+                    Routing for the Stellar forwarder, pointing at {short(stellarRecipient)}. The
+                    full byte layout is below.
+                </span>
             {:else}
                 <span class="arg-placeholder">Connect a Stellar recipient</span>
             {/if}
@@ -170,7 +180,7 @@
     }
     .meta-row {
         display: grid;
-        grid-template-columns: max-content max-content 1fr;
+        grid-template-columns: max-content max-content minmax(0, 1fr);
         align-items: baseline;
         gap: 0.5rem;
     }
@@ -189,6 +199,7 @@
         font-size: 0.78rem;
         color: var(--text-muted);
         line-height: 1.4;
+        overflow-wrap: anywhere;
     }
     .section-title {
         margin: 0.2rem 0 0;
@@ -206,18 +217,19 @@
         flex-direction: column;
         gap: 0.4rem;
     }
+    /* The third track must stay flexible: a `max-content` track would let the
+       full-width `arg-note` / `arg-hex` children (which span every column)
+       inflate the label and type tracks, blowing the row past the container
+       instead of wrapping. `minmax(0, 1fr)` keeps that contribution out. */
     .row {
         display: grid;
-        grid-template-columns: max-content max-content 1fr;
+        grid-template-columns: max-content max-content minmax(0, 1fr);
         align-items: baseline;
         gap: 0.2rem 0.6rem;
         padding: 0.4rem 0.5rem;
         background: var(--bg);
         border-radius: var(--radius);
         border-left: 2px solid var(--accent);
-    }
-    .row.wide {
-        grid-template-columns: max-content max-content;
     }
     .arg-name {
         font-family: var(--mono);
@@ -243,6 +255,11 @@
         font-size: 0.75rem;
         color: var(--text-muted);
         line-height: 1.4;
+        overflow-wrap: anywhere;
+    }
+    .arg-note code {
+        font-family: var(--mono);
+        color: var(--text);
     }
     .arg-placeholder {
         grid-column: 3 / -1;
@@ -250,6 +267,7 @@
         color: var(--text-dim);
         font-style: italic;
         justify-self: end;
+        overflow-wrap: anywhere;
     }
     .arg-hex {
         grid-column: 1 / -1;
@@ -257,6 +275,5 @@
         font-size: 0.75rem;
         color: var(--text);
         word-break: break-all;
-        overflow-x: auto;
     }
 </style>

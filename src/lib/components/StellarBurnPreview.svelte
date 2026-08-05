@@ -137,37 +137,40 @@
             <span class="meta-label">Function</span>
             <code class="meta-value">{functionName}</code>
         </div>
-        <div class="meta-row">
-            <span class="meta-label">Caller</span>
-            <code class="meta-value" title={stellarAddress}>{shortStrkey(stellarAddress)}</code>
-            <span class="meta-aside">
-                require_auth() on this address — Freighter prompts the user for this signature.
-            </span>
-        </div>
     </div>
 
     {#if isWrapper}
         <p class="flow-note">
-            Wrapper flow — one Soroban tx, one Freighter prompt. Soroban's auth tree authorizes the
-            two inner calls below (<code>approve</code> + <code>{innerBurnFn}</code>) from this
-            single signature.
+            Wrapper flow: one Soroban transaction, one Freighter prompt. Soroban's auth tree
+            authorizes both inner calls below (<code>approve</code> and <code>{innerBurnFn}</code>)
+            from that single signature.
         </p>
     {:else}
         <p class="flow-note">
-            Two-tx flow — a separate <code>usdc.approve(...)</code> precedes this burn (skipped if allowance
-            is sufficient).
+            Two-transaction flow: a separate <code>usdc.approve(...)</code> goes first, and it's skipped
+            when your existing allowance already covers the amount.
         </p>
     {/if}
     {#if isForwarding}
         <p class="flow-note">
-            Forwarding on (experimental) — the <code>hook_data</code> below tags the burn for Circle's
-            forwarding relayer, which auto-mints on the destination and deducts its fee from the minted
-            USDC (no destination gas from you).
+            Forwarding is on, so the <code>hook_data</code> below tags this burn for Circle's forwarding
+            relayer. The relayer mints on the destination for you and takes its fee out of the minted
+            USDC, which means no destination gas out of your pocket.
         </p>
     {/if}
 
     <h5 class="section-title">Arguments</h5>
     <ul class="rows">
+        <li class="row">
+            <span class="arg-name">caller</span>
+            <span class="arg-type">Address</span>
+            <code class="arg-value" title={stellarAddress}>{shortStrkey(stellarAddress)}</code>
+            <span class="arg-note">
+                Your address, and the one the USDC is burned from. The contract calls
+                <code>require_auth()</code> on it, which is what Freighter prompts you to sign.
+            </span>
+        </li>
+
         {#if isWrapper}
             <li class="row">
                 <span class="arg-name">usdc</span>
@@ -175,9 +178,10 @@
                 <code class="arg-value" title={STELLAR.contracts.usdc}>
                     {shortContract(STELLAR.contracts.usdc)}
                 </code>
-                <span class="arg-note"
-                    >Stellar USDC SAC — passed through to inner approve/burn.</span
-                >
+                <span class="arg-note">
+                    Stellar USDC SAC. The wrapper hands this same address to the inner
+                    <code>approve</code> and to the burn as its <code>burn_token</code>.
+                </span>
             </li>
             <li class="row">
                 <span class="arg-name">tmm</span>
@@ -185,15 +189,11 @@
                 <code class="arg-value" title={STELLAR.contracts.tokenMessengerMinter}>
                     {shortContract(STELLAR.contracts.tokenMessengerMinter)}
                 </code>
-                <span class="arg-note">TokenMessengerMinter — invoked by the wrapper.</span>
+                <span class="arg-note">
+                    TokenMessengerMinter, the CCTP contract the wrapper calls on your behalf.
+                </span>
             </li>
         {/if}
-
-        <li class="row">
-            <span class="arg-name">caller</span>
-            <span class="arg-type">Address</span>
-            <code class="arg-value" title={stellarAddress}>{shortStrkey(stellarAddress)}</code>
-        </li>
 
         <li class="row">
             <span class="arg-name">amount</span>
@@ -215,39 +215,44 @@
             <span class="arg-note">{toSolana ? 'Solana' : chain?.label}</span>
         </li>
 
-        <li class="row wide">
+        <li class="row">
             <span class="arg-name">mint_recipient</span>
             <span class="arg-type">BytesN&lt;32&gt;</span>
             {#if toSolana}
                 {#await solanaAtaPromise then ata}
                     <code class="arg-hex">{ata ? toHex(ata) : ''}</code>
-                    <span class="arg-note"
-                        >→ your Solana USDC ATA (owner {shortStrkey(solanaRecipient ?? '')})</span
-                    >
+                    <span class="arg-note">
+                        Your Solana USDC ATA (owned by {shortStrkey(solanaRecipient ?? '')}).
+                    </span>
                 {:catch}
                     <span class="arg-placeholder">Invalid Solana recipient</span>
                 {/await}
             {:else}
                 <code class="arg-hex">{mintRecipientHex}</code>
-                <span class="arg-note">→ {evmRecipient} on {chain?.label}</span>
+                <span class="arg-note">
+                    Your address on {chain?.label} ({evmRecipient}), left-padded to 32 bytes.
+                </span>
             {/if}
         </li>
 
-        <li class="row">
-            <span class="arg-name">burn_token</span>
-            <span class="arg-type">Address</span>
-            <code class="arg-value" title={STELLAR.contracts.usdc}>
-                {shortContract(STELLAR.contracts.usdc)}
-            </code>
-            <span class="arg-note">Stellar USDC SAC</span>
-        </li>
+        {#if !isWrapper}
+            <li class="row">
+                <span class="arg-name">burn_token</span>
+                <span class="arg-type">Address</span>
+                <code class="arg-value" title={STELLAR.contracts.usdc}>
+                    {shortContract(STELLAR.contracts.usdc)}
+                </code>
+                <span class="arg-note">Stellar USDC SAC.</span>
+            </li>
+        {/if}
 
-        <li class="row wide">
+        <li class="row">
             <span class="arg-name">destination_caller</span>
             <span class="arg-type">BytesN&lt;32&gt;</span>
             <code class="arg-hex">{ZERO_BYTES_32_HEX}</code>
             <span class="arg-note">
-                open — any address can call receiveMessage on the destination.
+                All zeros leaves the mint open, so any address can call receiveMessage on the
+                destination.
             </span>
         </li>
 
@@ -264,11 +269,12 @@
                         ).toString()}
                     </code>
                     <span class="arg-note">
-                        protocol fee + Circle forwarding fee — deducted from the minted USDC.
+                        Protocol fee plus Circle's forwarding fee, both taken out of the minted
+                        USDC.
                     </span>
                 {:catch}
                     <code class="arg-value">{STELLAR_MAX_FEE.toString()}</code>
-                    <span class="arg-note">floor (forward fee API unavailable)</span>
+                    <span class="arg-note">Floor only (the forward fee API didn't answer).</span>
                 {/await}
             {:else}
                 {#await feePromise then rows}
@@ -279,11 +285,13 @@
                             : computeMaxFee(0n, bps, STELLAR_MAX_FEE).toString()}
                     </code>
                     <span class="arg-note">
-                        {bps > 0 ? `${bps} bps fast fee + floor` : 'floor (no fee at this speed)'}
+                        {bps > 0
+                            ? `${bps} bps fast fee on top of the floor.`
+                            : 'Floor only (this speed carries no fee).'}
                     </span>
                 {:catch}
                     <code class="arg-value">{STELLAR_MAX_FEE.toString()}</code>
-                    <span class="arg-note">floor (fee API unavailable)</span>
+                    <span class="arg-note">Floor only (the fee API didn't answer).</span>
                 {/await}
             {/if}
         </li>
@@ -293,19 +301,21 @@
             <span class="arg-type">u32</span>
             <code class="arg-value">{threshold}</code>
             <span class="arg-note">
-                finalized — Stellar finalizes in seconds and always attests at {threshold} regardless
-                of this value, so Fast Transfer (mint-before-finality) is N/A as a source.
+                Finalized. Stellar settles in seconds and always attests at {threshold} no matter what
+                you pass here, so Fast Transfer (minting before finality) doesn't apply with Stellar as
+                the source.
             </span>
         </li>
 
         {#if isForwarding}
-            <li class="row wide">
+            <li class="row">
                 <span class="arg-name">hook_data</span>
                 <span class="arg-type">Bytes</span>
                 <code class="arg-hex">{hookDataHex}</code>
                 <span class="arg-note">
-                    32 bytes — ascii "{CCTP_FORWARD_MAGIC}" (bytes 0–23) + u32 version 0 + u32
-                    length 0. The magic Circle's forwarding relayer watches for.
+                    32 bytes: the ascii magic "{CCTP_FORWARD_MAGIC}" in bytes 0 to 23, a u32 version
+                    of 0, and a u32 length of 0. That magic is what Circle's forwarding relayer
+                    watches for. The full byte layout is broken out below.
                 </span>
             </li>
         {/if}
@@ -392,7 +402,7 @@
                             <code class="arg-value">{destDomain}</code>
                             <span class="arg-note">{toSolana ? 'Solana' : chain?.label}</span>
                         </li>
-                        <li class="wide">
+                        <li>
                             <span class="arg-name">mint_recipient</span>
                             <span class="arg-type">BytesN&lt;32&gt;</span>
                             {#if toSolana}
@@ -413,7 +423,7 @@
                             </code>
                             <span class="arg-note">usdc</span>
                         </li>
-                        <li class="wide">
+                        <li>
                             <span class="arg-name">destination_caller</span>
                             <span class="arg-type">BytesN&lt;32&gt;</span>
                             <code class="arg-hex">{ZERO_BYTES_32_HEX}</code>
@@ -458,11 +468,11 @@
                             <span class="arg-note">{speed === 'fast' ? 'fast' : 'finalized'}</span>
                         </li>
                         {#if isForwarding}
-                            <li class="wide">
+                            <li>
                                 <span class="arg-name">hook_data</span>
                                 <span class="arg-type">Bytes</span>
                                 <code class="arg-hex">{hookDataHex}</code>
-                                <span class="arg-note">ascii "{CCTP_FORWARD_MAGIC}" magic</span>
+                                <span class="arg-note">the ascii "{CCTP_FORWARD_MAGIC}" magic</span>
                             </li>
                         {/if}
                     </ul>
@@ -513,7 +523,7 @@
 
     .meta-row {
         display: grid;
-        grid-template-columns: max-content max-content 1fr;
+        grid-template-columns: max-content max-content minmax(0, 1fr);
         align-items: baseline;
         gap: 0.5rem;
     }
@@ -535,6 +545,7 @@
         font-size: 0.78rem;
         color: var(--text-muted);
         line-height: 1.4;
+        overflow-wrap: anywhere;
     }
 
     .flow-note {
@@ -568,20 +579,19 @@
         gap: 0.4rem;
     }
 
+    /* The third track must stay flexible: a `max-content` track would let the
+       full-width `arg-note` / `arg-hex` children (which span every column)
+       inflate the label and type tracks, blowing the row past the container
+       instead of wrapping. `minmax(0, 1fr)` keeps that contribution out. */
     .row {
         display: grid;
-        grid-template-columns: max-content max-content 1fr;
+        grid-template-columns: max-content max-content minmax(0, 1fr);
         align-items: baseline;
         gap: 0.2rem 0.6rem;
         padding: 0.4rem 0.5rem;
         background: var(--bg);
         border-radius: var(--radius);
         border-left: 2px solid var(--accent);
-    }
-
-    .row.wide,
-    .auth-args li.wide {
-        grid-template-columns: max-content max-content;
     }
 
     .arg-name {
@@ -611,6 +621,12 @@
         font-size: 0.75rem;
         color: var(--text-muted);
         line-height: 1.4;
+        overflow-wrap: anywhere;
+    }
+
+    .arg-note code {
+        font-family: var(--mono);
+        color: var(--text);
     }
 
     .arg-placeholder {
@@ -619,6 +635,7 @@
         color: var(--text-dim);
         font-style: italic;
         justify-self: end;
+        overflow-wrap: anywhere;
     }
 
     .arg-hex {
@@ -627,7 +644,6 @@
         font-size: 0.75rem;
         color: var(--text);
         word-break: break-all;
-        overflow-x: auto;
     }
 
     .auth-tree {
@@ -714,7 +730,7 @@
 
     .auth-args li {
         display: grid;
-        grid-template-columns: max-content max-content 1fr;
+        grid-template-columns: max-content max-content minmax(0, 1fr);
         align-items: baseline;
         gap: 0.2rem 0.5rem;
         padding: 0.25rem 0.4rem;

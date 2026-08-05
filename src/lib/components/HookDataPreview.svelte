@@ -1,7 +1,22 @@
 <script lang="ts">
+    import { toHex } from 'viem';
     import { encodeStellarForwarderHookData } from '$lib/stellar/recipient';
+    import { CCTP_FORWARD_MAGIC, encodeCctpForwardHookData } from '$lib/stellar/cctp';
 
-    let { stellarRecipient }: { stellarRecipient: string } = $props();
+    // Two hookData shapes ship in this demo, so the component takes a mode:
+    //  - 'forwarder': Stellar is the destination, and the payload carries the
+    //    recipient strkey for the CctpForwarder to deliver to. Needs
+    //    `stellarRecipient`.
+    //  - 'cctp-forward': Stellar is the source, and the payload is just the
+    //    32-byte magic that flags the burn for Circle's forwarding relayer.
+    //    Takes no recipient (the burn's mint_recipient already names one).
+    let {
+        mode,
+        stellarRecipient,
+    }: {
+        mode: 'forwarder' | 'cctp-forward';
+        stellarRecipient?: string;
+    } = $props();
 
     type Encoded = { ok: true; hex: string } | { ok: false; error: string };
 
@@ -9,8 +24,11 @@
     // as a typed result so the template can render an error state instead.
     let encoded = $derived<Encoded>(
         (() => {
+            if (mode === 'cctp-forward') {
+                return { ok: true, hex: toHex(encodeCctpForwardHookData()) };
+            }
             try {
-                return { ok: true, hex: encodeStellarForwarderHookData(stellarRecipient) };
+                return { ok: true, hex: encodeStellarForwarderHookData(stellarRecipient ?? '') };
             } catch (err) {
                 return { ok: false, error: err instanceof Error ? err.message : String(err) };
             }
@@ -28,42 +46,76 @@
         return hex.slice(a, b);
     }
 
-    function buildRows(hex: string): Row[] {
+    function forwarderRows(hex: string): Row[] {
         const totalBytes = (hex.length - 2) / 2;
         return [
             {
                 label: 'magic prefix (Circle-reserved zeros)',
-                range: '0–23',
+                range: '0 to 23',
                 hex: sliceBytes(hex, 0, 24),
             },
             {
                 label: 'version (uint32)',
-                range: '24–27',
+                range: '24 to 27',
                 hex: sliceBytes(hex, 24, 28),
             },
             {
                 label: 'recipient strkey length (uint32)',
-                range: '28–31',
+                range: '28 to 31',
                 hex: sliceBytes(hex, 28, 32),
             },
             {
                 label: 'recipient strkey (UTF-8)',
-                range: `32–${totalBytes - 1}`,
+                range: `32 to ${totalBytes - 1}`,
                 hex: sliceBytes(hex, 32, totalBytes),
             },
         ];
     }
 
-    let rows = $derived(encoded.ok ? buildRows(encoded.hex) : []);
+    function cctpForwardRows(hex: string): Row[] {
+        return [
+            {
+                label: `magic prefix (ascii "${CCTP_FORWARD_MAGIC}", zero-padded to 24 bytes)`,
+                range: '0 to 23',
+                hex: sliceBytes(hex, 0, 24),
+            },
+            {
+                label: 'version (uint32)',
+                range: '24 to 27',
+                hex: sliceBytes(hex, 24, 28),
+            },
+            {
+                label: 'length of any extra Circle hook data (uint32)',
+                range: '28 to 31',
+                hex: sliceBytes(hex, 28, 32),
+            },
+        ];
+    }
+
+    let rows = $derived(
+        encoded.ok
+            ? mode === 'cctp-forward'
+                ? cctpForwardRows(encoded.hex)
+                : forwarderRows(encoded.hex)
+            : [],
+    );
 </script>
 
 <section class="hook-preview">
     <header class="head">
         <h4 class="title">Hook data preview</h4>
-        <span class="sub">
-            Encoded routing instructions appended to the burn — tells the Stellar forwarder where to
-            deliver the freshly minted USDC.
-        </span>
+        {#if mode === 'cctp-forward'}
+            <span class="sub">
+                The bytes that ride along with your burn to flag it for Circle's forwarding relayer.
+                No recipient in here: the relayer mints to the <code>mint_recipient</code> the burn already
+                names.
+            </span>
+        {:else}
+            <span class="sub">
+                Encoded routing instructions that ride along with the burn, telling the Stellar
+                forwarder where to deliver the freshly minted USDC.
+            </span>
+        {/if}
     </header>
 
     {#if encoded.ok}
@@ -112,6 +164,12 @@
         line-height: 1.4;
     }
 
+    .sub code {
+        font-family: var(--mono);
+        font-size: 0.75rem;
+        color: var(--text);
+    }
+
     .full-hex {
         display: block;
         padding: 0.5rem;
@@ -121,7 +179,6 @@
         font-size: 0.75rem;
         color: var(--text-muted);
         word-break: break-all;
-        overflow-x: auto;
     }
 
     .rows {
@@ -133,9 +190,12 @@
         gap: 0.4rem;
     }
 
+    /* Flexible second track: the `hex` child spans both columns, and a
+       `max-content` track would let it inflate the byte-range column rather
+       than wrapping inside the box. */
     .row {
         display: grid;
-        grid-template-columns: max-content 1fr;
+        grid-template-columns: max-content minmax(0, 1fr);
         gap: 0.2rem 0.75rem;
         padding: 0.4rem 0.5rem;
         background: var(--bg);
@@ -153,6 +213,7 @@
     .label {
         font-size: 0.78rem;
         color: var(--text-muted);
+        overflow-wrap: anywhere;
     }
 
     .row .hex {
@@ -161,7 +222,6 @@
         font-size: 0.75rem;
         color: var(--text);
         word-break: break-all;
-        overflow-x: auto;
     }
 
     .error {

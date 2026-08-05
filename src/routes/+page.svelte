@@ -217,7 +217,7 @@
                 {sendCallsCap}
                 {speed}
             />
-            <HookDataPreview stellarRecipient={stellar.address} />
+            <HookDataPreview mode="forwarder" stellarRecipient={stellar.address} />
         {/if}
         {#if direction === 'stellar-to-evm' && stellar.address && evm && transfer.state.phase === 'idle'}
             <StellarBurnPreview
@@ -229,6 +229,9 @@
                 {forwarding}
                 speed={effectiveSpeed}
             />
+            {#if forwarding}
+                <HookDataPreview mode="cctp-forward" />
+            {/if}
         {/if}
         {#if direction === 'solana-to-stellar' && stellar.address && solana && transfer.state.phase === 'idle'}
             <SolanaBurnPreview
@@ -237,6 +240,7 @@
                 {amount}
                 speed={effectiveSpeed}
             />
+            <HookDataPreview mode="forwarder" stellarRecipient={stellar.address} />
         {/if}
         {#if direction === 'stellar-to-solana' && stellar.address && solana && transfer.state.phase === 'idle'}
             <StellarBurnPreview
@@ -247,6 +251,9 @@
                 {forwarding}
                 speed={effectiveSpeed}
             />
+            {#if forwarding}
+                <HookDataPreview mode="cctp-forward" />
+            {/if}
         {/if}
     </section>
 

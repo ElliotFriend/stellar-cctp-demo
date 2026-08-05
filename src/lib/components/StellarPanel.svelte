@@ -115,7 +115,7 @@
                     onclick={() => (outboundFlow = 'wrapper')}
                     role="tab"
                     aria-selected={outboundFlow === 'wrapper'}
-                    title="One Soroban tx via wrapper contract — single Freighter prompt"
+                    title="One Soroban tx via a wrapper contract, so you get a single Freighter prompt"
                 >
                     1 tx (wrapper)
                 </button>

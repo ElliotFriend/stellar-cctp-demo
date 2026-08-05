@@ -69,9 +69,10 @@
     <summary>Resume a transfer by burn hash</summary>
     <div class="body">
         <p class="blurb">
-            If a previous transfer's tab closed during attestation, paste the burn transaction hash
-            to pick up at attest + mint. Works for any transfer with a known hash and matching
-            source domain — minting is permissionless.
+            If a previous transfer's tab closed while it was waiting on attestation, paste the burn
+            transaction hash here and we'll pick things back up at attest and mint. This works for
+            any transfer with a known hash and a matching source domain, since minting is
+            permissionless.
         </p>
         <label class="hash-row">
             <span class="label">Burn hash</span>

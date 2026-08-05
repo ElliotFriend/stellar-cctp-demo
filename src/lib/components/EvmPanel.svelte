@@ -254,8 +254,8 @@
                     role="tab"
                     aria-selected={inboundFlow === 'wrapper'}
                     title={wrapperAvailable
-                        ? 'One tx via CctpWrapper — sign an EIP-2612 permit, then submit one transaction'
-                        : 'No CctpWrapper deployed on this chain — set bridgeWrapper in config.ts'}
+                        ? 'One tx via CctpWrapper: sign an EIP-2612 permit, then submit one transaction'
+                        : 'No CctpWrapper deployed on this chain (set bridgeWrapper in config.ts)'}
                 >
                     1 tx (permit)
                 </button>
@@ -269,7 +269,7 @@
                     aria-selected={inboundFlow === 'send-calls'}
                     title={sendCallsAvailable
                         ? sendCallsCap.atomic
-                            ? 'Wallet bundles approve + burn atomically (EIP-5792 + EIP-7702 / smart wallet) — one click, one tx'
+                            ? 'Wallet bundles approve + burn atomically (EIP-5792 with EIP-7702 or a smart wallet): one click, one tx'
                             : 'Wallet bundles approve + burn behind one prompt, but submits them sequentially (still two txs)'
                         : 'This wallet does not advertise EIP-5792 wallet_sendCalls on this chain'}
                 >

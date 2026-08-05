@@ -138,9 +138,9 @@
                                 This step usually takes about {Math.round(longWaitEtaMs / 60_000)} minutes.
                             </strong>
                             <span class="long-wait-sub">
-                                Circle's attesters wait for {longWaitChainLabel}'s batch to settle
-                                and reach finality on its parent chain. Safe to leave the tab open —
-                                don't refresh.
+                                Circle's attesters are waiting for {longWaitChainLabel}'s batch to
+                                settle and reach finality on its parent chain. Leaving this tab open
+                                is fine, but don't refresh it.
                             </span>
                             <span class="long-wait-eta"
                                 >{fmtRemaining(step.startedAt, longWaitEtaMs)}</span

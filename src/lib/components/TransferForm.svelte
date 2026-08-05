@@ -42,10 +42,10 @@
 
     let etaCaption = $derived(
         !fastAllowed
-            ? 'Standard only — Fast Transfer (mint-before-finality) is not available for this route.'
+            ? 'Standard only. Fast Transfer (minting before finality) is not available on this route.'
             : speed === 'fast'
-              ? 'Fast: mint before finality — Circle charges a basis-point fee.'
-              : 'Standard: wait for source-chain finality — no fee.',
+              ? 'Fast: Circle mints before finality and charges a basis-point fee.'
+              : 'Standard: wait for source-chain finality, and pay no fee.',
     );
 </script>
 
@@ -75,7 +75,7 @@
                 onclick={() => (speed = 'standard')}
                 role="tab"
                 aria-selected={!fastAllowed || speed === 'standard'}
-                title="Wait for source-chain finality — no fee"
+                title="Wait for source-chain finality, and pay no fee"
             >
                 Standard
             </button>
@@ -88,8 +88,8 @@
                 role="tab"
                 aria-selected={fastAllowed && speed === 'fast'}
                 title={fastAllowed
-                    ? 'Mint before finality — Circle charges a basis-point fee'
-                    : 'Not available for this route — the source finalizes with no pre-finality window'}
+                    ? 'Mint before finality (Circle charges a basis-point fee)'
+                    : 'Not available on this route, since the source finalizes with no pre-finality window'}
             >
                 Fast
             </button>
