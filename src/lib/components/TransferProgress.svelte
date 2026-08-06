@@ -128,7 +128,7 @@
                             target="_blank"
                             rel="external noreferrer"
                         >
-                            <code>{shortAddr(step.hash, 8, 6)}</code>
+                            <code>{shortAddr(step.hash)}</code>
                             <span class="ext">↗</span>
                         </a>
                     {/if}

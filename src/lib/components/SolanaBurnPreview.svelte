@@ -43,7 +43,6 @@
         })(),
     );
     let feePromise = $derived(fetchBurnFee(SOLANA.domain, STELLAR.domain));
-    const short = (a: string) => shortAddr(a, 6, 6);
 </script>
 
 <section class="burn-preview">
@@ -58,13 +57,13 @@
         <div class="meta-row">
             <span class="meta-label">Program</span>
             <code class="meta-value" title={SOLANA.programs.tokenMessengerMinterV2}>
-                {short(SOLANA.programs.tokenMessengerMinterV2)}
+                {shortAddr(SOLANA.programs.tokenMessengerMinterV2)}
             </code>
             <span class="meta-aside">TokenMessengerMinterV2 · deposit_for_burn_with_hook</span>
         </div>
         <div class="meta-row">
             <span class="meta-label">Owner</span>
-            <code class="meta-value" title={solanaAddress}>{short(solanaAddress)}</code>
+            <code class="meta-value" title={solanaAddress}>{shortAddr(solanaAddress)}</code>
             <span class="meta-aside">signs + pays the burn (Phantom)</span>
         </div>
     </div>
@@ -134,8 +133,8 @@
             {#if hookHex}
                 <code class="arg-hex">{hookHex}</code>
                 <span class="arg-note">
-                    Routing for the Stellar forwarder, pointing at {short(stellarRecipient)}. The
-                    full byte layout is below.
+                    Routing for the Stellar forwarder, pointing at {shortAddr(stellarRecipient)}.
+                    The full byte layout is below.
                 </span>
             {:else}
                 <span class="arg-placeholder">Connect a Stellar recipient</span>

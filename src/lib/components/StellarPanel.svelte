@@ -79,7 +79,7 @@
         {#if connectError}<p class="error">{connectError}</p>{/if}
     {:else}
         <div class="addr-row">
-            <code class="addr" title={freighter.address}>{shortAddr(freighter.address, 6, 6)}</code>
+            <code class="addr" title={freighter.address}>{shortAddr(freighter.address)}</code>
             <button class="link" onclick={refreshBalance}>refresh</button>
         </div>
         <div class="balance">

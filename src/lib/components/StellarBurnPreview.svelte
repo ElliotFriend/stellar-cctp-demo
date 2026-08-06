@@ -116,10 +116,6 @@
     // don't expose in the demo.
     const ZERO_BYTES_32_HEX = `0x${'0'.repeat(64)}` as const;
 
-    // G-addresses and Soroban C-contracts are 56 chars; show 6+6 trimmed.
-    const shortStrkey = (a: string) => shortAddr(a, 6, 6);
-    const shortContract = (a: string) => shortAddr(a, 6, 6);
-
     let amountArg = $derived.by(() => {
         if (parsedAmount.ok) {
             return {
@@ -134,7 +130,7 @@
     });
     let mintRecipientNote = $derived(
         toSolana
-            ? `Your Solana USDC ATA (owned by ${shortStrkey(solanaRecipient ?? '')}).`
+            ? `Your Solana USDC ATA (owned by ${shortAddr(solanaRecipient ?? '')}).`
             : `Your address on ${chain?.label} (${evmRecipient}), left-padded to 32 bytes.`,
     );
     let mintRecipientValue = $derived.by(async () =>
@@ -185,7 +181,7 @@
     <div class="meta">
         <div class="meta-row">
             <span class="meta-label">Contract</span>
-            <code class="meta-value" title={contractAddress}>{shortContract(contractAddress)}</code>
+            <code class="meta-value" title={contractAddress}>{shortAddr(contractAddress)}</code>
             <span class="meta-aside">{contractLabel}</span>
         </div>
         <div class="meta-row">
@@ -322,7 +318,7 @@
                 <li class="auth-call">
                     <div class="auth-head">
                         <code class="auth-target" title={STELLAR.contracts.usdc}>
-                            {shortContract(STELLAR.contracts.usdc)}
+                            {shortAddr(STELLAR.contracts.usdc)}
                         </code>
                         <span class="auth-dot">·</span>
                         <code class="auth-fn">approve</code>
@@ -361,7 +357,7 @@
                 <li class="auth-call">
                     <div class="auth-head">
                         <code class="auth-target" title={STELLAR.contracts.tokenMessengerMinter}>
-                            {shortContract(STELLAR.contracts.tokenMessengerMinter)}
+                            {shortAddr(STELLAR.contracts.tokenMessengerMinter)}
                         </code>
                         <span class="auth-dot">·</span>
                         <code class="auth-fn">{innerBurnFn}</code>

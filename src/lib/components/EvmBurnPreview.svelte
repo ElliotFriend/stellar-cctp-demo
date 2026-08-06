@@ -118,7 +118,7 @@
         <div class="meta-row">
             <span class="meta-label">Contract</span>
             <code class="meta-value" title={contractAddress ?? ''}>
-                {contractAddress ? shortAddr(contractAddress, 6, 4) : 'n/a'}
+                {contractAddress ? shortAddr(contractAddress) : 'n/a'}
             </code>
             <span class="meta-aside">{contractLabel}</span>
         </div>
@@ -128,7 +128,7 @@
         </div>
         <div class="meta-row">
             <span class="meta-label">Caller</span>
-            <code class="meta-value" title={evmAddress}>{shortAddr(evmAddress, 6, 4)}</code>
+            <code class="meta-value" title={evmAddress}>{shortAddr(evmAddress)}</code>
             <span class="meta-aside">
                 The <code>msg.sender</code>. Your EVM wallet pays the gas, and in the wrapper flow
                 it is also the permit <code>owner</code>.
@@ -195,7 +195,7 @@
                             <span class="arg-name">verifyingContract</span>
                             <span class="arg-type">address</span>
                             <code class="arg-value" title={domain.verifyingContract}>
-                                {shortAddr(domain.verifyingContract, 6, 4)}
+                                {shortAddr(domain.verifyingContract)}
                             </code>
                             <span class="arg-note">USDC on {cfg.label}</span>
                         </li>
@@ -210,7 +210,7 @@
                         <span class="arg-name">owner</span>
                         <span class="arg-type">address</span>
                         <code class="arg-value" title={evmAddress}>
-                            {shortAddr(evmAddress, 6, 4)}
+                            {shortAddr(evmAddress)}
                         </code>
                         <span class="arg-note">caller</span>
                     </li>
@@ -218,7 +218,7 @@
                         <span class="arg-name">spender</span>
                         <span class="arg-type">address</span>
                         <code class="arg-value" title={cfg.bridgeWrapper ?? ''}>
-                            {cfg.bridgeWrapper ? shortAddr(cfg.bridgeWrapper, 6, 4) : 'n/a'}
+                            {cfg.bridgeWrapper ? shortAddr(cfg.bridgeWrapper) : 'n/a'}
                         </code>
                         <span class="arg-note">CctpWrapper</span>
                     </li>
@@ -278,7 +278,7 @@
                     <div class="bundle-head">
                         <span class="bundle-num">1</span>
                         <code class="bundle-target" title={cfg.usdc}>
-                            {shortAddr(cfg.usdc, 6, 4)}
+                            {shortAddr(cfg.usdc)}
                         </code>
                         <span class="bundle-dot">·</span>
                         <code class="bundle-fn">approve</code>
@@ -288,7 +288,7 @@
                             <span class="arg-name">spender</span>
                             <span class="arg-type">address</span>
                             <code class="arg-value" title={EVM_CCTP_CONTRACTS.tokenMessengerV2}>
-                                {shortAddr(EVM_CCTP_CONTRACTS.tokenMessengerV2, 6, 4)}
+                                {shortAddr(EVM_CCTP_CONTRACTS.tokenMessengerV2)}
                             </code>
                             <span class="arg-note">TokenMessengerV2</span>
                         </li>
@@ -309,7 +309,7 @@
                     <div class="bundle-head">
                         <span class="bundle-num">2</span>
                         <code class="bundle-target" title={EVM_CCTP_CONTRACTS.tokenMessengerV2}>
-                            {shortAddr(EVM_CCTP_CONTRACTS.tokenMessengerV2, 6, 4)}
+                            {shortAddr(EVM_CCTP_CONTRACTS.tokenMessengerV2)}
                         </code>
                         <span class="bundle-dot">·</span>
                         <code class="bundle-fn">depositForBurnWithHook</code>
@@ -361,7 +361,7 @@
             <li class="row">
                 <span class="arg-name">burnToken</span>
                 <span class="arg-type">address</span>
-                <code class="arg-value" title={cfg.usdc}>{shortAddr(cfg.usdc, 6, 4)}</code>
+                <code class="arg-value" title={cfg.usdc}>{shortAddr(cfg.usdc)}</code>
                 <span class="arg-note">USDC on {cfg.label}</span>
             </li>
         {/if}
