@@ -18,6 +18,7 @@
     } from '$lib/evm/usdc';
     import type { SendCallsCapability } from '$lib/evm/capabilities';
     import { shortAddr } from '$lib/utils';
+    import ContractArg from '$lib/components/ui/ContractArg.svelte';
 
     let {
         evmAddress,
@@ -104,6 +105,51 @@
         }
         return p;
     }
+
+    // Row props for the amount, which appears three times with different notes:
+    // the burn argument, the permit `value`, and the bundled `approve` amount.
+    let amountArg = $derived(
+        parsedAmount.ok
+            ? {
+                  value: parsedAmount.raw.toString(),
+                  note: `${formatEvmUsdc(evmChainId, parsedAmount.raw)} USDC (canonical 6 decimals)`,
+              }
+            : { placeholder: 'Enter an amount above' },
+    );
+
+    let hookDataArg = $derived(
+        hookData.ok
+            ? {
+                  value: hookData.hex,
+                  note: "The forwarder's routing payload. The hook data preview below breaks it down byte by byte.",
+              }
+            : { placeholder: hookData.error },
+    );
+
+    let maxFeeArg = $derived.by(async () => {
+        // Read every reactive dependency up front: anything read after an `await`
+        // in an async $derived.by body is NOT tracked, so it would go stale.
+        // `speed` really does toggle on this side, so this matters.
+        const currentSpeed = speed;
+        const amount = parsedAmount.ok ? parsedAmount.raw : 0n;
+        const burnFees = feePromise;
+
+        try {
+            const bps = feeBpsFor(await burnFees, currentSpeed);
+            return {
+                value: computeMaxFee(amount, bps, EVM_MAX_FEE).toString(),
+                note:
+                    bps > 0
+                        ? `${bps} bps fast fee on top of the floor, in canonical 6-decimal units.`
+                        : 'Floor only (this speed carries no fee), in canonical 6-decimal units.',
+            };
+        } catch {
+            return {
+                value: EVM_MAX_FEE.toString(),
+                note: "Floor only (the fee API didn't answer), in canonical 6-decimal units.",
+            };
+        }
+    });
 </script>
 
 <section class="burn-preview">
@@ -173,32 +219,31 @@
                     <p class="loading">Reading USDC name + version…</p>
                 {:then domain}
                     <ul class="rows tight">
-                        <li class="row">
-                            <span class="arg-name">name</span>
-                            <span class="arg-type">string</span>
-                            <code class="arg-value">"{domain.name}"</code>
-                            <span class="arg-note">read from usdc.name()</span>
-                        </li>
-                        <li class="row">
-                            <span class="arg-name">version</span>
-                            <span class="arg-type">string</span>
-                            <code class="arg-value">"{domain.version}"</code>
-                            <span class="arg-note">read from usdc.version()</span>
-                        </li>
-                        <li class="row">
-                            <span class="arg-name">chainId</span>
-                            <span class="arg-type">uint256</span>
-                            <code class="arg-value">{domain.chainId}</code>
-                            <span class="arg-note">{cfg.label}</span>
-                        </li>
-                        <li class="row">
-                            <span class="arg-name">verifyingContract</span>
-                            <span class="arg-type">address</span>
-                            <code class="arg-value" title={domain.verifyingContract}>
-                                {shortAddr(domain.verifyingContract)}
-                            </code>
-                            <span class="arg-note">USDC on {cfg.label}</span>
-                        </li>
+                        <ContractArg
+                            name="name"
+                            type="string"
+                            value={`"${domain.name}"`}
+                            note="read from usdc.name()"
+                        />
+                        <ContractArg
+                            name="version"
+                            type="string"
+                            value={`"${domain.version}"`}
+                            note="read from usdc.version()"
+                        />
+                        <ContractArg
+                            name="chainId"
+                            type="uint256"
+                            value={domain.chainId.toString()}
+                            note={cfg.label}
+                        />
+                        <ContractArg
+                            name="verifyingContract"
+                            type="address"
+                            value={domain.verifyingContract}
+                            note={`USDC on ${cfg.label}`}
+                            truncate
+                        />
                     </ul>
                 {:catch err}
                     <p class="error">Couldn't read USDC domain: {err.message}</p>
@@ -206,49 +251,38 @@
 
                 <h6 class="block-section">Permit message</h6>
                 <ul class="rows tight">
-                    <li class="row">
-                        <span class="arg-name">owner</span>
-                        <span class="arg-type">address</span>
-                        <code class="arg-value" title={evmAddress}>
-                            {shortAddr(evmAddress)}
-                        </code>
-                        <span class="arg-note">caller</span>
-                    </li>
-                    <li class="row">
-                        <span class="arg-name">spender</span>
-                        <span class="arg-type">address</span>
-                        <code class="arg-value" title={cfg.bridgeWrapper ?? ''}>
-                            {cfg.bridgeWrapper ? shortAddr(cfg.bridgeWrapper) : 'n/a'}
-                        </code>
-                        <span class="arg-note">CctpWrapper</span>
-                    </li>
-                    <li class="row">
-                        <span class="arg-name">value</span>
-                        <span class="arg-type">uint256</span>
-                        {#if parsedAmount.ok}
-                            <code class="arg-value">{parsedAmount.raw.toString()}</code>
-                            <span class="arg-note">
-                                same as the burn amount ({formatEvmUsdc(
-                                    evmChainId,
-                                    parsedAmount.raw,
-                                )} USDC)
-                            </span>
-                        {:else}
-                            <span class="arg-placeholder">Enter an amount above</span>
-                        {/if}
-                    </li>
-                    <li class="row">
-                        <span class="arg-name">nonce</span>
-                        <span class="arg-type">uint256</span>
-                        <span class="arg-placeholder">
-                            read at sign time from usdc.nonces(owner)
-                        </span>
-                    </li>
-                    <li class="row">
-                        <span class="arg-name">deadline</span>
-                        <span class="arg-type">uint256</span>
-                        <span class="arg-placeholder"> set at sign time to now + 30 min </span>
-                    </li>
+                    <ContractArg
+                        name="owner"
+                        type="address"
+                        value={evmAddress}
+                        note="caller"
+                        truncate
+                    />
+                    <ContractArg
+                        name="spender"
+                        type="address"
+                        value={cfg.bridgeWrapper ?? 'n/a'}
+                        note="CctpWrapper"
+                        truncate={!!cfg.bridgeWrapper}
+                    />
+                    <ContractArg
+                        name="value"
+                        type="uint256"
+                        {...amountArg}
+                        note={parsedAmount.ok
+                            ? `same as the burn amount (${formatEvmUsdc(evmChainId, parsedAmount.raw)} USDC)`
+                            : undefined}
+                    />
+                    <ContractArg
+                        name="nonce"
+                        type="uint256"
+                        placeholder="read at sign time from usdc.nonces(owner)"
+                    />
+                    <ContractArg
+                        name="deadline"
+                        type="uint256"
+                        placeholder="set at sign time to now + 30 min"
+                    />
                 </ul>
             </div>
         </details>
@@ -284,24 +318,19 @@
                         <code class="bundle-fn">approve</code>
                     </div>
                     <ul class="rows tight">
-                        <li class="row">
-                            <span class="arg-name">spender</span>
-                            <span class="arg-type">address</span>
-                            <code class="arg-value" title={EVM_CCTP_CONTRACTS.tokenMessengerV2}>
-                                {shortAddr(EVM_CCTP_CONTRACTS.tokenMessengerV2)}
-                            </code>
-                            <span class="arg-note">TokenMessengerV2</span>
-                        </li>
-                        <li class="row">
-                            <span class="arg-name">amount</span>
-                            <span class="arg-type">uint256</span>
-                            {#if parsedAmount.ok}
-                                <code class="arg-value">{parsedAmount.raw.toString()}</code>
-                                <span class="arg-note"> same as the burn amount </span>
-                            {:else}
-                                <span class="arg-placeholder">Enter an amount above</span>
-                            {/if}
-                        </li>
+                        <ContractArg
+                            name="spender"
+                            type="address"
+                            value={EVM_CCTP_CONTRACTS.tokenMessengerV2}
+                            note="TokenMessengerV2"
+                            truncate
+                        />
+                        <ContractArg
+                            name="amount"
+                            type="uint256"
+                            {...amountArg}
+                            note={parsedAmount.ok ? 'same as the burn amount' : undefined}
+                        />
                     </ul>
                 </div>
 
@@ -327,124 +356,74 @@
         {isWrapper ? 'bridgeWithPermit arguments' : 'depositForBurnWithHook arguments'}
     </h5>
     <ul class="rows">
-        <li class="row">
-            <span class="arg-name">amount</span>
-            <span class="arg-type">uint256</span>
-            {#if parsedAmount.ok}
-                <code class="arg-value">{parsedAmount.raw.toString()}</code>
-                <span class="arg-note">
-                    {formatEvmUsdc(evmChainId, parsedAmount.raw)} USDC (canonical 6 decimals)
-                </span>
-            {:else}
-                <span class="arg-placeholder">Enter an amount above</span>
-            {/if}
-        </li>
+        <ContractArg name="amount" type="uint256" {...amountArg} />
 
-        <li class="row">
-            <span class="arg-name">destinationDomain</span>
-            <span class="arg-type">uint32</span>
-            <code class="arg-value">{STELLAR.domain}</code>
-            <span class="arg-note">Stellar Testnet</span>
-        </li>
+        <ContractArg
+            name="destinationDomain"
+            type="uint32"
+            value={STELLAR.domain.toString()}
+            note="Stellar Testnet"
+        />
 
-        <li class="row">
-            <span class="arg-name">mintRecipient</span>
-            <span class="arg-type">bytes32</span>
-            <code class="arg-hex">{forwarderBytes32}</code>
-            <span class="arg-note">
-                The CctpForwarder contract ({STELLAR.contracts.cctpForwarder}), which every inbound
-                Stellar transfer has to mint to.
-            </span>
-        </li>
+        <ContractArg
+            name="mintRecipient"
+            type="bytes32"
+            value={forwarderBytes32}
+            note={`The CctpForwarder contract (${STELLAR.contracts.cctpForwarder}), which every inbound Stellar transfer has to mint to.`}
+            hex
+        />
 
         {#if !isWrapper}
-            <li class="row">
-                <span class="arg-name">burnToken</span>
-                <span class="arg-type">address</span>
-                <code class="arg-value" title={cfg.usdc}>{shortAddr(cfg.usdc)}</code>
-                <span class="arg-note">USDC on {cfg.label}</span>
-            </li>
+            <ContractArg
+                name="burnToken"
+                type="address"
+                value={cfg.usdc}
+                note={`USDC on ${cfg.label}`}
+                truncate
+            />
         {/if}
 
-        <li class="row">
-            <span class="arg-name">destinationCaller</span>
-            <span class="arg-type">bytes32</span>
-            <code class="arg-hex">{forwarderBytes32}</code>
-            <span class="arg-note">
+        <ContractArg name="destinationCaller" type="bytes32" value={forwarderBytes32} hex>
+            {#snippet note()}
                 This one <em>must</em> match <code>mintRecipient</code>, since only the forwarder
                 can call <code>mint_and_forward</code> on Stellar.
-            </span>
-        </li>
+            {/snippet}
+        </ContractArg>
 
-        <li class="row">
-            <span class="arg-name">maxFee</span>
-            <span class="arg-type">uint256</span>
-            {#await feePromise then rows}
-                {@const bps = feeBpsFor(rows, speed)}
-                <code class="arg-value">
-                    {parsedAmount.ok
-                        ? computeMaxFee(parsedAmount.raw, bps, EVM_MAX_FEE).toString()
-                        : computeMaxFee(0n, bps, EVM_MAX_FEE).toString()}
-                </code>
-                <span class="arg-note">
-                    {bps > 0
-                        ? `${bps} bps fast fee on top of the floor, in canonical 6-decimal units.`
-                        : 'Floor only (this speed carries no fee), in canonical 6-decimal units.'}
-                </span>
-            {:catch}
-                <code class="arg-value">{EVM_MAX_FEE.toString()}</code>
-                <span class="arg-note">
-                    Floor only (the fee API didn't answer), in canonical 6-decimal units.
-                </span>
-            {/await}
-        </li>
+        {#await maxFeeArg}
+            <ContractArg name="maxFee" type="uint256" placeholder="Calculating maximum fee..." />
+        {:then arg}
+            <ContractArg name="maxFee" type="uint256" {...arg} />
+        {/await}
 
-        <li class="row">
-            <span class="arg-name">minFinalityThreshold</span>
-            <span class="arg-type">uint32</span>
-            <code class="arg-value">{threshold}</code>
-            <span class="arg-note">
-                {speed === 'fast'
-                    ? 'Fast Transfer, so Circle attests before finality.'
-                    : 'Standard, so Circle waits for source-chain finality.'}
-            </span>
-        </li>
+        <ContractArg
+            name="minFinalityThreshold"
+            type="uint32"
+            value={threshold.toString()}
+            note={speed === 'fast'
+                ? 'Fast Transfer, so Circle attests before finality.'
+                : 'Standard, so Circle waits for source-chain finality.'}
+        />
 
-        <li class="row">
-            <span class="arg-name">hookData</span>
-            <span class="arg-type">bytes</span>
-            {#if hookData.ok}
-                <code class="arg-hex">{hookData.hex}</code>
-                <span class="arg-note">
-                    The forwarder's routing payload. The hook data preview below breaks it down byte
-                    by byte.
-                </span>
-            {:else}
-                <span class="arg-placeholder">{hookData.error}</span>
-            {/if}
-        </li>
+        <ContractArg name="hookData" type="bytes" hex {...hookDataArg} />
 
         {#if isWrapper}
-            <li class="row">
-                <span class="arg-name">permitDeadline</span>
-                <span class="arg-type">uint256</span>
-                <span class="arg-placeholder">set at sign time to now + 30 min</span>
-            </li>
-            <li class="row">
-                <span class="arg-name">permitV</span>
-                <span class="arg-type">uint8</span>
-                <span class="arg-placeholder">27 or 28 (ECDSA recovery id)</span>
-            </li>
-            <li class="row">
-                <span class="arg-name">permitR</span>
-                <span class="arg-type">bytes32</span>
-                <span class="arg-placeholder">first 32 bytes of the signature</span>
-            </li>
-            <li class="row">
-                <span class="arg-name">permitS</span>
-                <span class="arg-type">bytes32</span>
-                <span class="arg-placeholder">middle 32 bytes of the signature</span>
-            </li>
+            <ContractArg
+                name="permitDeadline"
+                type="uint256"
+                placeholder="set at sign time to now + 30 min"
+            />
+            <ContractArg name="permitV" type="uint8" placeholder="27 or 28 (ECDSA recovery id)" />
+            <ContractArg
+                name="permitR"
+                type="bytes32"
+                placeholder="first 32 bytes of the signature"
+            />
+            <ContractArg
+                name="permitS"
+                type="bytes32"
+                placeholder="middle 32 bytes of the signature"
+            />
         {/if}
     </ul>
 </section>
@@ -556,80 +535,13 @@
         gap: 0.4rem;
     }
 
+    /* Denser rows inside the signature / bundle blocks. Custom properties are
+       how the container reaches ContractArg: a `.rows.tight .row` selector
+       can't, since the row's `<li>` carries ContractArg's scope hash. */
     .rows.tight {
         gap: 0.25rem;
-    }
-
-    /* The third track must stay flexible: a `max-content` track would let the
-       full-width `arg-note` / `arg-hex` children (which span every column)
-       inflate the label and type tracks, blowing the row past the container
-       instead of wrapping. `minmax(0, 1fr)` keeps that contribution out. */
-    .row {
-        display: grid;
-        grid-template-columns: max-content max-content minmax(0, 1fr);
-        align-items: baseline;
-        gap: 0.2rem 0.6rem;
-        padding: 0.4rem 0.5rem;
-        background: var(--bg);
-        border-radius: var(--radius);
-        border-left: 2px solid var(--accent);
-    }
-
-    .rows.tight .row {
-        padding: 0.3rem 0.45rem;
-        background: var(--bg-elev-2);
-    }
-
-    .arg-name {
-        font-family: var(--mono);
-        font-size: 0.78rem;
-        color: var(--text);
-        font-weight: 500;
-    }
-
-    .arg-type {
-        font-family: var(--mono);
-        font-size: 0.72rem;
-        color: var(--accent);
-        font-weight: 600;
-    }
-
-    .arg-value {
-        font-family: var(--mono);
-        font-size: 0.78rem;
-        color: var(--text);
-        word-break: break-all;
-        justify-self: end;
-    }
-
-    .arg-note {
-        grid-column: 1 / -1;
-        font-size: 0.75rem;
-        color: var(--text-muted);
-        line-height: 1.4;
-        overflow-wrap: anywhere;
-    }
-
-    .arg-note code {
-        font-family: var(--mono);
-        color: var(--text);
-    }
-
-    .arg-placeholder {
-        grid-column: 3 / -1;
-        font-size: 0.75rem;
-        color: var(--text-dim);
-        font-style: italic;
-        justify-self: end;
-        overflow-wrap: anywhere;
-    }
-
-    .arg-hex {
-        grid-column: 1 / -1;
-        font-family: var(--mono);
-        font-size: 0.75rem;
-        color: var(--text);
-        word-break: break-all;
+        --arg-pad: 0.3rem 0.45rem;
+        --arg-bg: var(--bg-elev-2);
     }
 
     .signed-block {
