@@ -1,5 +1,5 @@
 #![no_std]
-use soroban_sdk::{Address, Bytes, BytesN, Env, contract, contractimpl, token};
+use soroban_sdk::{contract, contractimpl, token, Address, Bytes, BytesN, Env};
 
 mod tmm_interface;
 use crate::tmm_interface::TmmClient;

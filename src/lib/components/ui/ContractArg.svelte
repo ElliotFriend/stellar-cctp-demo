@@ -1,26 +1,28 @@
 <script lang="ts">
-    import type { Snippet } from "svelte";
-    import { shortAddr } from "$lib/utils";
+    import type { Snippet } from 'svelte';
+    import { shortAddr } from '$lib/utils';
 
     interface Props {
-        name: string,
-        type: string,
-        value?: string,
-        note?: string | Snippet,
-        placeholder?: string,
-        truncate?: boolean,
-        hex?: boolean,
+        name: string;
+        type: string;
+        value?: string;
+        note?: string | Snippet;
+        placeholder?: string;
+        truncate?: boolean;
+        hex?: boolean;
     }
 
     let { name, type, value, note, placeholder, truncate, hex }: Props = $props();
-    let valueToDisplay = $derived(truncate && value ? shortAddr(value) : value)
+    let valueToDisplay = $derived(truncate && value ? shortAddr(value) : value);
 </script>
 
 <li class="row">
     <span class="arg-name">{name}</span>
     <span class="arg-type">{type}</span>
     {#if value !== undefined}
-        <code class="arg-value" class:hex title={truncate ? value : undefined}>{valueToDisplay}</code>
+        <code class="arg-value" class:hex title={truncate ? value : undefined}
+            >{valueToDisplay}</code
+        >
     {/if}
     {#if placeholder}
         <span class="arg-placeholder">{placeholder}</span>

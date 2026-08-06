@@ -125,21 +125,21 @@
             return {
                 value: parsedAmount.raw.toString(),
                 note: `${formatUsdc(parsedAmount.raw)} USDC (Stellar 7-decimal subunits)`,
-            }
+            };
         } else {
             return {
-                placeholder: 'Enter an amount above'
-            }
+                placeholder: 'Enter an amount above',
+            };
         }
     });
     let mintRecipientNote = $derived(
         toSolana
             ? `Your Solana USDC ATA (owned by ${shortStrkey(solanaRecipient ?? '')}).`
-            : `Your address on ${chain?.label} (${evmRecipient}), left-padded to 32 bytes.`
+            : `Your address on ${chain?.label} (${evmRecipient}), left-padded to 32 bytes.`,
     );
     let mintRecipientValue = $derived.by(async () =>
-        toSolana ? toHex(await solanaAtaPromise!) : mintRecipientHex
-    )
+        toSolana ? toHex(await solanaAtaPromise!) : mintRecipientHex,
+    );
     let maxFeeArg = $derived.by(async () => {
         // Read every reactive dependency up front: anything read after an `await`
         // in an async $derived.by body is NOT tracked, so it would go stale.
@@ -160,9 +160,10 @@
             const bps = feeBpsFor(await burnFees, currentSpeed);
             return {
                 value: computeMaxFee(amount, bps, STELLAR_MAX_FEE).toString(),
-                note: bps > 0
-                    ? `${bps} bps fast fee on top of the floor.`
-                    : 'Floor only (Standard speed carries no fee).',
+                note:
+                    bps > 0
+                        ? `${bps} bps fast fee on top of the floor.`
+                        : 'Floor only (Standard speed carries no fee).',
             };
         } catch {
             return {
@@ -170,7 +171,7 @@
                 note: `Floor only (the ${forwarding ? 'forwarding ' : ''}fee API didn't answer).`,
             };
         }
-    })
+    });
 </script>
 
 <section class="burn-preview">
@@ -229,18 +230,19 @@
                     <code>approve</code> and to the burn as its <code>burn_token</code>.
                 {/snippet}
             </ContractArg>
-            <ContractArg name="tmm" type="Address" value={STELLAR.contracts.tokenMessengerMinter} truncate>
+            <ContractArg
+                name="tmm"
+                type="Address"
+                value={STELLAR.contracts.tokenMessengerMinter}
+                truncate
+            >
                 {#snippet note()}
                     TokenMessengerMinter, the CCTP contract the wrapper calls on your behalf.
                 {/snippet}
             </ContractArg>
         {/if}
 
-        <ContractArg
-            name="amount"
-            type="i128"
-            {...amountArg}
-        />
+        <ContractArg name="amount" type="i128" {...amountArg} />
 
         <ContractArg
             name="destination_domain"
@@ -250,11 +252,25 @@
         />
 
         {#await mintRecipientValue}
-            <ContractArg name="mint_recipient" type="BytesN<32>" placeholder="Deriving your USDC ATA..." />
+            <ContractArg
+                name="mint_recipient"
+                type="BytesN<32>"
+                placeholder="Deriving your USDC ATA..."
+            />
         {:then value}
-            <ContractArg name="mint_recipient" type="BytesN<32>" {value} note={mintRecipientNote} hex />
+            <ContractArg
+                name="mint_recipient"
+                type="BytesN<32>"
+                {value}
+                note={mintRecipientNote}
+                hex
+            />
         {:catch}
-            <ContractArg name="mint_recipient" type="BytesN<32>" placeholder="Invalid Solana recipient." />
+            <ContractArg
+                name="mint_recipient"
+                type="BytesN<32>"
+                placeholder="Invalid Solana recipient."
+            />
         {/await}
 
         {#if !isWrapper}
@@ -277,7 +293,7 @@
         {#await maxFeeArg}
             <ContractArg name="max_fee" type="i128" placeholder="Calculating maximum fee..." />
         {:then { value, note }}
-            <ContractArg name="max_fee" type="i128" value={value} {note} />
+            <ContractArg name="max_fee" type="i128" {value} {note} />
         {/await}
 
         <ContractArg name="min_finality_threshold" type="u32" value={threshold.toString()}>
@@ -291,9 +307,9 @@
         {#if isForwarding}
             <ContractArg name="hook_data" type="Bytes" value={hookDataHex} hex>
                 {#snippet note()}
-                    32 bytes: the ascii magic <code>{CCTP_FORWARD_MAGIC}</code> in bytes 0-23, a u32
-                    version of 0, and a u32 length of 0. That magic is what Circle's forwarding relayer
-                    watches for. The full byte layout is broken out below.
+                    32 bytes: the ascii magic <code>{CCTP_FORWARD_MAGIC}</code> in bytes 0-23, a u32 version
+                    of 0, and a u32 length of 0. That magic is what Circle's forwarding relayer watches
+                    for. The full byte layout is broken out below.
                 {/snippet}
             </ContractArg>
         {/if}
@@ -330,7 +346,9 @@
                             name="amount"
                             type="i128"
                             {...amountArg}
-                            note={parsedAmount.ok ? `${formatUsdc(parsedAmount.raw)} USDC` : undefined}
+                            note={parsedAmount.ok
+                                ? `${formatUsdc(parsedAmount.raw)} USDC`
+                                : undefined}
                         />
                         <ContractArg
                             name="live_until_ledger"
@@ -349,17 +367,14 @@
                         <code class="auth-fn">{innerBurnFn}</code>
                     </div>
                     <ul class="auth-args">
-                        <ContractArg
-                            name="caller"
-                            type="Address"
-                            value={stellarAddress}
-                            truncate
-                        />
+                        <ContractArg name="caller" type="Address" value={stellarAddress} truncate />
                         <ContractArg
                             name="amount"
                             type="i128"
                             {...amountArg}
-                            note={parsedAmount.ok ? `${formatUsdc(parsedAmount.raw)} USDC` : undefined}
+                            note={parsedAmount.ok
+                                ? `${formatUsdc(parsedAmount.raw)} USDC`
+                                : undefined}
                         />
                         <ContractArg
                             name="destination_domain"
@@ -368,7 +383,11 @@
                             note={toSolana ? 'Solana' : chain?.label}
                         />
                         {#await mintRecipientValue}
-                            <ContractArg name="mint_recipient" type="BytesN<32>" placeholder="Deriving your USDC ATA..." />
+                            <ContractArg
+                                name="mint_recipient"
+                                type="BytesN<32>"
+                                placeholder="Deriving your USDC ATA..."
+                            />
                         {:then value}
                             <ContractArg
                                 name="mint_recipient"
@@ -378,7 +397,11 @@
                                 note={toSolana ? '→ your Solana USDC ATA' : `→ ${evmRecipient}`}
                             />
                         {:catch}
-                            <ContractArg name="mint_recipient" type="BytesN<32>" placeholder="Invalid Solana recipient." />
+                            <ContractArg
+                                name="mint_recipient"
+                                type="BytesN<32>"
+                                placeholder="Invalid Solana recipient."
+                            />
                         {/await}
                         <ContractArg
                             name="burn_token"
@@ -395,9 +418,13 @@
                             hex
                         />
                         {#await maxFeeArg}
-                            <ContractArg name="max_fee" type="i128" placeholder="Calculating maximum fee..." />
+                            <ContractArg
+                                name="max_fee"
+                                type="i128"
+                                placeholder="Calculating maximum fee..."
+                            />
                         {:then { value }}
-                            <ContractArg name="max_fee" type="i128" value={value} />
+                            <ContractArg name="max_fee" type="i128" {value} />
                         {/await}
                         <ContractArg
                             name="min_finality_threshold"
