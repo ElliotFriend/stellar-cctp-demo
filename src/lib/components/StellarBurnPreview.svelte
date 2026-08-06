@@ -22,6 +22,8 @@
     import { parseUsdcStellar, formatUsdc } from '$lib/stellar/usdc';
     import { shortAddr } from '$lib/utils';
 
+    import ContractArg from '$lib/components/ui/ContractArg.svelte';
+
     // The outbound burn preview, reused for either destination. Pass EVM
     // fields for a Stellar→EVM burn, or `solanaRecipient` (a Solana owner
     // address) for a Stellar→Solana burn. The two are mutually exclusive.
@@ -117,6 +119,58 @@
     // G-addresses and Soroban C-contracts are 56 chars; show 6+6 trimmed.
     const shortStrkey = (a: string) => shortAddr(a, 6, 6);
     const shortContract = (a: string) => shortAddr(a, 6, 6);
+
+    let amountArg = $derived.by(() => {
+        if (parsedAmount.ok) {
+            return {
+                value: parsedAmount.raw.toString(),
+                note: `${formatUsdc(parsedAmount.raw)} USDC (Stellar 7-decimal subunits)`,
+            }
+        } else {
+            return {
+                placeholder: 'Enter an amount above'
+            }
+        }
+    });
+    let mintRecipientNote = $derived(
+        toSolana
+            ? `Your Solana USDC ATA (owned by ${shortStrkey(solanaRecipient ?? '')}).`
+            : `Your address on ${chain?.label} (${evmRecipient}), left-padded to 32 bytes.`
+    );
+    let mintRecipientValue = $derived.by(async () =>
+        toSolana ? toHex(await solanaAtaPromise!) : mintRecipientHex
+    )
+    let maxFeeArg = $derived.by(async () => {
+        // Read every reactive dependency up front: anything read after an `await`
+        // in an async $derived.by body is NOT tracked, so it would go stale.
+        const forwarding = isForwarding;
+        const currentSpeed = speed;
+        const amount = parsedAmount.ok ? parsedAmount.raw : 0n;
+        const forwardFees = forwardFeePromise;
+        const burnFees = feePromise;
+
+        try {
+            if (forwarding) {
+                const rows = await forwardFees;
+                return {
+                    value: forwardedMaxFeeStellar(rows, currentSpeed, amount).toString(),
+                    note: "Protocol fee plus Circle's forwarding fee, both taken out of the minted USDC.",
+                };
+            }
+            const bps = feeBpsFor(await burnFees, currentSpeed);
+            return {
+                value: computeMaxFee(amount, bps, STELLAR_MAX_FEE).toString(),
+                note: bps > 0
+                    ? `${bps} bps fast fee on top of the floor.`
+                    : 'Floor only (Standard speed carries no fee).',
+            };
+        } catch {
+            return {
+                value: STELLAR_MAX_FEE.toString(),
+                note: `Floor only (the ${forwarding ? 'forwarding ' : ''}fee API didn't answer).`,
+            };
+        }
+    })
 </script>
 
 <section class="burn-preview">
@@ -161,163 +215,87 @@
 
     <h5 class="section-title">Arguments</h5>
     <ul class="rows">
-        <li class="row">
-            <span class="arg-name">caller</span>
-            <span class="arg-type">Address</span>
-            <code class="arg-value" title={stellarAddress}>{shortStrkey(stellarAddress)}</code>
-            <span class="arg-note">
+        <ContractArg name="caller" type="Address" value={stellarAddress} truncate>
+            {#snippet note()}
                 Your address, and the one the USDC is burned from. The contract calls
                 <code>require_auth()</code> on it, which is what Freighter prompts you to sign.
-            </span>
-        </li>
+            {/snippet}
+        </ContractArg>
 
         {#if isWrapper}
-            <li class="row">
-                <span class="arg-name">usdc</span>
-                <span class="arg-type">Address</span>
-                <code class="arg-value" title={STELLAR.contracts.usdc}>
-                    {shortContract(STELLAR.contracts.usdc)}
-                </code>
-                <span class="arg-note">
+            <ContractArg name="usdc" type="Address" value={STELLAR.contracts.usdc} truncate>
+                {#snippet note()}
                     Stellar USDC SAC. The wrapper hands this same address to the inner
                     <code>approve</code> and to the burn as its <code>burn_token</code>.
-                </span>
-            </li>
-            <li class="row">
-                <span class="arg-name">tmm</span>
-                <span class="arg-type">Address</span>
-                <code class="arg-value" title={STELLAR.contracts.tokenMessengerMinter}>
-                    {shortContract(STELLAR.contracts.tokenMessengerMinter)}
-                </code>
-                <span class="arg-note">
+                {/snippet}
+            </ContractArg>
+            <ContractArg name="tmm" type="Address" value={STELLAR.contracts.tokenMessengerMinter} truncate>
+                {#snippet note()}
                     TokenMessengerMinter, the CCTP contract the wrapper calls on your behalf.
-                </span>
-            </li>
+                {/snippet}
+            </ContractArg>
         {/if}
 
-        <li class="row">
-            <span class="arg-name">amount</span>
-            <span class="arg-type">i128</span>
-            {#if parsedAmount.ok}
-                <code class="arg-value">{parsedAmount.raw.toString()}</code>
-                <span class="arg-note">
-                    {formatUsdc(parsedAmount.raw)} USDC (Stellar 7-decimal subunits)
-                </span>
-            {:else}
-                <span class="arg-placeholder">Enter an amount above</span>
-            {/if}
-        </li>
+        <ContractArg
+            name="amount"
+            type="i128"
+            {...amountArg}
+        />
 
-        <li class="row">
-            <span class="arg-name">destination_domain</span>
-            <span class="arg-type">u32</span>
-            <code class="arg-value">{destDomain}</code>
-            <span class="arg-note">{toSolana ? 'Solana' : chain?.label}</span>
-        </li>
+        <ContractArg
+            name="destination_domain"
+            type="u32"
+            value={destDomain.toString()}
+            note={toSolana ? 'Solana' : chain?.label}
+        />
 
-        <li class="row">
-            <span class="arg-name">mint_recipient</span>
-            <span class="arg-type">BytesN&lt;32&gt;</span>
-            {#if toSolana}
-                {#await solanaAtaPromise then ata}
-                    <code class="arg-hex">{ata ? toHex(ata) : ''}</code>
-                    <span class="arg-note">
-                        Your Solana USDC ATA (owned by {shortStrkey(solanaRecipient ?? '')}).
-                    </span>
-                {:catch}
-                    <span class="arg-placeholder">Invalid Solana recipient</span>
-                {/await}
-            {:else}
-                <code class="arg-hex">{mintRecipientHex}</code>
-                <span class="arg-note">
-                    Your address on {chain?.label} ({evmRecipient}), left-padded to 32 bytes.
-                </span>
-            {/if}
-        </li>
+        {#await mintRecipientValue}
+            <ContractArg name="mint_recipient" type="BytesN<32>" placeholder="Deriving your USDC ATA..." />
+        {:then value}
+            <ContractArg name="mint_recipient" type="BytesN<32>" {value} note={mintRecipientNote} hex />
+        {:catch}
+            <ContractArg name="mint_recipient" type="BytesN<32>" placeholder="Invalid Solana recipient." />
+        {/await}
 
         {#if !isWrapper}
-            <li class="row">
-                <span class="arg-name">burn_token</span>
-                <span class="arg-type">Address</span>
-                <code class="arg-value" title={STELLAR.contracts.usdc}>
-                    {shortContract(STELLAR.contracts.usdc)}
-                </code>
-                <span class="arg-note">Stellar USDC SAC.</span>
-            </li>
+            <ContractArg
+                name="burn_token"
+                type="Address"
+                value={STELLAR.contracts.usdc}
+                note="Stellar USDC SAC."
+                truncate
+            />
         {/if}
 
-        <li class="row">
-            <span class="arg-name">destination_caller</span>
-            <span class="arg-type">BytesN&lt;32&gt;</span>
-            <code class="arg-hex">{ZERO_BYTES_32_HEX}</code>
-            <span class="arg-note">
-                All zeros leaves the mint open, so any address can call receiveMessage on the
-                destination.
-            </span>
-        </li>
+        <ContractArg name="destination_caller" type="BytesN<32>" value={ZERO_BYTES_32_HEX} hex>
+            {#snippet note()}
+                All zeros leaves the mint open, so any address can call <code>receiveMessage</code>
+                on the destination.
+            {/snippet}
+        </ContractArg>
 
-        <li class="row">
-            <span class="arg-name">max_fee</span>
-            <span class="arg-type">i128</span>
-            {#if isForwarding}
-                {#await forwardFeePromise then rows}
-                    <code class="arg-value">
-                        {forwardedMaxFeeStellar(
-                            rows,
-                            speed,
-                            parsedAmount.ok ? parsedAmount.raw : 0n,
-                        ).toString()}
-                    </code>
-                    <span class="arg-note">
-                        Protocol fee plus Circle's forwarding fee, both taken out of the minted
-                        USDC.
-                    </span>
-                {:catch}
-                    <code class="arg-value">{STELLAR_MAX_FEE.toString()}</code>
-                    <span class="arg-note">Floor only (the forward fee API didn't answer).</span>
-                {/await}
-            {:else}
-                {#await feePromise then rows}
-                    {@const bps = feeBpsFor(rows, speed)}
-                    <code class="arg-value">
-                        {parsedAmount.ok
-                            ? computeMaxFee(parsedAmount.raw, bps, STELLAR_MAX_FEE).toString()
-                            : computeMaxFee(0n, bps, STELLAR_MAX_FEE).toString()}
-                    </code>
-                    <span class="arg-note">
-                        {bps > 0
-                            ? `${bps} bps fast fee on top of the floor.`
-                            : 'Floor only (this speed carries no fee).'}
-                    </span>
-                {:catch}
-                    <code class="arg-value">{STELLAR_MAX_FEE.toString()}</code>
-                    <span class="arg-note">Floor only (the fee API didn't answer).</span>
-                {/await}
-            {/if}
-        </li>
+        {#await maxFeeArg}
+            <ContractArg name="max_fee" type="i128" placeholder="Calculating maximum fee..." />
+        {:then { value, note }}
+            <ContractArg name="max_fee" type="i128" value={value} {note} />
+        {/await}
 
-        <li class="row">
-            <span class="arg-name">min_finality_threshold</span>
-            <span class="arg-type">u32</span>
-            <code class="arg-value">{threshold}</code>
-            <span class="arg-note">
+        <ContractArg name="min_finality_threshold" type="u32" value={threshold.toString()}>
+            {#snippet note()}
                 Finalized. Stellar settles in seconds and always attests at {threshold} no matter what
                 you pass here, so Fast Transfer (minting before finality) doesn't apply with Stellar as
                 the source.
-            </span>
-        </li>
+            {/snippet}
+        </ContractArg>
 
         {#if isForwarding}
-            <li class="row">
-                <span class="arg-name">hook_data</span>
-                <span class="arg-type">Bytes</span>
-                <code class="arg-hex">{hookDataHex}</code>
-                <span class="arg-note">
-                    32 bytes: the ascii magic "{CCTP_FORWARD_MAGIC}" in bytes 0-23, a u32 version of
-                    0, and a u32 length of 0. That magic is what Circle's forwarding relayer watches
-                    for. The full byte layout is broken out below.
-                </span>
-            </li>
+            <ContractArg name="hook_data" type="Bytes" value={hookDataHex} hex>
+                {#snippet note()}
+                    32 bytes: the ascii magic <code>{CCTP_FORWARD_MAGIC}</code> in bytes 0-23, a u32
+                    version of 0, and a u32 length of 0. That magic is what Circle's forwarding relayer
+                    watches for. The full byte layout is broken out below.
+                {/snippet}
+            </ContractArg>
         {/if}
     </ul>
 
@@ -334,39 +312,31 @@
                         <code class="auth-fn">approve</code>
                     </div>
                     <ul class="auth-args">
-                        <li>
-                            <span class="arg-name">from</span>
-                            <span class="arg-type">Address</span>
-                            <code class="arg-value" title={stellarAddress}>
-                                {shortStrkey(stellarAddress)}
-                            </code>
-                            <span class="arg-note">caller</span>
-                        </li>
-                        <li>
-                            <span class="arg-name">spender</span>
-                            <span class="arg-type">Address</span>
-                            <code class="arg-value" title={STELLAR.contracts.tokenMessengerMinter}>
-                                {shortContract(STELLAR.contracts.tokenMessengerMinter)}
-                            </code>
-                            <span class="arg-note">tmm</span>
-                        </li>
-                        <li>
-                            <span class="arg-name">amount</span>
-                            <span class="arg-type">i128</span>
-                            {#if parsedAmount.ok}
-                                <code class="arg-value">{parsedAmount.raw.toString()}</code>
-                                <span class="arg-note">{formatUsdc(parsedAmount.raw)} USDC</span>
-                            {:else}
-                                <span class="arg-placeholder">Enter an amount above</span>
-                            {/if}
-                        </li>
-                        <li>
-                            <span class="arg-name">expiration_ledger</span>
-                            <span class="arg-type">u32</span>
-                            <span class="arg-placeholder">
-                                computed in-contract: (sequence + 50).next_multiple_of(50)
-                            </span>
-                        </li>
+                        <ContractArg
+                            name="from"
+                            type="Address"
+                            value={stellarAddress}
+                            note="caller"
+                            truncate
+                        />
+                        <ContractArg
+                            name="spender"
+                            type="Address"
+                            value={STELLAR.contracts.tokenMessengerMinter}
+                            note="tmm"
+                            truncate
+                        />
+                        <ContractArg
+                            name="amount"
+                            type="i128"
+                            {...amountArg}
+                            note={parsedAmount.ok ? `${formatUsdc(parsedAmount.raw)} USDC` : undefined}
+                        />
+                        <ContractArg
+                            name="live_until_ledger"
+                            type="u32"
+                            placeholder="computed in-contract: (sequence + 50).next_multiple_of(50)"
+                        />
                     </ul>
                 </li>
 
@@ -379,101 +349,70 @@
                         <code class="auth-fn">{innerBurnFn}</code>
                     </div>
                     <ul class="auth-args">
-                        <li>
-                            <span class="arg-name">caller</span>
-                            <span class="arg-type">Address</span>
-                            <code class="arg-value" title={stellarAddress}>
-                                {shortStrkey(stellarAddress)}
-                            </code>
-                        </li>
-                        <li>
-                            <span class="arg-name">amount</span>
-                            <span class="arg-type">i128</span>
-                            {#if parsedAmount.ok}
-                                <code class="arg-value">{parsedAmount.raw.toString()}</code>
-                                <span class="arg-note">{formatUsdc(parsedAmount.raw)} USDC</span>
-                            {:else}
-                                <span class="arg-placeholder">Enter an amount above</span>
-                            {/if}
-                        </li>
-                        <li>
-                            <span class="arg-name">destination_domain</span>
-                            <span class="arg-type">u32</span>
-                            <code class="arg-value">{destDomain}</code>
-                            <span class="arg-note">{toSolana ? 'Solana' : chain?.label}</span>
-                        </li>
-                        <li>
-                            <span class="arg-name">mint_recipient</span>
-                            <span class="arg-type">BytesN&lt;32&gt;</span>
-                            {#if toSolana}
-                                {#await solanaAtaPromise then ata}
-                                    <code class="arg-hex">{ata ? toHex(ata) : ''}</code>
-                                    <span class="arg-note">→ your Solana USDC ATA</span>
-                                {/await}
-                            {:else}
-                                <code class="arg-hex">{mintRecipientHex}</code>
-                                <span class="arg-note">→ {evmRecipient}</span>
-                            {/if}
-                        </li>
-                        <li>
-                            <span class="arg-name">burn_token</span>
-                            <span class="arg-type">Address</span>
-                            <code class="arg-value" title={STELLAR.contracts.usdc}>
-                                {shortContract(STELLAR.contracts.usdc)}
-                            </code>
-                            <span class="arg-note">usdc</span>
-                        </li>
-                        <li>
-                            <span class="arg-name">destination_caller</span>
-                            <span class="arg-type">BytesN&lt;32&gt;</span>
-                            <code class="arg-hex">{ZERO_BYTES_32_HEX}</code>
-                            <span class="arg-note">open</span>
-                        </li>
-                        <li>
-                            <span class="arg-name">max_fee</span>
-                            <span class="arg-type">i128</span>
-                            {#if isForwarding}
-                                {#await forwardFeePromise then rows}
-                                    <code class="arg-value">
-                                        {forwardedMaxFeeStellar(
-                                            rows,
-                                            speed,
-                                            parsedAmount.ok ? parsedAmount.raw : 0n,
-                                        ).toString()}
-                                    </code>
-                                {:catch}
-                                    <code class="arg-value">{STELLAR_MAX_FEE.toString()}</code>
-                                {/await}
-                            {:else}
-                                {#await feePromise then rows}
-                                    {@const bps = feeBpsFor(rows, speed)}
-                                    <code class="arg-value">
-                                        {parsedAmount.ok
-                                            ? computeMaxFee(
-                                                  parsedAmount.raw,
-                                                  bps,
-                                                  STELLAR_MAX_FEE,
-                                              ).toString()
-                                            : computeMaxFee(0n, bps, STELLAR_MAX_FEE).toString()}
-                                    </code>
-                                {:catch}
-                                    <code class="arg-value">{STELLAR_MAX_FEE.toString()}</code>
-                                {/await}
-                            {/if}
-                        </li>
-                        <li>
-                            <span class="arg-name">min_finality_threshold</span>
-                            <span class="arg-type">u32</span>
-                            <code class="arg-value">{threshold}</code>
-                            <span class="arg-note">{speed === 'fast' ? 'fast' : 'finalized'}</span>
-                        </li>
+                        <ContractArg
+                            name="caller"
+                            type="Address"
+                            value={stellarAddress}
+                            truncate
+                        />
+                        <ContractArg
+                            name="amount"
+                            type="i128"
+                            {...amountArg}
+                            note={parsedAmount.ok ? `${formatUsdc(parsedAmount.raw)} USDC` : undefined}
+                        />
+                        <ContractArg
+                            name="destination_domain"
+                            type="u32"
+                            value={destDomain.toString()}
+                            note={toSolana ? 'Solana' : chain?.label}
+                        />
+                        {#await mintRecipientValue}
+                            <ContractArg name="mint_recipient" type="BytesN<32>" placeholder="Deriving your USDC ATA..." />
+                        {:then value}
+                            <ContractArg
+                                name="mint_recipient"
+                                type="BytesN<32>"
+                                {value}
+                                hex
+                                note={toSolana ? '→ your Solana USDC ATA' : `→ ${evmRecipient}`}
+                            />
+                        {:catch}
+                            <ContractArg name="mint_recipient" type="BytesN<32>" placeholder="Invalid Solana recipient." />
+                        {/await}
+                        <ContractArg
+                            name="burn_token"
+                            type="Address"
+                            value={STELLAR.contracts.usdc}
+                            note="Stellar USDC SAC."
+                            truncate
+                        />
+                        <ContractArg
+                            name="destination_caller"
+                            type="BytesN<32>"
+                            value={ZERO_BYTES_32_HEX}
+                            note="open"
+                            hex
+                        />
+                        {#await maxFeeArg}
+                            <ContractArg name="max_fee" type="i128" placeholder="Calculating maximum fee..." />
+                        {:then { value }}
+                            <ContractArg name="max_fee" type="i128" value={value} />
+                        {/await}
+                        <ContractArg
+                            name="min_finality_threshold"
+                            type="u32"
+                            value={threshold.toString()}
+                            note={speed === 'fast' ? 'fast' : 'finalized'}
+                        />
                         {#if isForwarding}
-                            <li>
-                                <span class="arg-name">hook_data</span>
-                                <span class="arg-type">Bytes</span>
-                                <code class="arg-hex">{hookDataHex}</code>
-                                <span class="arg-note">the ascii "{CCTP_FORWARD_MAGIC}" magic</span>
-                            </li>
+                            <ContractArg
+                                name="hook_data"
+                                type="Bytes"
+                                value={hookDataHex}
+                                note={`the ascii "${CCTP_FORWARD_MAGIC}" magic`}
+                                hex
+                            />
                         {/if}
                     </ul>
                 </li>
@@ -579,73 +518,6 @@
         gap: 0.4rem;
     }
 
-    /* The third track must stay flexible: a `max-content` track would let the
-       full-width `arg-note` / `arg-hex` children (which span every column)
-       inflate the label and type tracks, blowing the row past the container
-       instead of wrapping. `minmax(0, 1fr)` keeps that contribution out. */
-    .row {
-        display: grid;
-        grid-template-columns: max-content max-content minmax(0, 1fr);
-        align-items: baseline;
-        gap: 0.2rem 0.6rem;
-        padding: 0.4rem 0.5rem;
-        background: var(--bg);
-        border-radius: var(--radius);
-        border-left: 2px solid var(--accent);
-    }
-
-    .arg-name {
-        font-family: var(--mono);
-        font-size: 0.78rem;
-        color: var(--text);
-        font-weight: 500;
-    }
-
-    .arg-type {
-        font-family: var(--mono);
-        font-size: 0.72rem;
-        color: var(--accent);
-        font-weight: 600;
-    }
-
-    .arg-value {
-        font-family: var(--mono);
-        font-size: 0.78rem;
-        color: var(--text);
-        word-break: break-all;
-        justify-self: end;
-    }
-
-    .arg-note {
-        grid-column: 1 / -1;
-        font-size: 0.75rem;
-        color: var(--text-muted);
-        line-height: 1.4;
-        overflow-wrap: anywhere;
-    }
-
-    .arg-note code {
-        font-family: var(--mono);
-        color: var(--text);
-    }
-
-    .arg-placeholder {
-        grid-column: 3 / -1;
-        font-size: 0.75rem;
-        color: var(--text-dim);
-        font-style: italic;
-        justify-self: end;
-        overflow-wrap: anywhere;
-    }
-
-    .arg-hex {
-        grid-column: 1 / -1;
-        font-family: var(--mono);
-        font-size: 0.75rem;
-        color: var(--text);
-        word-break: break-all;
-    }
-
     .auth-tree {
         margin-top: 0.25rem;
         background: var(--bg);
@@ -726,15 +598,10 @@
         display: flex;
         flex-direction: column;
         gap: 0.25rem;
-    }
 
-    .auth-args li {
-        display: grid;
-        grid-template-columns: max-content max-content minmax(0, 1fr);
-        align-items: baseline;
-        gap: 0.2rem 0.5rem;
-        padding: 0.25rem 0.4rem;
-        background: var(--bg-elev-2);
-        border-radius: var(--radius);
+        --arg-gap: 0.25rem 0.5rem;
+        --arg-pad: 0.25rem 0.4rem;
+        --arg-bg: var(--bg-elev-2);
+        --arg-rule: none;
     }
 </style>

@@ -44,6 +44,44 @@ Rules that follow from those:
 The canonical version of this lives as a comment above `Direction` in
 `src/lib/config.ts`, and a reader-facing version is in the README.
 
+## Async `$derived.by`: read dependencies before the first `await`
+
+In an async `$derived.by` body, read every reactive dependency synchronously at
+the top, before the first `await`. Reads after an `await` are **not** tracked, so
+the derived silently goes stale when they change.
+
+Per the [`$derived` docs, "Understanding dependencies"](https://svelte.dev/docs/svelte/$derived):
+"Anything read _synchronously_ inside the `$derived` expression (or `$derived.by`
+function body) is considered a dependency of the derived state." The transform
+that also tracks post-`await` state applies only to `await` in a `$derived`
+expression itself, not in functions it calls, and it needs
+`compilerOptions.experimental.async`, which this project does not enable.
+
+```ts
+// WRONG: `speed` and `amount` are read after the await, so changing either
+// leaves the displayed value stale.
+let arg = $derived.by(async () => {
+    const rows = await feePromise;
+    return { value: computeMaxFee(amount, feeBpsFor(rows, speed), floor).toString() };
+});
+
+// RIGHT: every dependency is read up front.
+let arg = $derived.by(async () => {
+    const currentSpeed = speed;
+    const currentAmount = amount;
+    const quote = feePromise;
+    const rows = await quote;
+    return { value: computeMaxFee(currentAmount, feeBpsFor(rows, currentSpeed), floor).toString() };
+});
+```
+
+If hoisting reads gets awkward, split the synchronous part into its own plain
+`$derived` and let the async one resolve a value only (see `mintRecipientNote`
+and `mintRecipientValue` in `StellarBurnPreview.svelte`).
+
+This fails silently: no runtime warning, no type error. It is easy to miss when
+the correct result happens not to depend on the untracked value yet.
+
 ## Available Svelte MCP Tools:
 
 You are able to use the Svelte MCP server, where you have access to comprehensive Svelte 5 and SvelteKit documentation. Here's how to use the available tools effectively:
