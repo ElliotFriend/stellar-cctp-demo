@@ -11,8 +11,12 @@
     let tick = setInterval(() => (now = Date.now()), 1000);
     onDestroy(() => clearInterval(tick));
 
+    // Only Standard transfers wait on source finality. Fast Transfer attests
+    // before it, so the chain's finality ETA copy would be plain wrong there.
     let longWaitEtaMs = $derived(
-        transfer.direction === 'evm-to-stellar' && transfer.evmChainId
+        transfer.direction === 'evm-to-stellar' &&
+            transfer.evmChainId &&
+            transfer.speed === 'standard'
             ? EVM_CHAINS[transfer.evmChainId].attestationEtaMs
             : undefined,
     );

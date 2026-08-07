@@ -7,6 +7,7 @@ import {
     STELLAR,
     STELLAR_MAX_FEE,
     EVM_MAX_FEE,
+    DEFAULT_SPEED,
     type Direction,
     type EvmChainId,
     type InboundFlow,
@@ -75,6 +76,9 @@ export type TransferState = {
     forwarding: boolean;
     inboundFlow: InboundFlow;
     phase: Phase;
+    // Speed the burn was actually submitted with. Fast Transfer mints before
+    // source finality, so the long-wait ETA copy must not be shown for it.
+    speed: TransferSpeed;
     amount: string;
     steps: Step[];
     error: string | null;
@@ -94,6 +98,7 @@ const initialState = (
     forwarding,
     inboundFlow,
     phase: 'idle',
+    speed: DEFAULT_SPEED,
     amount: '',
     steps: stepsFor(direction, evmChainId, outboundFlow, forwarding, inboundFlow),
     error: null,
@@ -633,7 +638,7 @@ export function createTransferStore(
             burnHash = h;
         }
 
-        const finalityNote = finalityHint(args.evmChainId);
+        const finalityNote = finalityHint(args.evmChainId, args.speed);
         patchStep('attest', { detail: finalityNote });
         const attest = await performStep<IrisMessage>('attesting', 'attest', async () => {
             const r = await pollAttestation(evmCfg.domain, burnHash, {
@@ -967,6 +972,7 @@ export function createTransferStore(
         state.outboundFlow = outboundFlow;
         state.forwarding = forwarding;
         state.inboundFlow = inboundFlow;
+        state.speed = args.speed;
         state.steps = stepsFor(
             args.direction,
             args.evmChainId,
@@ -1044,6 +1050,10 @@ export function createTransferStore(
         state.outboundFlow = 'two-tx';
         state.forwarding = false;
         state.inboundFlow = 'two-tx';
+        // A resumed burn carries no record of the speed it was submitted with,
+        // so assume Standard: the worst case, and the only one whose long-wait
+        // ETA copy is worth showing.
+        state.speed = 'standard';
         state.error = null;
         state.attestation = null;
         state.amount = '';
@@ -1153,8 +1163,13 @@ export function createTransferStore(
     };
 }
 
-function finalityHint(chainId: EvmChainId): string {
+function finalityHint(chainId: EvmChainId, speed: TransferSpeed): string {
     const cfg = EVM_CHAINS[chainId];
+    // Fast Transfer attests before source finality, so the chain's finality
+    // window says nothing about how long this wait will be.
+    if (speed === 'fast') {
+        return `Fast Transfer attests before ${cfg.label} finality, typically in seconds.`;
+    }
     if (!cfg.attestationEtaMs) {
         return `${cfg.label} finality is fast, typically under a minute.`;
     }
