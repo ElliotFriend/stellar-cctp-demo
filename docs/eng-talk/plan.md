@@ -10,8 +10,8 @@ context needed to build it without re-deriving decisions.
 | -------------- | ------------------------------ | -------------------------- |
 | Speaker script | **done** (committed `02bb695`) | `docs/eng-talk/script.md`  |
 | Slide deck     | **done** (31 slides)           | `docs/eng-talk/deck.html`  |
-| Demo runbook   | todo                           | `docs/eng-talk/runbook.md` |
-| Q&A prep       | todo                           | `docs/eng-talk/qa.md`      |
+| Demo runbook   | **done** (2026-08-07)          | `docs/eng-talk/runbook.md` |
+| Q&A prep       | **done** (2026-08-07)          | `docs/eng-talk/qa.md`      |
 
 Deck artifact URL (private):
 <https://claude.ai/code/artifact/8f7d4ba8-8b3b-4593-a3b7-20451c5e3b00> Republish
@@ -19,7 +19,8 @@ by passing that `url` to the Artifact tool to keep the same link.
 
 ## Talk parameters (locked)
 
-- **Length:** ~45 min talk + ~15 min Q&A. Talk is Friday **2026-07-31**.
+- **Length:** ~45 min talk + ~15 min Q&A. Talk is Friday **2026-08-07**
+  (rescheduled twice; an earlier version of this file said 2026-07-31).
 - **Audience:** internal Stellar staff. Deep on Stellar internals; _not_
   uniformly deep on smart contracts-in-practice or other chains. Introduce EVM
   `approve`/allowance and Solana ATAs; assume G-accounts, trustlines, Soroban,

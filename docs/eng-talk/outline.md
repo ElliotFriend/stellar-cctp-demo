@@ -30,6 +30,24 @@ and the forwarding concept in §4.
 
 ---
 
+## Resume hashes (keep these in reach)
+
+Verified in pre-flight on 2026-08-07, 5 USDC each. If a live burn stalls after
+it lands, `ResumeForm` skips straight to attest plus mint. Full click paths and
+fallbacks are in `runbook.md`.
+
+| Route             | Burn hash                                                                                 |
+| ----------------- | ----------------------------------------------------------------------------------------- |
+| Stellar to Arc    | `820ab52bd0bb0da56c82e8b8b84feb90ab82653ba47af2f20987b8ce9816304a`                        |
+| Arc to Stellar    | `0x43357264d653b11a7ec2121bfe3bb26dd6474e3f4d5e4f35b0d3400ef1c1a1a1`                      |
+| Stellar to Solana | `017073e036ffa41b95cbd9a43ee3af091742c1e7b372c71b795189c8450e4391`                        |
+| Solana to Stellar | `FqbpEWR6dnfWZSKnZPNTiyNkd9cUo1wAaJaCcZsy5uL2hGBGC6UNvpUztpP18sZWkkBxpTZkszGctJMBw95bfjV` |
+
+Transfer history is in memory, so a refresh wipes the list. Nothing on-chain is
+lost, and any of these recovers a transfer that was mid-flight.
+
+---
+
 ## 1. Cold open (2 min)
 
 - (SLIDE) **Three ways to move a dollar.**

@@ -42,21 +42,21 @@ the wrapper concept on Stellar in §5b/§5c._
 - [1. Cold open: the problem (2 min)](#1-cold-open-the-problem-2-min)
 - [2. CCTP mental model: burn, attest, mint (6 min)](#2-cctp-mental-model-burn-attest-mint-6-min)
 - [3. Stellar realities: the Forwarder \& hook data (6 min)](#3-stellar-realities-the-forwarder--hook-data-6-min)
-    - [3a. Why inbound transfers need a Forwarder](#3a-why-inbound-transfers-need-a-forwarder)
-    - [3b. Hook data, the most important bytes in the repo](#3b-hook-data-the-most-important-bytes-in-the-repo)
-    - [3c. Three address encodings, one concept](#3c-three-address-encodings-one-concept)
+  - [3a. Why inbound transfers need a Forwarder](#3a-why-inbound-transfers-need-a-forwarder)
+  - [3b. Hook data, the most important bytes in the repo](#3b-hook-data-the-most-important-bytes-in-the-repo)
+  - [3c. Three address encodings, one concept](#3c-three-address-encodings-one-concept)
 - [4. The forwarding service (4 min)](#4-the-forwarding-service-4-min)
 - [5. Demo A (Stellar and Arc): raw, walkthrough, wrapper (12 min)](#5-demo-a-stellar-and-arc-raw-walkthrough-wrapper-12-min)
-    - [5a. The raw path: "2 tx (direct)"](#5a-the-raw-path-2-tx-direct)
-    - [5b. Wrapper walkthrough: the Soroban contract](#5b-wrapper-walkthrough-the-soroban-contract)
-    - [5c. The wrapper path: "1 tx (wrapper)"](#5c-the-wrapper-path-1-tx-wrapper)
+  - [5a. The raw path: "2 tx (direct)"](#5a-the-raw-path-2-tx-direct)
+  - [5b. Wrapper walkthrough: the Soroban contract](#5b-wrapper-walkthrough-the-soroban-contract)
+  - [5c. The wrapper path: "1 tx (wrapper)"](#5c-the-wrapper-path-1-tx-wrapper)
 - [6. Demo B (EVM to Stellar): three burn flows (7 min)](#6-demo-b-evm-to-stellar-three-burn-flows-7-min)
-    - [6a. The invariant, up front](#6a-the-invariant-up-front)
-    - [6b. Three burn flows (show at least two live)](#6b-three-burn-flows-show-at-least-two-live)
+  - [6a. The invariant, up front](#6a-the-invariant-up-front)
+  - [6b. Three burn flows (show at least two live)](#6b-three-burn-flows-show-at-least-two-live)
 - [7. Demo C: Solana both ways, plus the custody twist (5 min)](#7-demo-c-solana-both-ways-plus-the-custody-twist-5-min)
-    - [7a. Solana to Stellar (burn on Solana)](#7a-solana-to-stellar-burn-on-solana)
-    - [7b. Stellar to Solana, and the custody twist](#7b-stellar-to-solana-and-the-custody-twist)
-    - [7c. Fast vs Standard, honestly](#7c-fast-vs-standard-honestly)
+  - [7a. Solana to Stellar (burn on Solana)](#7a-solana-to-stellar-burn-on-solana)
+  - [7b. Stellar to Solana, and the custody twist](#7b-stellar-to-solana-and-the-custody-twist)
+  - [7c. Fast vs Standard, honestly](#7c-fast-vs-standard-honestly)
 - [8. Demo D: forwarding live (Stellar to EVM) (2 min)](#8-demo-d-forwarding-live-stellar-to-evm-2-min)
 - [9. Recap + honest limitations (2 min)](#9-recap--honest-limitations-2-min)
 - [Voice reminders (for you, not the slides)](#voice-reminders-for-you-not-the-slides)
@@ -385,8 +385,8 @@ The recipient needs nothing on the destination chain. No gas, no manual
 (SLIDE)(CAVEAT) **The honest status.** Say this plainly, it's the point of the
 story:
 
-- **Forwarding works for Stellar as a _source_ (origin), to both EVM and
-  Solana.** Verified end to end:
+- **Forwarding works for Stellar as a _source_, to both EVM and Solana.**
+  Verified end to end:
     - **Stellar to Arc** and **Stellar to Base**, via both the raw
       `deposit_for_burn_with_hook` and the wrapper `approve_and_deposit_with_hook`
       paths.

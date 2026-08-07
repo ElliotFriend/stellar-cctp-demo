@@ -49,8 +49,8 @@ for these preemptively. A demo audience would rather see a third transfer.
     - Arc-to-Stellar: `0xedff6d8e1bf81831fafd2a5f72ac7c1f72bd02540127a0efe521e55e4b4f432d`
 - Transfer history is in memory. Don't refresh mid-demo.
 
-Still no `docs/eng-talk/runbook.md` (todo in `plan.md`), so the click paths
-below are the only written ones you have.
+Fuller click paths and fallbacks now live in `docs/eng-talk/runbook.md`. The
+ones below are the dev-call cut, so they stay the tighter read for this format.
 
 ---
 
