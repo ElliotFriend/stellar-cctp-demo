@@ -82,6 +82,20 @@
     --iris: linear-gradient(90deg, #6e7cff, #59b7f0, #4fd1a5);
   }
 
+  /* Published, the Artifact skeleton supplies `body{margin:0;padding:0}`.
+     Opened as a local file it does not, so the browser's default 8px body
+     margin shows as a pale border around the stage and pushes the page past
+     100svh, which raises a scrollbar with nothing to scroll to. Match the
+     skeleton so file:// and the published URL render identically. Deliberately
+     NOT a full reset: the skeleton leaves p/h2/ul margins in place and the
+     deck's vertical rhythm is tuned against them. */
+  html,
+  body {
+    margin: 0;
+    padding: 0;
+    background: var(--ink);
+  }
+
   /* ── frame ────────────────────────────────────────────────────────── */
   .deck {
     display: flex;
