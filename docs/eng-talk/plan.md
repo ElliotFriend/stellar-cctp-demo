@@ -80,7 +80,7 @@ with a 2 to 4 sentence starter answer, honest about unknowns):
 - **Forwarder security:** Can anyone call `mint_and_forward`? Can the Forwarder
   steal/misroute funds? Why is it a separate contract vs in-protocol?
 - **Wrapper:** Why a wrapper at all? Is it audited? What's the risk of passing
-  `usdc`/`tmm` as args (see script §5b)?
+  `burn_token`/`tmm` as args (see script §5b)?
 - **Fees/economics:** Who pays the forward fee? Why does forwarding consume the
   full `maxFee`? What does a transfer cost end-to-end?
 - **Fast vs Standard:** Why is Fast N/A from Stellar? When does Fast matter?

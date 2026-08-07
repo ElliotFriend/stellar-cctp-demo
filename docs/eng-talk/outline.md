@@ -253,8 +253,9 @@ Rust, so let's read it before we run it.
 - **Design notes** (this room appreciates the _why_):
     - USDC only passes _through_ the wrapper inside one call. It holds no balance
       between invocations, so there's nothing to drain.
-    - `usdc` is an argument because that's the pattern TokenMessengerMinter itself
-      uses.
+    - `burn_token` is an argument because that's the pattern TokenMessengerMinter
+      itself uses. Everything from `caller` on is `deposit_for_burn`'s own
+      parameter list, same names, same order.
     - `tmm` is an argument because I'm not sure how _permanent_ Circle's addresses
       are. Passing it per call avoids both a redeploy and a `set_tmm(...)`.
     - (CAVEAT) Flip side: the frontend supplies trusted addresses. For mainnet

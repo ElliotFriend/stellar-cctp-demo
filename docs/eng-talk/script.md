@@ -479,12 +479,12 @@ EVM `approve` dance.
 ```rust
 pub fn approve_and_deposit(
     env: Env,
-    caller: Address,
-    usdc: Address,
     tmm: Address,
+    caller: Address,
     amount: i128,
     destination_domain: u32,
     mint_recipient: BytesN<32>,
+    burn_token: Address,
     destination_caller: BytesN<32>,
     max_fee: i128,
     min_finality_threshold: u32,
@@ -493,12 +493,12 @@ pub fn approve_and_deposit(
 
     // approve an allowance so the TokenMessengerMinter contract can `transfer_from` our caller address
     let live_until_ledger = (env.ledger().sequence() + 50).next_multiple_of(50);
-    token::Client::new(&env, &usdc).approve(&caller, &tmm, &amount, &live_until_ledger);
+    token::Client::new(&env, &burn_token).approve(&caller, &tmm, &amount, &live_until_ledger);
 
     let tmm_client = TmmClient::new(&env, &tmm);
     tmm_client.deposit_for_burn(
         &caller, &amount, &destination_domain, &mint_recipient,
-        &usdc, &destination_caller, &max_fee, &min_finality_threshold,
+        &burn_token, &destination_caller, &max_fee, &min_finality_threshold,
     );
 }
 ```
@@ -512,7 +512,7 @@ Walk it line by line (this is where the room's Stellar fluency pays off):
     - On EVM there's no equivalent. `approve` and the burn are two separate
       transactions from the EOA, full stop, unless you add a contract or use a
       newer wallet batching standard. We can cover that in a second.
-- **`token::Client::new(&env, &usdc).approve(...)`**: a standard SEP-41
+- **`token::Client::new(&env, &burn_token).approve(...)`**: a standard SEP-41
   `approve`.
     - I set the allowance's `live_until_ledger` to the next multiple of 50 ledgers
       out, mainly to avoid weird mismatches in the current ledger number between
@@ -528,9 +528,12 @@ contract bindings rust`. Same idea as `stellar contract bindings typescript`,
 - Design notes worth stating out loud (this room appreciates the _why_):
     - The USDC only ever passes _through_ the wrapper within this one call. It
       holds no balance between invocations, so there's nothing to drain.
-    - `usdc` is an argument here because I'm following the pattern the
+    - `burn_token` is an argument here because I'm following the pattern the
       TokenMessengerMinter contract itself uses. The USDC SAC address is one of
-      _its_ arguments too.
+      _its_ arguments too, under that same name. In fact, the whole parameter
+      list from `caller` onward is `deposit_for_burn`'s own list, in its own
+      order, so the wrapper reads as a pass-through with `tmm` bolted on the
+      front.
     - `tmm` I passed through because I'm honestly not sure how _permanent_
       Circle's contract addresses are. If that address ever changes, I didn't want
       to either redeploy this wrapper or bake in a `set_tmm(...)` function.

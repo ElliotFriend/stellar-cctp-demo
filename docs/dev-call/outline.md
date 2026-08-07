@@ -100,9 +100,9 @@ That's the whole intro. Get to the demo.
       `permit`.
     - The wrapper holds no balance between invocations. USDC only passes through
       inside a single call, so there's nothing to drain.
-    - `usdc` and `tmm` are arguments because I'm not sure how permanent Circle's
-      addresses are. Flip side: the frontend supplies trusted addresses. Fine for
-      testnet, not fine for mainnet.
+    - `burn_token` and `tmm` are arguments because I'm not sure how permanent
+      Circle's addresses are. Flip side: the frontend supplies trusted addresses.
+      Fine for testnet, not fine for mainnet.
 - (DEMO) Same direction, same amount, flip to **1 tx (wrapper)**. Say "watch the
   prompt count" **before** you click. One signature.
 - Be precise about what that is: not cheaper gas, not cryptographically clever,
