@@ -17,9 +17,8 @@ fn test() {
 
     // create a fake USDC token
     let issuer = Address::generate(&env);
-    let usdc = env.register_stellar_asset_contract_v2(issuer.clone());
-    let _usdc_client = token::Client::new(&env, &usdc.address());
-    let usdc_admin_client = token::StellarAssetClient::new(&env, &usdc.address());
+    let burn_token = env.register_stellar_asset_contract_v2(issuer.clone());
+    let burn_token_admin_client = token::StellarAssetClient::new(&env, &burn_token.address());
 
     // create a mock transmitter contract
     let mtv2_contract_address = env.register(
@@ -69,23 +68,24 @@ fn test() {
 
     // do some configuration for the token messenger minter (test won't pass without)
     let tmm_client = TmmClient::new(&env, &tmm_contract_address);
-    tmm_client.set_token_decimal_config(&usdc.address(), &7, &6);
-    tmm_client.set_max_burn_amount_per_message(&usdc.address(), &(1_000_000i128 * 10_000_000));
+    tmm_client.set_token_decimal_config(&burn_token.address(), &7, &6);
+    tmm_client
+        .set_max_burn_amount_per_message(&burn_token.address(), &(1_000_000i128 * 10_000_000));
 
     // create a "user"
     let caller = Address::generate(&env);
-    usdc_admin_client.mint(&caller, &(100i128 * 10_000_000));
+    burn_token_admin_client.mint(&caller, &(100i128 * 10_000_000));
 
     wrapper_client.approve_and_deposit(
-        &caller,
-        &usdc.address(),
         &tmm_contract_address,
+        &caller,
         &(10i128 * 10_000_000),
         &26,
         &bytesn!(
             &env,
             0xfded3f55dec47250a52a8c0bb7038e72fa6ffaae33562f77cd2b629ef7fd424d
         ),
+        &burn_token.address(),
         &bytesn!(
             &env,
             0x0000000000000000000000000000000000000000000000000000000000000000
@@ -105,9 +105,8 @@ fn test_with_hook() {
 
     // create a fake USDC token
     let issuer = Address::generate(&env);
-    let usdc = env.register_stellar_asset_contract_v2(issuer.clone());
-    let _usdc_client = token::Client::new(&env, &usdc.address());
-    let usdc_admin_client = token::StellarAssetClient::new(&env, &usdc.address());
+    let burn_token = env.register_stellar_asset_contract_v2(issuer.clone());
+    let burn_token_admin_client = token::StellarAssetClient::new(&env, &burn_token.address());
 
     // create a mock transmitter contract
     let mtv2_contract_address = env.register(
@@ -157,23 +156,24 @@ fn test_with_hook() {
 
     // do some configuration for the token messenger minter (test won't pass without)
     let tmm_client = TmmClient::new(&env, &tmm_contract_address);
-    tmm_client.set_token_decimal_config(&usdc.address(), &7, &6);
-    tmm_client.set_max_burn_amount_per_message(&usdc.address(), &(1_000_000i128 * 10_000_000));
+    tmm_client.set_token_decimal_config(&burn_token.address(), &7, &6);
+    tmm_client
+        .set_max_burn_amount_per_message(&burn_token.address(), &(1_000_000i128 * 10_000_000));
 
     // create a "user"
     let caller = Address::generate(&env);
-    usdc_admin_client.mint(&caller, &(100i128 * 10_000_000));
+    burn_token_admin_client.mint(&caller, &(100i128 * 10_000_000));
 
     wrapper_client.approve_and_deposit_with_hook(
-        &caller,
-        &usdc.address(),
         &tmm_contract_address,
+        &caller,
         &(10i128 * 10_000_000),
         &26,
         &bytesn!(
             &env,
             0xfded3f55dec47250a52a8c0bb7038e72fa6ffaae33562f77cd2b629ef7fd424d
         ),
+        &burn_token.address(),
         &bytesn!(
             &env,
             0x0000000000000000000000000000000000000000000000000000000000000000

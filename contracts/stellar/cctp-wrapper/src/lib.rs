@@ -12,12 +12,12 @@ pub struct CctpWrapperContract;
 impl CctpWrapperContract {
     pub fn approve_and_deposit(
         env: Env,
-        caller: Address,
-        usdc: Address,
         tmm: Address,
+        caller: Address,
         amount: i128,
         destination_domain: u32,
         mint_recipient: BytesN<32>,
+        burn_token: Address,
         destination_caller: BytesN<32>,
         max_fee: i128,
         min_finality_threshold: u32,
@@ -26,7 +26,7 @@ impl CctpWrapperContract {
 
         // approve an allowance so the TokenMessengerMinter contract can `transfer_from` our caller address
         let live_until_ledger = (env.ledger().sequence() + 50).next_multiple_of(50);
-        token::Client::new(&env, &usdc).approve(&caller, &tmm, &amount, &live_until_ledger);
+        token::Client::new(&env, &burn_token).approve(&caller, &tmm, &amount, &live_until_ledger);
 
         let tmm_client = TmmClient::new(&env, &tmm);
         tmm_client.deposit_for_burn(
@@ -34,7 +34,7 @@ impl CctpWrapperContract {
             &amount,
             &destination_domain,
             &mint_recipient,
-            &usdc,
+            &burn_token,
             &destination_caller,
             &max_fee,
             &min_finality_threshold,
@@ -43,12 +43,12 @@ impl CctpWrapperContract {
 
     pub fn approve_and_deposit_with_hook(
         env: Env,
-        caller: Address,
-        usdc: Address,
         tmm: Address,
+        caller: Address,
         amount: i128,
         destination_domain: u32,
         mint_recipient: BytesN<32>,
+        burn_token: Address,
         destination_caller: BytesN<32>,
         max_fee: i128,
         min_finality_threshold: u32,
@@ -58,7 +58,7 @@ impl CctpWrapperContract {
 
         // approve an allowance so the TokenMessengerMinter contract can `transfer_from` our caller address
         let live_until_ledger = (env.ledger().sequence() + 50).next_multiple_of(50);
-        token::Client::new(&env, &usdc).approve(&caller, &tmm, &amount, &live_until_ledger);
+        token::Client::new(&env, &burn_token).approve(&caller, &tmm, &amount, &live_until_ledger);
 
         let tmm_client = TmmClient::new(&env, &tmm);
         tmm_client.deposit_for_burn_with_hook(
@@ -66,7 +66,7 @@ impl CctpWrapperContract {
             &amount,
             &destination_domain,
             &mint_recipient,
-            &usdc,
+            &burn_token,
             &destination_caller,
             &max_fee,
             &min_finality_threshold,
