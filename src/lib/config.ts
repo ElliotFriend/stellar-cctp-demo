@@ -14,7 +14,7 @@ export const STELLAR = {
         usdc: 'CBIELTK6YBZJU5UP2WWQEUCYKLPU6AUNZ2BQ4WWFEIE3USCIHMXQDAMA',
         // User-deployed wrapper that bundles approve + deposit_for_burn into
         // one atomic invocation, signed in a single Freighter prompt.
-        bridgeWrapper: 'CDC4EGIJSQU4I7LBER3CRMSTBAVR6JMCQXKJHZZU7WB2R32WQJDGKTN6',
+        bridgeWrapper: 'CCR6VA3W3R3O23MEKY64J5ABIKB5MUTQYN5NVY4VE7FIZT7OTOELS5AE',
     },
     usdc: {
         code: 'USDC',

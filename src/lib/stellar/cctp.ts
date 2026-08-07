@@ -115,12 +115,12 @@ export async function bridgeUsdcToEvm(args: {
         .addOperation(
             bridgeWrapper.call(
                 'approve_and_deposit',
-                Address.fromString(args.caller).toScVal(),
-                Address.fromString(STELLAR.contracts.usdc).toScVal(),
                 Address.fromString(STELLAR.contracts.tokenMessengerMinter).toScVal(),
+                Address.fromString(args.caller).toScVal(),
                 nativeToScVal(args.amount, { type: 'i128' }),
                 nativeToScVal(args.destinationDomain, { type: 'u32' }),
                 bytesN32(mintRecipient),
+                Address.fromString(STELLAR.contracts.usdc).toScVal(),
                 bytesN32(destinationCaller),
                 nativeToScVal(args.maxFee, { type: 'i128' }),
                 nativeToScVal(args.finalityThreshold, { type: 'u32' }),
@@ -159,12 +159,12 @@ export async function bridgeUsdcToEvmWithHook(args: {
         .addOperation(
             bridgeWrapper.call(
                 'approve_and_deposit_with_hook',
-                Address.fromString(args.caller).toScVal(),
-                Address.fromString(STELLAR.contracts.usdc).toScVal(),
                 Address.fromString(STELLAR.contracts.tokenMessengerMinter).toScVal(),
+                Address.fromString(args.caller).toScVal(),
                 nativeToScVal(args.amount, { type: 'i128' }),
                 nativeToScVal(args.destinationDomain, { type: 'u32' }),
                 bytesN32(mintRecipient),
+                Address.fromString(STELLAR.contracts.usdc).toScVal(),
                 bytesN32(destinationCaller),
                 nativeToScVal(args.maxFee, { type: 'i128' }),
                 nativeToScVal(args.finalityThreshold, { type: 'u32' }),
