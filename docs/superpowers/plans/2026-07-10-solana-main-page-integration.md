@@ -78,204 +78,201 @@ git rm -r src/routes/solana-spike
 
 ```svelte
 <script lang="ts">
-    import { onMount } from 'svelte';
-    import { browser } from '$app/environment';
-    import {
-        connectSolana,
-        detectExistingSolana,
-        discoverSolanaWallets,
-        type SolanaWallet,
-    } from '$lib/solana/wallet';
-    import { getUsdcBalance } from '$lib/solana/usdc';
-    import { SOLANA } from '$lib/config';
-    import { shortAddr } from '$lib/utils';
+  import { onMount } from 'svelte';
+  import { browser } from '$app/environment';
+  import {
+    connectSolana,
+    detectExistingSolana,
+    discoverSolanaWallets,
+    type SolanaWallet,
+  } from '$lib/solana/wallet';
+  import { getUsdcBalance } from '$lib/solana/usdc';
+  import { SOLANA } from '$lib/config';
+  import { shortAddr } from '$lib/utils';
 
-    let {
-        wallet = $bindable<SolanaWallet | null>(null),
-        disabled = false,
-    }: { wallet?: SolanaWallet | null; disabled?: boolean } = $props();
+  let {
+    wallet = $bindable<SolanaWallet | null>(null),
+    disabled = false,
+  }: { wallet?: SolanaWallet | null; disabled?: boolean } = $props();
 
-    let balance = $state<string | null>(null);
-    let error = $state<string | null>(null);
-    let connecting = $state(false);
+  let balance = $state<string | null>(null);
+  let error = $state<string | null>(null);
+  let connecting = $state(false);
 
-    onMount(async () => {
-        if (!browser) return;
-        const existing = await detectExistingSolana();
-        if (existing) {
-            wallet = existing;
-            await refreshBalance();
-        }
-    });
-
-    async function refreshBalance() {
-        if (!wallet) {
-            balance = null;
-            return;
-        }
-        error = null;
-        try {
-            balance = await getUsdcBalance(wallet.address);
-        } catch (e) {
-            error = e instanceof Error ? e.message : String(e);
-        }
+  onMount(async () => {
+    if (!browser) return;
+    const existing = await detectExistingSolana();
+    if (existing) {
+      wallet = existing;
+      await refreshBalance();
     }
+  });
 
-    // Exposed via bind:this so DestinationPanel can refetch after a transfer.
-    export function refresh() {
-        return refreshBalance();
+  async function refreshBalance() {
+    if (!wallet) {
+      balance = null;
+      return;
     }
+    error = null;
+    try {
+      balance = await getUsdcBalance(wallet.address);
+    } catch (e) {
+      error = e instanceof Error ? e.message : String(e);
+    }
+  }
 
-    async function connect() {
-        error = null;
-        connecting = true;
-        try {
-            const wallets = discoverSolanaWallets();
-            if (wallets.length === 0) {
-                throw new Error(
-                    'No Solana wallet found. Install Phantom from phantom.app and reload.',
-                );
-            }
-            const pick =
-                wallets.find((w) => w.name.toLowerCase().includes('phantom')) ?? wallets[0];
-            wallet = await connectSolana(pick);
-            await refreshBalance();
-        } catch (e) {
-            error = e instanceof Error ? e.message : String(e);
-        } finally {
-            connecting = false;
-        }
-    }
+  // Exposed via bind:this so DestinationPanel can refetch after a transfer.
+  export function refresh() {
+    return refreshBalance();
+  }
 
-    function disconnect() {
-        wallet = null;
-        balance = null;
+  async function connect() {
+    error = null;
+    connecting = true;
+    try {
+      const wallets = discoverSolanaWallets();
+      if (wallets.length === 0) {
+        throw new Error('No Solana wallet found. Install Phantom from phantom.app and reload.');
+      }
+      const pick = wallets.find((w) => w.name.toLowerCase().includes('phantom')) ?? wallets[0];
+      wallet = await connectSolana(pick);
+      await refreshBalance();
+    } catch (e) {
+      error = e instanceof Error ? e.message : String(e);
+    } finally {
+      connecting = false;
     }
+  }
+
+  function disconnect() {
+    wallet = null;
+    balance = null;
+  }
 </script>
 
 <section class="panel">
-    <header class="head">
-        <span class="badge solana">Solana</span>
-        <span class="muted">domain {SOLANA.domain}</span>
-    </header>
+  <header class="head">
+    <span class="badge solana">Solana</span>
+    <span class="muted">domain {SOLANA.domain}</span>
+  </header>
 
-    {#if wallet}
-        <div class="addr-row">
-            <code class="addr" title={wallet.address}>{shortAddr(wallet.address)}</code>
-            <div class="actions">
-                <button class="link" onclick={refreshBalance}>refresh</button>
-                <button class="link" onclick={disconnect}>disconnect</button>
-            </div>
-        </div>
-        <div class="balance">
-            <span class="amount">{balance ?? '…'}</span>
-            <span class="symbol">USDC</span>
-        </div>
-        <p class="gas-note">Devnet · fees paid in SOL.</p>
-    {:else}
-        <button class="connect" onclick={connect} disabled={disabled || connecting}>
-            {connecting ? 'Connecting…' : 'Connect Phantom'}
-        </button>
-    {/if}
-    {#if error}<p class="error">{error}</p>{/if}
+  {#if wallet}
+    <div class="addr-row">
+      <code class="addr" title={wallet.address}>{shortAddr(wallet.address)}</code>
+      <div class="actions">
+        <button class="link" onclick={refreshBalance}>refresh</button>
+        <button class="link" onclick={disconnect}>disconnect</button>
+      </div>
+    </div>
+    <div class="balance">
+      <span class="amount">{balance ?? '…'}</span>
+      <span class="symbol">USDC</span>
+    </div>
+    <p class="gas-note">Devnet · fees paid in SOL.</p>
+  {:else}
+    <button class="connect" onclick={connect} disabled={disabled || connecting}>
+      {connecting ? 'Connecting…' : 'Connect Phantom'}
+    </button>
+  {/if}
+  {#if error}<p class="error">{error}</p>{/if}
 </section>
 
 <style>
-    /* Mirror EvmPanel.svelte's panel/badge/addr/balance/connect styles. */
-    .panel {
-        background: var(--bg-elev);
-        border: 1px solid var(--border);
-        border-radius: var(--radius-lg);
-        padding: 1.25rem;
-        display: flex;
-        flex-direction: column;
-        gap: 0.85rem;
-        min-height: 160px;
-    }
-    .head {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-    }
-    .badge {
-        font-size: 0.75rem;
-        text-transform: uppercase;
-        letter-spacing: 0.05em;
-        font-weight: 600;
-        padding: 0.2rem 0.55rem;
-        border-radius: 999px;
-    }
-    .badge.solana {
-        background: color-mix(in srgb, #14f195 20%, transparent);
-        color: #14f195;
-    }
-    .muted {
-        color: var(--text-dim);
-        font-size: 0.85rem;
-        font-family: var(--mono);
-    }
-    .connect {
-        background: var(--bg-elev-2);
-        color: var(--text);
-        border: 1px solid var(--border-strong);
-        padding: 0.6rem 1rem;
-        border-radius: var(--radius);
-        font-weight: 500;
-    }
-    .connect:hover:not(:disabled) {
-        background: var(--accent-dim);
-        border-color: var(--accent);
-    }
-    .addr-row {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        gap: 0.5rem;
-    }
-    .actions {
-        display: flex;
-        gap: 0.75rem;
-    }
-    .addr {
-        font-family: var(--mono);
-        font-size: 0.85rem;
-        color: var(--text-muted);
-    }
-    .link {
-        background: none;
-        border: none;
-        color: var(--accent);
-        font-size: 0.8rem;
-        padding: 0;
-    }
-    .link:hover {
-        text-decoration: underline;
-    }
-    .balance {
-        display: flex;
-        align-items: baseline;
-        gap: 0.4rem;
-    }
-    .amount {
-        font-size: 1.6rem;
-        font-weight: 600;
-        font-variant-numeric: tabular-nums;
-    }
-    .symbol {
-        font-size: 0.95rem;
-        color: var(--text-muted);
-    }
-    .gas-note {
-        margin: 0;
-        font-size: 0.78rem;
-        color: var(--text-dim);
-    }
-    .error {
-        color: var(--error);
-        font-size: 0.85rem;
-        margin: 0;
-        word-break: break-word;
-    }
+  /* Mirror EvmPanel.svelte's panel/badge/addr/balance/connect styles. */
+  .panel {
+    background: var(--bg-elev);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    padding: 1.25rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.85rem;
+    min-height: 160px;
+  }
+  .head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .badge {
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    font-weight: 600;
+    padding: 0.2rem 0.55rem;
+    border-radius: 999px;
+  }
+  .badge.solana {
+    background: color-mix(in srgb, #14f195 20%, transparent);
+    color: #14f195;
+  }
+  .muted {
+    color: var(--text-dim);
+    font-size: 0.85rem;
+    font-family: var(--mono);
+  }
+  .connect {
+    background: var(--bg-elev-2);
+    color: var(--text);
+    border: 1px solid var(--border-strong);
+    padding: 0.6rem 1rem;
+    border-radius: var(--radius);
+    font-weight: 500;
+  }
+  .connect:hover:not(:disabled) {
+    background: var(--accent-dim);
+    border-color: var(--accent);
+  }
+  .addr-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.5rem;
+  }
+  .actions {
+    display: flex;
+    gap: 0.75rem;
+  }
+  .addr {
+    font-family: var(--mono);
+    font-size: 0.85rem;
+    color: var(--text-muted);
+  }
+  .link {
+    background: none;
+    border: none;
+    color: var(--accent);
+    font-size: 0.8rem;
+    padding: 0;
+  }
+  .link:hover {
+    text-decoration: underline;
+  }
+  .balance {
+    display: flex;
+    align-items: baseline;
+    gap: 0.4rem;
+  }
+  .amount {
+    font-size: 1.6rem;
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+  }
+  .symbol {
+    font-size: 0.95rem;
+    color: var(--text-muted);
+  }
+  .gas-note {
+    margin: 0;
+    font-size: 0.78rem;
+    color: var(--text-dim);
+  }
+  .error {
+    color: var(--error);
+    font-size: 0.85rem;
+    margin: 0;
+    word-break: break-word;
+  }
 </style>
 ```
 
@@ -303,129 +300,124 @@ Both burn previews are source-side. `solana-to-stellar` burns on Solana → new 
 
 ```svelte
 <script lang="ts">
-    import { SOLANA, STELLAR, SOLANA_MAX_FEE, STANDARD_THRESHOLD } from '$lib/config';
-    import { fetchBurnFee, feeBpsFor, computeMaxFee } from '$lib/circle/fees';
-    import { parseUsdcSolana } from '$lib/solana/usdc';
-    import { strkeyToBytes32, encodeStellarForwarderHookData } from '$lib/stellar/recipient';
-    import { toHex } from 'viem';
-    import { shortAddr } from '$lib/utils';
+  import { SOLANA, STELLAR, SOLANA_MAX_FEE, STANDARD_THRESHOLD } from '$lib/config';
+  import { fetchBurnFee, feeBpsFor, computeMaxFee } from '$lib/circle/fees';
+  import { parseUsdcSolana } from '$lib/solana/usdc';
+  import { strkeyToBytes32, encodeStellarForwarderHookData } from '$lib/stellar/recipient';
+  import { toHex } from 'viem';
+  import { shortAddr } from '$lib/utils';
 
-    let {
-        solanaAddress,
-        stellarRecipient,
-        amount,
-    }: { solanaAddress: string; stellarRecipient: string; amount: string } = $props();
+  let {
+    solanaAddress,
+    stellarRecipient,
+    amount,
+  }: { solanaAddress: string; stellarRecipient: string; amount: string } = $props();
 
-    type Parsed = { ok: true; raw: bigint } | { ok: false };
-    let parsedAmount = $derived<Parsed>(
-        (() => {
-            const t = amount.trim();
-            if (t === '') return { ok: false };
-            try {
-                return { ok: true, raw: parseUsdcSolana(t) };
-            } catch {
-                return { ok: false };
-            }
-        })(),
-    );
+  type Parsed = { ok: true; raw: bigint } | { ok: false };
+  let parsedAmount = $derived<Parsed>(
+    (() => {
+      const t = amount.trim();
+      if (t === '') return { ok: false };
+      try {
+        return { ok: true, raw: parseUsdcSolana(t) };
+      } catch {
+        return { ok: false };
+      }
+    })(),
+  );
 
-    let forwarderHex = $derived(strkeyToBytes32(STELLAR.contracts.cctpForwarder));
-    let hookHex = $derived(
-        (() => {
-            try {
-                return encodeStellarForwarderHookData(stellarRecipient);
-            } catch {
-                return null;
-            }
-        })(),
-    );
-    let feePromise = $derived(fetchBurnFee(SOLANA.domain, STELLAR.domain));
-    const short = (a: string) => shortAddr(a, 6, 6);
+  let forwarderHex = $derived(strkeyToBytes32(STELLAR.contracts.cctpForwarder));
+  let hookHex = $derived(
+    (() => {
+      try {
+        return encodeStellarForwarderHookData(stellarRecipient);
+      } catch {
+        return null;
+      }
+    })(),
+  );
+  let feePromise = $derived(fetchBurnFee(SOLANA.domain, STELLAR.domain));
+  const short = (a: string) => shortAddr(a, 6, 6);
 </script>
 
 <section class="burn-preview">
-    <header class="head">
-        <h4 class="title">Burn invocation preview</h4>
-        <span class="sub">What you're about to sign in Phantom, decoded.</span>
-    </header>
-    <div class="meta">
-        <div class="meta-row">
-            <span class="meta-label">Program</span>
-            <code class="meta-value" title={SOLANA.programs.tokenMessengerMinterV2}>
-                {short(SOLANA.programs.tokenMessengerMinterV2)}
-            </code>
-            <span class="meta-aside">TokenMessengerMinterV2 · deposit_for_burn_with_hook</span>
-        </div>
-        <div class="meta-row">
-            <span class="meta-label">Owner</span>
-            <code class="meta-value" title={solanaAddress}>{short(solanaAddress)}</code>
-            <span class="meta-aside">signs + pays (Phantom)</span>
-        </div>
+  <header class="head">
+    <h4 class="title">Burn invocation preview</h4>
+    <span class="sub">What you're about to sign in Phantom, decoded.</span>
+  </header>
+  <div class="meta">
+    <div class="meta-row">
+      <span class="meta-label">Program</span>
+      <code class="meta-value" title={SOLANA.programs.tokenMessengerMinterV2}>
+        {short(SOLANA.programs.tokenMessengerMinterV2)}
+      </code>
+      <span class="meta-aside">TokenMessengerMinterV2 · deposit_for_burn_with_hook</span>
     </div>
-    <h5 class="section-title">Arguments</h5>
-    <ul class="rows">
-        <li class="row">
-            <span class="arg-name">amount</span>
-            <span class="arg-type">u64</span>
-            {#if parsedAmount.ok}
-                <code class="arg-value">{parsedAmount.raw.toString()}</code>
-                <span class="arg-note">6-decimal USDC subunits</span>
-            {:else}
-                <span class="arg-placeholder">Enter an amount above</span>
-            {/if}
-        </li>
-        <li class="row">
-            <span class="arg-name">destinationDomain</span>
-            <span class="arg-type">u32</span>
-            <code class="arg-value">{STELLAR.domain}</code>
-            <span class="arg-note">Stellar</span>
-        </li>
-        <li class="row wide">
-            <span class="arg-name">mintRecipient = destinationCaller</span>
-            <span class="arg-type">Pubkey</span>
-            <code class="arg-hex">{forwarderHex}</code>
-            <span class="arg-note">the Stellar CctpForwarder, real recipient rides in hookData</span
-            >
-        </li>
-        <li class="row">
-            <span class="arg-name">maxFee</span>
-            <span class="arg-type">u64</span>
-            {#await feePromise then rows}
-                {@const bps = feeBpsFor(rows, 'standard')}
-                <code class="arg-value">
-                    {computeMaxFee(
-                        parsedAmount.ok ? parsedAmount.raw : 0n,
-                        bps,
-                        SOLANA_MAX_FEE,
-                    ).toString()}
-                </code>
-                <span class="arg-note">{bps > 0 ? `${bps} bps + floor` : 'floor (no fee)'}</span>
-            {:catch}
-                <code class="arg-value">{SOLANA_MAX_FEE.toString()}</code>
-                <span class="arg-note">floor (fee API unavailable)</span>
-            {/await}
-        </li>
-        <li class="row">
-            <span class="arg-name">minFinalityThreshold</span>
-            <span class="arg-type">u32</span>
-            <code class="arg-value">{STANDARD_THRESHOLD}</code>
-            <span class="arg-note">standard (finalized)</span>
-        </li>
-        <li class="row wide">
-            <span class="arg-name">hookData</span>
-            <span class="arg-type">bytes</span>
-            {#if hookHex}
-                <code class="arg-hex">{hookHex}</code>
-                <span class="arg-note">Stellar forwarder hook → {short(stellarRecipient)}</span>
-            {:else}
-                <span class="arg-placeholder">Connect a Stellar recipient</span>
-            {/if}
-        </li>
-    </ul>
+    <div class="meta-row">
+      <span class="meta-label">Owner</span>
+      <code class="meta-value" title={solanaAddress}>{short(solanaAddress)}</code>
+      <span class="meta-aside">signs + pays (Phantom)</span>
+    </div>
+  </div>
+  <h5 class="section-title">Arguments</h5>
+  <ul class="rows">
+    <li class="row">
+      <span class="arg-name">amount</span>
+      <span class="arg-type">u64</span>
+      {#if parsedAmount.ok}
+        <code class="arg-value">{parsedAmount.raw.toString()}</code>
+        <span class="arg-note">6-decimal USDC subunits</span>
+      {:else}
+        <span class="arg-placeholder">Enter an amount above</span>
+      {/if}
+    </li>
+    <li class="row">
+      <span class="arg-name">destinationDomain</span>
+      <span class="arg-type">u32</span>
+      <code class="arg-value">{STELLAR.domain}</code>
+      <span class="arg-note">Stellar</span>
+    </li>
+    <li class="row wide">
+      <span class="arg-name">mintRecipient = destinationCaller</span>
+      <span class="arg-type">Pubkey</span>
+      <code class="arg-hex">{forwarderHex}</code>
+      <span class="arg-note">the Stellar CctpForwarder, real recipient rides in hookData</span>
+    </li>
+    <li class="row">
+      <span class="arg-name">maxFee</span>
+      <span class="arg-type">u64</span>
+      {#await feePromise then rows}
+        {@const bps = feeBpsFor(rows, 'standard')}
+        <code class="arg-value">
+          {computeMaxFee(parsedAmount.ok ? parsedAmount.raw : 0n, bps, SOLANA_MAX_FEE).toString()}
+        </code>
+        <span class="arg-note">{bps > 0 ? `${bps} bps + floor` : 'floor (no fee)'}</span>
+      {:catch}
+        <code class="arg-value">{SOLANA_MAX_FEE.toString()}</code>
+        <span class="arg-note">floor (fee API unavailable)</span>
+      {/await}
+    </li>
+    <li class="row">
+      <span class="arg-name">minFinalityThreshold</span>
+      <span class="arg-type">u32</span>
+      <code class="arg-value">{STANDARD_THRESHOLD}</code>
+      <span class="arg-note">standard (finalized)</span>
+    </li>
+    <li class="row wide">
+      <span class="arg-name">hookData</span>
+      <span class="arg-type">bytes</span>
+      {#if hookHex}
+        <code class="arg-hex">{hookHex}</code>
+        <span class="arg-note">Stellar forwarder hook → {short(stellarRecipient)}</span>
+      {:else}
+        <span class="arg-placeholder">Connect a Stellar recipient</span>
+      {/if}
+    </li>
+  </ul>
 </section>
 
 <style>
-    /* Copy StellarBurnPreview.svelte's <style> block verbatim for parity. */
+  /* Copy StellarBurnPreview.svelte's <style> block verbatim for parity. */
 </style>
 ```
 
@@ -453,17 +445,17 @@ These change props across the panel↔page boundary together, so they land as on
 ```ts
 // Imperative: called by DestinationPanel when the chip row picks an EVM chain.
 export async function setChain(id: EvmChainId) {
-    if (id === chainId) return;
-    chainId = id;
-    if (!EVM_CHAINS[id].bridgeWrapper && inboundFlow === 'wrapper') {
-        inboundFlow = 'two-tx';
-    }
-    if (wallet) {
-        await switchChain();
-    } else {
-        balance = null;
-        sendCallsCap = { supported: false, atomic: false };
-    }
+  if (id === chainId) return;
+  chainId = id;
+  if (!EVM_CHAINS[id].bridgeWrapper && inboundFlow === 'wrapper') {
+    inboundFlow = 'two-tx';
+  }
+  if (wallet) {
+    await switchChain();
+  } else {
+    balance = null;
+    sendCallsCap = { supported: false, atomic: false };
+  }
 }
 ```
 
@@ -473,140 +465,140 @@ Keep `switchChain`, `refreshBalance`, `refreshSendCallsCap`, `refresh`, connect 
 
 ```svelte
 <script lang="ts">
-    import EvmPanel from './EvmPanel.svelte';
-    import SolanaPanel from './SolanaPanel.svelte';
-    import {
-        EVM_CHAINS,
-        type Direction,
-        type EvmChainId,
-        type InboundFlow,
-        type RightChain,
-    } from '$lib/config';
-    import type { EvmWallet } from '$lib/evm/wallet';
-    import type { SendCallsCapability } from '$lib/evm/capabilities';
-    import type { SolanaWallet } from '$lib/solana/wallet';
+  import EvmPanel from './EvmPanel.svelte';
+  import SolanaPanel from './SolanaPanel.svelte';
+  import {
+    EVM_CHAINS,
+    type Direction,
+    type EvmChainId,
+    type InboundFlow,
+    type RightChain,
+  } from '$lib/config';
+  import type { EvmWallet } from '$lib/evm/wallet';
+  import type { SendCallsCapability } from '$lib/evm/capabilities';
+  import type { SolanaWallet } from '$lib/solana/wallet';
 
-    let {
-        chain = $bindable<RightChain>('arc'),
-        evmWallet = $bindable<EvmWallet | null>(null),
-        evmChainId = $bindable<EvmChainId>('arc'),
-        solanaWallet = $bindable<SolanaWallet | null>(null),
-        inboundFlow = $bindable<InboundFlow>('two-tx'),
-        sendCallsCap = $bindable<SendCallsCapability>({ supported: false, atomic: false }),
-        direction,
-        disabled = false,
-    }: {
-        chain?: RightChain;
-        evmWallet?: EvmWallet | null;
-        evmChainId?: EvmChainId;
-        solanaWallet?: SolanaWallet | null;
-        inboundFlow?: InboundFlow;
-        sendCallsCap?: SendCallsCapability;
-        direction: Direction;
-        disabled?: boolean;
-    } = $props();
+  let {
+    chain = $bindable<RightChain>('arc'),
+    evmWallet = $bindable<EvmWallet | null>(null),
+    evmChainId = $bindable<EvmChainId>('arc'),
+    solanaWallet = $bindable<SolanaWallet | null>(null),
+    inboundFlow = $bindable<InboundFlow>('two-tx'),
+    sendCallsCap = $bindable<SendCallsCapability>({ supported: false, atomic: false }),
+    direction,
+    disabled = false,
+  }: {
+    chain?: RightChain;
+    evmWallet?: EvmWallet | null;
+    evmChainId?: EvmChainId;
+    solanaWallet?: SolanaWallet | null;
+    inboundFlow?: InboundFlow;
+    sendCallsCap?: SendCallsCapability;
+    direction: Direction;
+    disabled?: boolean;
+  } = $props();
 
-    let evmRef = $state<{
-        refresh: () => Promise<void>;
-        setChain: (id: EvmChainId) => Promise<void>;
-    }>();
-    let solRef = $state<{ refresh: () => Promise<void> }>();
+  let evmRef = $state<{
+    refresh: () => Promise<void>;
+    setChain: (id: EvmChainId) => Promise<void>;
+  }>();
+  let solRef = $state<{ refresh: () => Promise<void> }>();
 
-    export function refresh() {
-        return chain === 'solana'
-            ? (solRef?.refresh() ?? Promise.resolve())
-            : (evmRef?.refresh() ?? Promise.resolve());
+  export function refresh() {
+    return chain === 'solana'
+      ? (solRef?.refresh() ?? Promise.resolve())
+      : (evmRef?.refresh() ?? Promise.resolve());
+  }
+
+  async function pick(id: RightChain) {
+    if (id === chain) return;
+    chain = id;
+    if (id !== 'solana') {
+      evmChainId = id;
+      // Wait a tick so EvmPanel is mounted before driving its chain switch.
+      await Promise.resolve();
+      await evmRef?.setChain(id);
     }
-
-    async function pick(id: RightChain) {
-        if (id === chain) return;
-        chain = id;
-        if (id !== 'solana') {
-            evmChainId = id;
-            // Wait a tick so EvmPanel is mounted before driving its chain switch.
-            await Promise.resolve();
-            await evmRef?.setChain(id);
-        }
-    }
+  }
 </script>
 
 <section class="dest">
-    <div class="chain-picker" role="tablist" aria-label="Destination chain">
-        {#each Object.values(EVM_CHAINS) as cfg (cfg.id)}
-            <button
-                type="button"
-                class="chip"
-                class:active={chain === cfg.id}
-                {disabled}
-                onclick={() => pick(cfg.id)}
-                role="tab"
-                aria-selected={chain === cfg.id}
-            >
-                {cfg.label}
-            </button>
-        {/each}
-        <button
-            type="button"
-            class="chip"
-            class:active={chain === 'solana'}
-            {disabled}
-            onclick={() => pick('solana')}
-            role="tab"
-            aria-selected={chain === 'solana'}
-        >
-            Solana
-        </button>
-    </div>
+  <div class="chain-picker" role="tablist" aria-label="Destination chain">
+    {#each Object.values(EVM_CHAINS) as cfg (cfg.id)}
+      <button
+        type="button"
+        class="chip"
+        class:active={chain === cfg.id}
+        {disabled}
+        onclick={() => pick(cfg.id)}
+        role="tab"
+        aria-selected={chain === cfg.id}
+      >
+        {cfg.label}
+      </button>
+    {/each}
+    <button
+      type="button"
+      class="chip"
+      class:active={chain === 'solana'}
+      {disabled}
+      onclick={() => pick('solana')}
+      role="tab"
+      aria-selected={chain === 'solana'}
+    >
+      Solana
+    </button>
+  </div>
 
-    {#if chain === 'solana'}
-        <SolanaPanel bind:this={solRef} bind:wallet={solanaWallet} {disabled} />
-    {:else}
-        <EvmPanel
-            bind:this={evmRef}
-            bind:wallet={evmWallet}
-            bind:chainId={evmChainId}
-            bind:inboundFlow
-            bind:sendCallsCap
-            {direction}
-            {disabled}
-        />
-    {/if}
+  {#if chain === 'solana'}
+    <SolanaPanel bind:this={solRef} bind:wallet={solanaWallet} {disabled} />
+  {:else}
+    <EvmPanel
+      bind:this={evmRef}
+      bind:wallet={evmWallet}
+      bind:chainId={evmChainId}
+      bind:inboundFlow
+      bind:sendCallsCap
+      {direction}
+      {disabled}
+    />
+  {/if}
 </section>
 
 <style>
-    .dest {
-        display: flex;
-        flex-direction: column;
-        gap: 0.6rem;
-    }
-    .chain-picker {
-        display: flex;
-        gap: 0.4rem;
-    }
-    .chip {
-        flex: 1;
-        background: var(--bg-elev-2);
-        color: var(--text-muted);
-        border: 1px solid var(--border);
-        padding: 0.4rem 0.6rem;
-        border-radius: var(--radius);
-        font-size: 0.8rem;
-        font-weight: 500;
-        transition: all 120ms;
-    }
-    .chip:hover:not(:disabled) {
-        color: var(--text);
-        border-color: var(--border-strong);
-    }
-    .chip.active {
-        background: var(--accent-dim);
-        color: var(--text);
-        border-color: var(--accent);
-    }
-    .chip:disabled {
-        opacity: 0.4;
-        cursor: not-allowed;
-    }
+  .dest {
+    display: flex;
+    flex-direction: column;
+    gap: 0.6rem;
+  }
+  .chain-picker {
+    display: flex;
+    gap: 0.4rem;
+  }
+  .chip {
+    flex: 1;
+    background: var(--bg-elev-2);
+    color: var(--text-muted);
+    border: 1px solid var(--border);
+    padding: 0.4rem 0.6rem;
+    border-radius: var(--radius);
+    font-size: 0.8rem;
+    font-weight: 500;
+    transition: all 120ms;
+  }
+  .chip:hover:not(:disabled) {
+    color: var(--text);
+    border-color: var(--border-strong);
+  }
+  .chip.active {
+    background: var(--accent-dim);
+    color: var(--text);
+    border-color: var(--accent);
+  }
+  .chip:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+  }
 </style>
 ```
 
@@ -616,25 +608,25 @@ Keep `switchChain`, `refreshBalance`, `refreshSendCallsCap`, `refresh`, connect 
 
 ```svelte
 <script lang="ts">
-    let {
-        stellarIsSource = $bindable<boolean>(true),
-        otherLabel = 'EVM',
-        disabled = false,
-    }: { stellarIsSource?: boolean; otherLabel?: string; disabled?: boolean } = $props();
-    let otherShort = $derived(otherLabel.split(' ')[0]);
-    function flip() {
-        stellarIsSource = !stellarIsSource;
-    }
+  let {
+    stellarIsSource = $bindable<boolean>(true),
+    otherLabel = 'EVM',
+    disabled = false,
+  }: { stellarIsSource?: boolean; otherLabel?: string; disabled?: boolean } = $props();
+  let otherShort = $derived(otherLabel.split(' ')[0]);
+  function flip() {
+    stellarIsSource = !stellarIsSource;
+  }
 </script>
 
 <div class="switcher">
-    <span class="from">{stellarIsSource ? 'Stellar' : otherShort}</span>
-    <button class="flip" onclick={flip} {disabled} aria-label="Flip direction"> ⇄ </button>
-    <span class="to">{stellarIsSource ? otherShort : 'Stellar'}</span>
+  <span class="from">{stellarIsSource ? 'Stellar' : otherShort}</span>
+  <button class="flip" onclick={flip} {disabled} aria-label="Flip direction"> ⇄ </button>
+  <span class="to">{stellarIsSource ? otherShort : 'Stellar'}</span>
 </div>
 
 <style>
-    /* unchanged from current DirectionSwitcher */
+  /* unchanged from current DirectionSwitcher */
 </style>
 ```
 
@@ -645,40 +637,40 @@ Keep `switchChain`, `refreshBalance`, `refreshSendCallsCap`, `refresh`, connect 
 ```ts
 let otherShort = $derived(otherLabel.split(' ')[0]);
 let buttonLabel = $derived(
-    busy
-        ? 'Working…'
-        : stellarIsSource
-          ? `Send Stellar → ${otherShort}`
-          : `Send ${otherShort} → Stellar`,
+  busy
+    ? 'Working…'
+    : stellarIsSource
+      ? `Send Stellar → ${otherShort}`
+      : `Send ${otherShort} → Stellar`,
 );
 ```
 
 Replace the internal `let stellarSource = $derived(direction === 'stellar-to-evm')` usage with the `stellarIsSource` prop everywhere it gated Fast (so Fast is disabled whenever Stellar is the source OR the right chain is Solana). Add a `fastAllowed` prop from the page (`fastAllowed = rightChain !== 'solana' && !stellarIsSource`) and gate the Fast chip on `!fastAllowed` (disabled), simplest: pass `fastAllowed: boolean` and use it in place of `!stellarSource`. Keep `direction` only if still needed for copy; otherwise drop it.
 
 - [ ] **Step 5, `+page.svelte` rewiring:**
-    - Imports: drop `EvmPanel` import, add `DestinationPanel` and `SolanaBurnPreview` + `type SolanaWallet` + `type RightChain`. Keep `StellarBurnPreview`.
-    - State: replace `evmChainId`/`direction` with `rightChain = $state<RightChain>('arc')`, `stellarIsSource = $state(true)`, add `solana = $state<SolanaWallet | null>(null)`. Keep `evm`. Add `evmChainId = $state<EvmChainId>(DEFAULT_EVM_CHAIN)` (still needed for the EVM body + store).
-    - Derived: `direction` from `(rightChain, stellarIsSource)` per Global Constraints; `rightLabel = rightChain === 'solana' ? 'Solana' : EVM_CHAINS[rightChain].label`; `rightConnected = rightChain === 'solana' ? !!solana : !!evm`; `bothConnected = !!stellar.address && rightConnected`; `effectiveSpeed = (direction === 'stellar-to-evm' ... )` → coerce to `standard` when `!(rightChain !== 'solana' && !stellarIsSource)` (i.e. standard unless EVM-source).
-    - Replace `<EvmPanel .../>` with `<DestinationPanel bind:this={destPanel} bind:chain={rightChain} bind:evmWallet={evm} bind:evmChainId bind:solanaWallet={solana} bind:inboundFlow bind:sendCallsCap {direction} disabled={busy} />` and rename the `evmPanel` handle to `destPanel` (type `{ refresh }`).
-    - `DirectionSwitcher`: `<DirectionSwitcher bind:stellarIsSource otherLabel={rightLabel} disabled={busy} />`.
-    - `TransferForm`: pass `otherLabel={rightLabel}`, `stellarIsSource`, `fastAllowed={rightChain !== 'solana' && !stellarIsSource}` (+ keep amount/speed/etc).
-    - `send()`: branch. Solana: `if (!stellar.address || !solana) return; await transfer.start({ direction, stellarAddress: stellar.address, solanaWallet: solana, amount: amount.trim(), speed: 'standard' });`. EVM: unchanged (`evmWallet: evm`, `evmChainId`). After done: `await Promise.all([stellarPanel?.refresh(), destPanel?.refresh()])`.
-    - `resume()`: `if (rightChain === 'solana') return;` at top (plus keep the EVM path).
-    - Resume form: `{#if transfer.state.phase === 'idle' && rightChain !== 'solana'}<ResumeForm .../>{/if}`.
-    - Burn previews: keep the two EVM/Stellar blocks gated additionally on `rightChain !== 'solana'`. Add:
-        - `{#if direction === 'solana-to-stellar' && stellar.address && solana && transfer.state.phase === 'idle'}<SolanaBurnPreview solanaAddress={solana.address} stellarRecipient={stellar.address} {amount} />{/if}`
-        - `{#if direction === 'stellar-to-solana' && stellar.address && solana && transfer.state.phase === 'idle'}<StellarBurnPreview stellarAddress={stellar.address} solanaRecipient={solana.address} {amount} outboundFlow={'two-tx'} forwarding={false} speed={'standard'} />{/if}`
-    - `gas`/hint text unaffected.
+  - Imports: drop `EvmPanel` import, add `DestinationPanel` and `SolanaBurnPreview` + `type SolanaWallet` + `type RightChain`. Keep `StellarBurnPreview`.
+  - State: replace `evmChainId`/`direction` with `rightChain = $state<RightChain>('arc')`, `stellarIsSource = $state(true)`, add `solana = $state<SolanaWallet | null>(null)`. Keep `evm`. Add `evmChainId = $state<EvmChainId>(DEFAULT_EVM_CHAIN)` (still needed for the EVM body + store).
+  - Derived: `direction` from `(rightChain, stellarIsSource)` per Global Constraints; `rightLabel = rightChain === 'solana' ? 'Solana' : EVM_CHAINS[rightChain].label`; `rightConnected = rightChain === 'solana' ? !!solana : !!evm`; `bothConnected = !!stellar.address && rightConnected`; `effectiveSpeed = (direction === 'stellar-to-evm' ... )` → coerce to `standard` when `!(rightChain !== 'solana' && !stellarIsSource)` (i.e. standard unless EVM-source).
+  - Replace `<EvmPanel .../>` with `<DestinationPanel bind:this={destPanel} bind:chain={rightChain} bind:evmWallet={evm} bind:evmChainId bind:solanaWallet={solana} bind:inboundFlow bind:sendCallsCap {direction} disabled={busy} />` and rename the `evmPanel` handle to `destPanel` (type `{ refresh }`).
+  - `DirectionSwitcher`: `<DirectionSwitcher bind:stellarIsSource otherLabel={rightLabel} disabled={busy} />`.
+  - `TransferForm`: pass `otherLabel={rightLabel}`, `stellarIsSource`, `fastAllowed={rightChain !== 'solana' && !stellarIsSource}` (+ keep amount/speed/etc).
+  - `send()`: branch. Solana: `if (!stellar.address || !solana) return; await transfer.start({ direction, stellarAddress: stellar.address, solanaWallet: solana, amount: amount.trim(), speed: 'standard' });`. EVM: unchanged (`evmWallet: evm`, `evmChainId`). After done: `await Promise.all([stellarPanel?.refresh(), destPanel?.refresh()])`.
+  - `resume()`: `if (rightChain === 'solana') return;` at top (plus keep the EVM path).
+  - Resume form: `{#if transfer.state.phase === 'idle' && rightChain !== 'solana'}<ResumeForm .../>{/if}`.
+  - Burn previews: keep the two EVM/Stellar blocks gated additionally on `rightChain !== 'solana'`. Add:
+    - `{#if direction === 'solana-to-stellar' && stellar.address && solana && transfer.state.phase === 'idle'}<SolanaBurnPreview solanaAddress={solana.address} stellarRecipient={stellar.address} {amount} />{/if}`
+    - `{#if direction === 'stellar-to-solana' && stellar.address && solana && transfer.state.phase === 'idle'}<StellarBurnPreview stellarAddress={stellar.address} solanaRecipient={solana.address} {amount} outboundFlow={'two-tx'} forwarding={false} speed={'standard'} />{/if}`
+  - `gas`/hint text unaffected.
 
 - [ ] **Step 6:** `svelte-autofixer` on every changed/new `.svelte` (DestinationPanel, EvmPanel, DirectionSwitcher, TransferForm, +page) until clean. `pnpm check && pnpm lint` PASS.
 
 - [ ] **Step 7, manual verification (the gate):** `pnpm dev`, open `/`:
-    1. Selector shows Arc · Base · Ethereum · Solana. Pick Solana → body swaps to Phantom connect + balance.
-    2. Switch EVM chips arc→base with an EVM wallet connected → wallet network switches, balance/cap refresh; picking Ethereum drops a `wrapper` inbound flow.
-    3. Connect Freighter + Phantom, Solana selected: flip direction; Resume form hidden; Fast chip absent; button label correct both ways; correct burn preview per direction.
-    4. Run Stellar→Solana and Solana→Stellar to completion; balances update.
-    5. Run a Base↔Stellar EVM transfer, unchanged.
-    6. `/solana-spike` → 404.
+  1. Selector shows Arc · Base · Ethereum · Solana. Pick Solana → body swaps to Phantom connect + balance.
+  2. Switch EVM chips arc→base with an EVM wallet connected → wallet network switches, balance/cap refresh; picking Ethereum drops a `wrapper` inbound flow.
+  3. Connect Freighter + Phantom, Solana selected: flip direction; Resume form hidden; Fast chip absent; button label correct both ways; correct burn preview per direction.
+  4. Run Stellar→Solana and Solana→Stellar to completion; balances update.
+  5. Run a Base↔Stellar EVM transfer, unchanged.
+  6. `/solana-spike` → 404.
 
 - [ ] **Step 8, commit:**
 

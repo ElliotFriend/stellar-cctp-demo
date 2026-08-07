@@ -97,20 +97,20 @@ import { solanaRpc } from './client';
 // Devnet USDC uses the classic SPL Token program (not Token-2022), so
 // TOKEN_PROGRAM_ADDRESS is the correct token-program seed for the ATA.
 export async function getUsdcBalance(owner: string): Promise<string> {
-    const [ata] = await findAssociatedTokenPda({
-        owner: address(owner),
-        tokenProgram: TOKEN_PROGRAM_ADDRESS,
-        mint: address(SOLANA.usdc.mint),
-    });
+  const [ata] = await findAssociatedTokenPda({
+    owner: address(owner),
+    tokenProgram: TOKEN_PROGRAM_ADDRESS,
+    mint: address(SOLANA.usdc.mint),
+  });
 
-    // The ATA does not exist until the owner first receives USDC. Probe with
-    // getAccountInfo (returns null for a missing account) instead of letting
-    // getTokenAccountBalance throw, so a genuine RPC failure still surfaces.
-    const info = await solanaRpc.getAccountInfo(ata, { encoding: 'base64' }).send();
-    if (info.value === null) return '0';
+  // The ATA does not exist until the owner first receives USDC. Probe with
+  // getAccountInfo (returns null for a missing account) instead of letting
+  // getTokenAccountBalance throw, so a genuine RPC failure still surfaces.
+  const info = await solanaRpc.getAccountInfo(ata, { encoding: 'base64' }).send();
+  if (info.value === null) return '0';
 
-    const bal = await solanaRpc.getTokenAccountBalance(ata).send();
-    return bal.value.uiAmountString ?? '0';
+  const bal = await solanaRpc.getTokenAccountBalance(ata).send();
+  return bal.value.uiAmountString ?? '0';
 }
 ```
 
@@ -140,11 +140,11 @@ Note: real exercise of this function happens in Task 4 (needs a funded devnet ad
 
 - Consumes: `getWallets` from `@wallet-standard/app`; `Wallet` type from `@wallet-standard/base`; `browser` from `$app/environment`; `sleep` from `$lib/utils`.
 - Produces:
-    - `type SolanaWalletInfo = { name: string; icon: string; wallet: Wallet }`
-    - `type SolanaWallet = { name: string; icon: string; address: string }`
-    - `discoverSolanaWallets(): SolanaWalletInfo[]`
-    - `connectSolana(info: SolanaWalletInfo): Promise<SolanaWallet>`
-    - `detectExistingSolana(): Promise<SolanaWallet | null>`
+  - `type SolanaWalletInfo = { name: string; icon: string; wallet: Wallet }`
+  - `type SolanaWallet = { name: string; icon: string; address: string }`
+  - `discoverSolanaWallets(): SolanaWalletInfo[]`
+  - `connectSolana(info: SolanaWalletInfo): Promise<SolanaWallet>`
+  - `detectExistingSolana(): Promise<SolanaWallet | null>`
 
 - [ ] **Step 1: Implement the wallet module**
 
@@ -159,15 +159,15 @@ import { sleep } from '$lib/utils';
 const NAME_STORAGE_KEY = 'cctp-demo:solana-wallet';
 
 export type SolanaWalletInfo = {
-    name: string;
-    icon: string;
-    wallet: Wallet;
+  name: string;
+  icon: string;
+  wallet: Wallet;
 };
 
 export type SolanaWallet = {
-    name: string;
-    icon: string;
-    address: string;
+  name: string;
+  icon: string;
+  address: string;
 };
 
 // Minimal shape of the standard:connect feature. Kept local rather than
@@ -175,48 +175,48 @@ export type SolanaWallet = {
 // evm/wallet.ts keeps its EIP-6963 types local.
 type ConnectableAccount = { address: string };
 type ConnectFeature = {
-    connect: (input?: { silent?: boolean }) => Promise<{ accounts: readonly ConnectableAccount[] }>;
+  connect: (input?: { silent?: boolean }) => Promise<{ accounts: readonly ConnectableAccount[] }>;
 };
 
 function isSolana(w: Wallet): boolean {
-    return w.chains.some((c) => c.startsWith('solana:')) && 'standard:connect' in w.features;
+  return w.chains.some((c) => c.startsWith('solana:')) && 'standard:connect' in w.features;
 }
 
 function connectFeature(w: Wallet): ConnectFeature {
-    return w.features['standard:connect'] as unknown as ConnectFeature;
+  return w.features['standard:connect'] as unknown as ConnectFeature;
 }
 
 function readStoredName(): string | null {
-    if (!browser) return null;
-    try {
-        return window.localStorage.getItem(NAME_STORAGE_KEY);
-    } catch {
-        return null;
-    }
+  if (!browser) return null;
+  try {
+    return window.localStorage.getItem(NAME_STORAGE_KEY);
+  } catch {
+    return null;
+  }
 }
 
 function writeStoredName(name: string): void {
-    if (!browser) return;
-    try {
-        window.localStorage.setItem(NAME_STORAGE_KEY, name);
-    } catch {
-        // private windows / sandboxed iframes can throw, non-fatal.
-    }
+  if (!browser) return;
+  try {
+    window.localStorage.setItem(NAME_STORAGE_KEY, name);
+  } catch {
+    // private windows / sandboxed iframes can throw, non-fatal.
+  }
 }
 
 export function discoverSolanaWallets(): SolanaWalletInfo[] {
-    if (!browser) return [];
-    return getWallets()
-        .get()
-        .filter(isSolana)
-        .map((w) => ({ name: w.name, icon: w.icon, wallet: w }));
+  if (!browser) return [];
+  return getWallets()
+    .get()
+    .filter(isSolana)
+    .map((w) => ({ name: w.name, icon: w.icon, wallet: w }));
 }
 
 export async function connectSolana(info: SolanaWalletInfo): Promise<SolanaWallet> {
-    const { accounts } = await connectFeature(info.wallet).connect();
-    if (accounts.length === 0) throw new Error('Wallet returned no accounts.');
-    writeStoredName(info.name);
-    return { name: info.name, icon: info.icon, address: accounts[0].address };
+  const { accounts } = await connectFeature(info.wallet).connect();
+  if (accounts.length === 0) throw new Error('Wallet returned no accounts.');
+  writeStoredName(info.name);
+  return { name: info.name, icon: info.icon, address: accounts[0].address };
 }
 
 // Silent reconnect: standard:connect with { silent: true } asks the wallet to
@@ -230,24 +230,24 @@ export async function connectSolana(info: SolanaWalletInfo): Promise<SolanaWalle
 // miss the first pass, so if our stored wallet isn't present, wait briefly and
 // look again once (mirrors the EIP-6963 sleep in evm/wallet.ts) before giving up.
 export async function detectExistingSolana(): Promise<SolanaWallet | null> {
-    if (!browser) return null;
-    const name = readStoredName();
-    if (!name) return null;
+  if (!browser) return null;
+  const name = readStoredName();
+  if (!name) return null;
 
-    let info = discoverSolanaWallets().find((w) => w.name === name);
-    if (!info) {
-        await sleep(250);
-        info = discoverSolanaWallets().find((w) => w.name === name);
-    }
-    if (!info) return null;
+  let info = discoverSolanaWallets().find((w) => w.name === name);
+  if (!info) {
+    await sleep(250);
+    info = discoverSolanaWallets().find((w) => w.name === name);
+  }
+  if (!info) return null;
 
-    try {
-        const { accounts } = await connectFeature(info.wallet).connect({ silent: true });
-        if (accounts.length === 0) return null;
-        return { name: info.name, icon: info.icon, address: accounts[0].address };
-    } catch {
-        return null;
-    }
+  try {
+    const { accounts } = await connectFeature(info.wallet).connect({ silent: true });
+    if (accounts.length === 0) return null;
+    return { name: info.name, icon: info.icon, address: accounts[0].address };
+  } catch {
+    return null;
+  }
 }
 ```
 
@@ -283,90 +283,87 @@ Create `src/lib/components/SolanaPanel.svelte`:
 
 ```svelte
 <script lang="ts">
-    import { onMount } from 'svelte';
-    import { browser } from '$app/environment';
-    import {
-        connectSolana,
-        detectExistingSolana,
-        discoverSolanaWallets,
-        type SolanaWallet,
-    } from '$lib/solana/wallet';
-    import { getUsdcBalance } from '$lib/solana/usdc';
-    import { shortAddr } from '$lib/utils';
+  import { onMount } from 'svelte';
+  import { browser } from '$app/environment';
+  import {
+    connectSolana,
+    detectExistingSolana,
+    discoverSolanaWallets,
+    type SolanaWallet,
+  } from '$lib/solana/wallet';
+  import { getUsdcBalance } from '$lib/solana/usdc';
+  import { shortAddr } from '$lib/utils';
 
-    let { wallet = $bindable<SolanaWallet | null>(null) }: { wallet?: SolanaWallet | null } =
-        $props();
+  let { wallet = $bindable<SolanaWallet | null>(null) }: { wallet?: SolanaWallet | null } =
+    $props();
 
-    let balance = $state<string | null>(null);
-    let error = $state<string | null>(null);
-    let connecting = $state(false);
+  let balance = $state<string | null>(null);
+  let error = $state<string | null>(null);
+  let connecting = $state(false);
 
-    onMount(async () => {
-        if (!browser) return;
-        const existing = await detectExistingSolana();
-        if (existing) {
-            wallet = existing;
-            await refreshBalance();
-        }
-    });
-
-    async function refreshBalance() {
-        if (!wallet) return;
-        error = null;
-        try {
-            balance = await getUsdcBalance(wallet.address);
-        } catch (e) {
-            error = e instanceof Error ? e.message : String(e);
-        }
+  onMount(async () => {
+    if (!browser) return;
+    const existing = await detectExistingSolana();
+    if (existing) {
+      wallet = existing;
+      await refreshBalance();
     }
+  });
 
-    async function connect() {
-        error = null;
-        connecting = true;
-        try {
-            const wallets = discoverSolanaWallets();
-            if (wallets.length === 0) {
-                throw new Error(
-                    'No Solana wallet found. Install Phantom from phantom.app and reload.',
-                );
-            }
-            const pick =
-                wallets.find((w) => w.name.toLowerCase().includes('phantom')) ?? wallets[0];
-            wallet = await connectSolana(pick);
-            await refreshBalance();
-        } catch (e) {
-            error = e instanceof Error ? e.message : String(e);
-        } finally {
-            connecting = false;
-        }
+  async function refreshBalance() {
+    if (!wallet) return;
+    error = null;
+    try {
+      balance = await getUsdcBalance(wallet.address);
+    } catch (e) {
+      error = e instanceof Error ? e.message : String(e);
     }
+  }
+
+  async function connect() {
+    error = null;
+    connecting = true;
+    try {
+      const wallets = discoverSolanaWallets();
+      if (wallets.length === 0) {
+        throw new Error('No Solana wallet found. Install Phantom from phantom.app and reload.');
+      }
+      const pick = wallets.find((w) => w.name.toLowerCase().includes('phantom')) ?? wallets[0];
+      wallet = await connectSolana(pick);
+      await refreshBalance();
+    } catch (e) {
+      error = e instanceof Error ? e.message : String(e);
+    } finally {
+      connecting = false;
+    }
+  }
 </script>
 
 <div class="panel">
-    <h2>Solana (devnet)</h2>
-    {#if !wallet}
-        <button onclick={connect} disabled={connecting}>
-            {connecting ? 'Connecting…' : 'Connect Phantom'}
-        </button>
-    {:else}
-        <p>Wallet: {wallet.name}</p>
-        <p><code title={wallet.address}>{shortAddr(wallet.address, 6, 6)}</code></p>
-        <p>USDC: {balance ?? '…'}</p>
-        <button onclick={refreshBalance}>Refresh</button>
-    {/if}
-    {#if error}<p class="error">{error}</p>{/if}
+  <h2>Solana (devnet)</h2>
+  {#if !wallet}
+    <button onclick={connect} disabled={connecting}>
+      {connecting ? 'Connecting…' : 'Connect Phantom'}
+    </button>
+  {:else}
+    <p>Wallet: {wallet.name}</p>
+    <p><code title={wallet.address}>{shortAddr(wallet.address, 6, 6)}</code></p>
+    <p>USDC: {balance ?? '…'}</p>
+    <button onclick={refreshBalance}>Refresh</button>
+  {/if}
+  {#if error}<p class="error">{error}</p>{/if}
 </div>
 
 <style>
-    .panel {
-        border: 1px solid currentColor;
-        border-radius: 8px;
-        padding: 1rem;
-        max-width: 24rem;
-    }
-    .error {
-        color: crimson;
-    }
+  .panel {
+    border: 1px solid currentColor;
+    border-radius: 8px;
+    padding: 1rem;
+    max-width: 24rem;
+  }
+  .error {
+    color: crimson;
+  }
 </style>
 ```
 
@@ -380,10 +377,10 @@ Create `src/routes/solana-spike/+page.svelte`:
 
 ```svelte
 <script lang="ts">
-    import SolanaPanel from '$lib/components/SolanaPanel.svelte';
-    import type { SolanaWallet } from '$lib/solana/wallet';
+  import SolanaPanel from '$lib/components/SolanaPanel.svelte';
+  import type { SolanaWallet } from '$lib/solana/wallet';
 
-    let wallet = $state<SolanaWallet | null>(null);
+  let wallet = $state<SolanaWallet | null>(null);
 </script>
 
 <h1>Solana balance spike</h1>

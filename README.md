@@ -99,10 +99,10 @@ Only USDC and the chain ID/domain differ per chain.
 This direction supports **two flows**, selectable from the Stellar panel:
 
 1. **2 tx (direct)**, plain CCTP:
-    1. `approve` USDC SAC for the `TokenMessengerMinter`.
-    2. Call `deposit_for_burn` on `TokenMessengerMinter`.
-    3. Poll Iris for the attestation.
-    4. Call `receiveMessage` on the destination's `MessageTransmitterV2`.
+   1. `approve` USDC SAC for the `TokenMessengerMinter`.
+   2. Call `deposit_for_burn` on `TokenMessengerMinter`.
+   3. Poll Iris for the attestation.
+   4. Call `receiveMessage` on the destination's `MessageTransmitterV2`.
 
 2. **1 tx (wrapper)**, which uses a user-deployed Soroban wrapper
    (`contracts/stellar/cctp-wrapper/`) whose `approve_and_deposit` method

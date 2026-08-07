@@ -30,8 +30,8 @@
 
 - Consumes: `IRIS_API` (existing, `config.ts:95`).
 - Produces:
-    - `config.ts`: `type TransferSpeed = 'standard' | 'fast'`, `DEFAULT_SPEED: TransferSpeed`, `FAST_THRESHOLD = 1000`, `STANDARD_THRESHOLD = 2000`, `FINALIZED_THRESHOLD` (temporary alias = `STANDARD_THRESHOLD`), unchanged `STELLAR_MAX_FEE: bigint`, `EVM_MAX_FEE: bigint`.
-    - `fees.ts`: `type BurnFeeRow = { finalityThreshold: number; minimumFee: number }`, `fetchBurnFee(srcDomain: number, dstDomain: number): Promise<BurnFeeRow[]>`, `thresholdFor(speed: TransferSpeed): number`, `feeBpsFor(rows: BurnFeeRow[], speed: TransferSpeed): number`, `computeMaxFee(amount: bigint, bps: number, floor: bigint): bigint`.
+  - `config.ts`: `type TransferSpeed = 'standard' | 'fast'`, `DEFAULT_SPEED: TransferSpeed`, `FAST_THRESHOLD = 1000`, `STANDARD_THRESHOLD = 2000`, `FINALIZED_THRESHOLD` (temporary alias = `STANDARD_THRESHOLD`), unchanged `STELLAR_MAX_FEE: bigint`, `EVM_MAX_FEE: bigint`.
+  - `fees.ts`: `type BurnFeeRow = { finalityThreshold: number; minimumFee: number }`, `fetchBurnFee(srcDomain: number, dstDomain: number): Promise<BurnFeeRow[]>`, `thresholdFor(speed: TransferSpeed): number`, `feeBpsFor(rows: BurnFeeRow[], speed: TransferSpeed): number`, `computeMaxFee(amount: bigint, bps: number, floor: bigint): bigint`.
 
 - [ ] **Step 1: Edit `src/lib/config.ts`**
 
@@ -67,30 +67,30 @@ export type BurnFeeRow = { finalityThreshold: number; minimumFee: number };
 const cache = new Map<string, Promise<BurnFeeRow[]>>();
 
 export function fetchBurnFee(srcDomain: number, dstDomain: number): Promise<BurnFeeRow[]> {
-    const key = `${srcDomain}-${dstDomain}`;
-    let p = cache.get(key);
-    if (!p) {
-        p = (async () => {
-            const res = await fetch(`${IRIS_API}/v2/burn/USDC/fees/${srcDomain}/${dstDomain}`);
-            if (!res.ok) throw new Error(`Fee API ${res.status}: ${await res.text()}`);
-            return (await res.json()) as BurnFeeRow[];
-        })().catch((err) => {
-            cache.delete(key);
-            throw err;
-        });
-        cache.set(key, p);
-    }
-    return p;
+  const key = `${srcDomain}-${dstDomain}`;
+  let p = cache.get(key);
+  if (!p) {
+    p = (async () => {
+      const res = await fetch(`${IRIS_API}/v2/burn/USDC/fees/${srcDomain}/${dstDomain}`);
+      if (!res.ok) throw new Error(`Fee API ${res.status}: ${await res.text()}`);
+      return (await res.json()) as BurnFeeRow[];
+    })().catch((err) => {
+      cache.delete(key);
+      throw err;
+    });
+    cache.set(key, p);
+  }
+  return p;
 }
 
 export function thresholdFor(speed: TransferSpeed): number {
-    return speed === 'fast' ? FAST_THRESHOLD : STANDARD_THRESHOLD;
+  return speed === 'fast' ? FAST_THRESHOLD : STANDARD_THRESHOLD;
 }
 
 // minimumFee for the row matching the speed's threshold; 0 if absent.
 export function feeBpsFor(rows: BurnFeeRow[], speed: TransferSpeed): number {
-    const threshold = thresholdFor(speed);
-    return rows.find((r) => r.finalityThreshold === threshold)?.minimumFee ?? 0;
+  const threshold = thresholdFor(speed);
+  return rows.find((r) => r.finalityThreshold === threshold)?.minimumFee ?? 0;
 }
 
 // maxFee in burn-token subunits. `bps` is basis points of the amount
@@ -98,8 +98,8 @@ export function feeBpsFor(rows: BurnFeeRow[], speed: TransferSpeed): number {
 // `floor` is safe headroom against a quote tick between preview and submit.
 // Number() is fine for demo-sized amounts; revisit if amounts approach 2^53.
 export function computeMaxFee(amount: bigint, bps: number, floor: bigint): bigint {
-    const fee = BigInt(Math.ceil((Number(amount) * bps) / 10000));
-    return fee + floor;
+  const fee = BigInt(Math.ceil((Number(amount) * bps) / 10000));
+  return fee + floor;
 }
 ```
 
@@ -142,9 +142,9 @@ Co-Authored-By: Claude Opus 4.8 (1M context) <noreply@anthropic.com>"
 
 - Consumes: `computeMaxFee`, `feeBpsFor`, `thresholdFor`, `fetchBurnFee` (Task 1); `STELLAR_MAX_FEE`, `EVM_MAX_FEE`, `DEFAULT_SPEED`, `TransferSpeed`.
 - Produces:
-    - `stellar/cctp.ts`: `depositForBurnToEvm` and `bridgeUsdcToEvm` arg objects gain `maxFee: bigint` and `finalityThreshold: number`.
-    - `evm/cctp.ts`: `buildBurnToStellar(chainId, amount, stellarRecipient, maxFee, finalityThreshold)`; `depositForBurnWithHookToStellar`, `bridgeWithPermitToStellar`, `sendCallsBridgeToStellar` arg objects gain `maxFee: bigint`, `finalityThreshold: number`.
-    - `transfer.svelte.ts`: `start(args)` and `runStellarToEvm`/`runEvmToStellar` args gain `speed: TransferSpeed`.
+  - `stellar/cctp.ts`: `depositForBurnToEvm` and `bridgeUsdcToEvm` arg objects gain `maxFee: bigint` and `finalityThreshold: number`.
+  - `evm/cctp.ts`: `buildBurnToStellar(chainId, amount, stellarRecipient, maxFee, finalityThreshold)`; `depositForBurnWithHookToStellar`, `bridgeWithPermitToStellar`, `sendCallsBridgeToStellar` arg objects gain `maxFee: bigint`, `finalityThreshold: number`.
+  - `transfer.svelte.ts`: `start(args)` and `runStellarToEvm`/`runEvmToStellar` args gain `speed: TransferSpeed`.
 
 - [ ] **Step 1: `src/lib/stellar/cctp.ts`, drop constant imports, take args**
 
@@ -196,26 +196,26 @@ Update `buildBurnToStellar` (lines 138-153):
 
 ```ts
 function buildBurnToStellar(
-    chainId: EvmChainId,
-    amount: bigint,
-    stellarRecipient: string,
-    maxFee: bigint,
-    finalityThreshold: number,
+  chainId: EvmChainId,
+  amount: bigint,
+  stellarRecipient: string,
+  maxFee: bigint,
+  finalityThreshold: number,
 ) {
-    const cfg = EVM_CHAINS[chainId];
-    const forwarderBytes32 = strkeyToBytes32(STELLAR.contracts.cctpForwarder);
-    const hookData = encodeStellarForwarderHookData(stellarRecipient);
-    const burnArgs = [
-        amount, //                  amount
-        STELLAR.domain, //          destinationDomain (Stellar's CCTP domain)
-        forwarderBytes32, //        mintRecipient (the forwarder, see invariant)
-        cfg.usdc, //                burnToken (per-chain USDC address)
-        forwarderBytes32, //        destinationCaller (MUST equal mintRecipient)
-        maxFee, //                  maxFee
-        finalityThreshold, //       minFinalityThreshold
-        hookData, //                hookData (G-address routing payload)
-    ] as const;
-    return { cfg, forwarderBytes32, hookData, burnArgs };
+  const cfg = EVM_CHAINS[chainId];
+  const forwarderBytes32 = strkeyToBytes32(STELLAR.contracts.cctpForwarder);
+  const hookData = encodeStellarForwarderHookData(stellarRecipient);
+  const burnArgs = [
+    amount, //                  amount
+    STELLAR.domain, //          destinationDomain (Stellar's CCTP domain)
+    forwarderBytes32, //        mintRecipient (the forwarder, see invariant)
+    cfg.usdc, //                burnToken (per-chain USDC address)
+    forwarderBytes32, //        destinationCaller (MUST equal mintRecipient)
+    maxFee, //                  maxFee
+    finalityThreshold, //       minFinalityThreshold
+    hookData, //                hookData (G-address routing payload)
+  ] as const;
+  return { cfg, forwarderBytes32, hookData, burnArgs };
 }
 ```
 
@@ -289,16 +289,16 @@ Add imports near the top (after the existing `$lib/config` import block, lines 2
 
 ```ts
 import {
-    EVM_CCTP_CONTRACTS,
-    EVM_CHAINS,
-    STELLAR,
-    STELLAR_MAX_FEE,
-    EVM_MAX_FEE,
-    type Direction,
-    type EvmChainId,
-    type InboundFlow,
-    type OutboundFlow,
-    type TransferSpeed,
+  EVM_CCTP_CONTRACTS,
+  EVM_CHAINS,
+  STELLAR,
+  STELLAR_MAX_FEE,
+  EVM_MAX_FEE,
+  type Direction,
+  type EvmChainId,
+  type InboundFlow,
+  type OutboundFlow,
+  type TransferSpeed,
 } from '$lib/config';
 import { fetchBurnFee, feeBpsFor, thresholdFor, computeMaxFee } from '$lib/circle/fees';
 ```
@@ -452,13 +452,13 @@ Where the burn amount is parsed in this component (the existing `amount`-parsing
 
 ```svelte
 {#await feePromise then rows}
-    {@const bps = feeBpsFor(rows, speed)}
-    <code class="arg-value">{computeMaxFee(parsedAmount, bps, STELLAR_MAX_FEE).toString()}</code>
-    <!-- ... and for the threshold row: -->
-    <code class="arg-value">{threshold}</code>
-    <!-- optional caption: Fast fee {bps} bps -->
+  {@const bps = feeBpsFor(rows, speed)}
+  <code class="arg-value">{computeMaxFee(parsedAmount, bps, STELLAR_MAX_FEE).toString()}</code>
+  <!-- ... and for the threshold row: -->
+  <code class="arg-value">{threshold}</code>
+  <!-- optional caption: Fast fee {bps} bps -->
 {:catch}
-    <code class="arg-value">{STELLAR_MAX_FEE.toString()}</code>
+  <code class="arg-value">{STELLAR_MAX_FEE.toString()}</code>
 {/await}
 ```
 

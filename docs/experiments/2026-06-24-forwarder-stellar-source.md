@@ -20,29 +20,29 @@ collector `0xc17d06b66fb2f308bb3af99231a45380a28563a2`.
 **Run 1, 2026-07-09 ~17:35 UTC (first confirmation, two-tx path)**
 
 - **Stellar → Arc** (domain 26), 5.0 USDC, minted 4.969225 (fee 0.030775)
-    - burn: `245956ca8688a88fa8e1e6db3eba33e8bdcee24834db202ab858e4f9e15ccd42`
-    - forward mint (Arc): `0x76fbf7d4c62938cae40f31f0512767653a1f5f625047a578f8ef650221215bfd`
+  - burn: `245956ca8688a88fa8e1e6db3eba33e8bdcee24834db202ab858e4f9e15ccd42`
+  - forward mint (Arc): `0x76fbf7d4c62938cae40f31f0512767653a1f5f625047a578f8ef650221215bfd`
 - **Stellar → Base** (domain 6), 5.1 USDC, minted 4.896013 (fee 0.203987)
-    - burn: `9f6b909c1e76be89d77dddc9c1bcfa93496d44b6386cbc0f149991a0409e2bf0`
-    - forward mint (Base Sepolia): `0x1d979cfcc797c670df983f5e033bc328838e958cf990b579d6a55c9ab909907c`
+  - burn: `9f6b909c1e76be89d77dddc9c1bcfa93496d44b6386cbc0f149991a0409e2bf0`
+  - forward mint (Base Sepolia): `0x1d979cfcc797c670df983f5e033bc328838e958cf990b579d6a55c9ab909907c`
 
 **Run 2, 2026-07-09 ~21:00 UTC (wrapper `approve_and_deposit_with_hook` validated)**
 
 - **Stellar → Arc** (domain 26), 2.9 USDC, minted 2.882766 (fee 0.017234), _two-tx forwarder_
-    - burn (`deposit_for_burn_with_hook` on TMM): `e16ae34b61c596a889852d636e0ae9cd44641293560caabb05ff06ead078c9e3`
-    - forward mint (Arc): `0x2e744c4ad065589ea2e92c543cdb45b7c40c48ae9644a63c1fba02521243c5ca`
+  - burn (`deposit_for_burn_with_hook` on TMM): `e16ae34b61c596a889852d636e0ae9cd44641293560caabb05ff06ead078c9e3`
+  - forward mint (Arc): `0x2e744c4ad065589ea2e92c543cdb45b7c40c48ae9644a63c1fba02521243c5ca`
 - **Stellar → Base** (domain 6), 2.8 USDC, minted 2.595982 (fee 0.204018), _1-tx wrapper forwarder_
-    - burn (`approve_and_deposit_with_hook` on wrapper `CDC4EGIJSQU4I7LBER3CRMSTBAVR6JMCQXKJHZZU7WB2R32WQJDGKTN6`): `b22f1c922c43bf725bc295c701aaa867129f9eab0b68b555786b8cbcd1b2d98a`
-    - forward mint (Base Sepolia): `0x514e161eec728a0c6e4ce8f64f9bf0b2b1b2144b9da6bb50224c52c71f7483bb`
+  - burn (`approve_and_deposit_with_hook` on wrapper `CDC4EGIJSQU4I7LBER3CRMSTBAVR6JMCQXKJHZZU7WB2R32WQJDGKTN6`): `b22f1c922c43bf725bc295c701aaa867129f9eab0b68b555786b8cbcd1b2d98a`
+  - forward mint (Base Sepolia): `0x514e161eec728a0c6e4ce8f64f9bf0b2b1b2144b9da6bb50224c52c71f7483bb`
 
 **Run 3, 2026-07-24 (Solana destination, first non-EVM forward)**
 
 - **Stellar → Solana** (domain 5), 3.0 USDC, `maxFee` 128946, `feeExecuted` 128946
-    - burn (Stellar testnet): `0d4fcd21ce8cfbe98f3e2bc9441a472c7cf9e28e886e516fbabfd696dc0b09aa`
-    - nonce: `0x6ba6ec6938fdd4241513ba6c00f8df18456b20ea8b199e031f9eb46d8d7633d0`
-    - `forwardState` COMPLETE; forward mint (Solana devnet, `finalized`, `err: null`): `3WertUfbKQA22CobQ7uh3mKDQegfw5ZKGKPsdpk45gRPq8PCiGZddfkgiKtpLFrkvcoYye9jnf5awRevKqfj1xqF`
-    - `destinationCaller` zero (all-1s system pubkey), `finalityThresholdExecuted` 2000
-    - Iris surfaces the message-envelope recipient as the Solana TokenMessengerMinter program (`CCTPV2vP…gUMQe`), _not_ the end ATA. The real `mintRecipient` (the recipient's USDC ATA, set by `runStellarToSolanaForwarded` via `solanaAtaToBytes32`) rides in the burn-message body, and the relayer delivered there (recipient balance rose, no user tx)
+  - burn (Stellar testnet): `0d4fcd21ce8cfbe98f3e2bc9441a472c7cf9e28e886e516fbabfd696dc0b09aa`
+  - nonce: `0x6ba6ec6938fdd4241513ba6c00f8df18456b20ea8b199e031f9eb46d8d7633d0`
+  - `forwardState` COMPLETE; forward mint (Solana devnet, `finalized`, `err: null`): `3WertUfbKQA22CobQ7uh3mKDQegfw5ZKGKPsdpk45gRPq8PCiGZddfkgiKtpLFrkvcoYye9jnf5awRevKqfj1xqF`
+  - `destinationCaller` zero (all-1s system pubkey), `finalityThresholdExecuted` 2000
+  - Iris surfaces the message-envelope recipient as the Solana TokenMessengerMinter program (`CCTPV2vP…gUMQe`), _not_ the end ATA. The real `mintRecipient` (the recipient's USDC ATA, set by `runStellarToSolanaForwarded` via `solanaAtaToBytes32`) rides in the burn-message body, and the relayer delivered there (recipient balance rose, no user tx)
 
 ## Goal
 
@@ -322,15 +322,15 @@ doesn't (yet) name Solana. It works: the sandbox relayer services
 Stellar→Solana exactly as it does Stellar→EVM.
 
 - **Stellar → Solana** (27 → 5), 3.0 USDC.
-    - burn (Stellar testnet):
-      `0d4fcd21ce8cfbe98f3e2bc9441a472c7cf9e28e886e516fbabfd696dc0b09aa`
-    - `GET /v2/messages/27?transactionHash=0d4fcd21…dc0b09aa` → `status`
-      complete, `forwardState` **COMPLETE**, `feeExecuted` = `maxFee` (128946),
-      `finalityThresholdExecuted` 2000, `delayReason` null.
-    - forward mint (Solana devnet):
-      `3WertUfbKQA22CobQ7uh3mKDQegfw5ZKGKPsdpk45gRPq8PCiGZddfkgiKtpLFrkvcoYye9jnf5awRevKqfj1xqF`
-      , `getSignatureStatuses` → `confirmationStatus: finalized`, `err: null`,
-      `status: Ok`. No user `receiveMessage`.
+  - burn (Stellar testnet):
+    `0d4fcd21ce8cfbe98f3e2bc9441a472c7cf9e28e886e516fbabfd696dc0b09aa`
+  - `GET /v2/messages/27?transactionHash=0d4fcd21…dc0b09aa` → `status`
+    complete, `forwardState` **COMPLETE**, `feeExecuted` = `maxFee` (128946),
+    `finalityThresholdExecuted` 2000, `delayReason` null.
+  - forward mint (Solana devnet):
+    `3WertUfbKQA22CobQ7uh3mKDQegfw5ZKGKPsdpk45gRPq8PCiGZddfkgiKtpLFrkvcoYye9jnf5awRevKqfj1xqF`
+    , `getSignatureStatuses` → `confirmationStatus: finalized`, `err: null`,
+    `status: Ok`. No user `receiveMessage`.
 
 Same invariants as the EVM legs (`cctp-forward` hookData, `destinationCaller`
 zero, `feeExecuted` == `maxFee`), and the economics carry over. The full

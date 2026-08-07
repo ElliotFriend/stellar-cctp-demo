@@ -43,8 +43,8 @@ connect + balance. Rejected alternatives: lifting the selector inline into
 
 - New `RightChain = EvmChainId | 'solana'` (in `config.ts`).
 - `direction` on the page is derived from `(rightChain, orientation)`:
-    - EVM, Stellar as source → `stellar-to-evm`; EVM as source → `evm-to-stellar`.
-    - Solana, Stellar as source → `stellar-to-solana`; Solana as source → `solana-to-stellar`.
+  - EVM, Stellar as source → `stellar-to-evm`; EVM as source → `evm-to-stellar`.
+  - Solana, Stellar as source → `stellar-to-solana`; Solana as source → `solana-to-stellar`.
 
 ## Components
 
@@ -144,10 +144,10 @@ boolean` (the orientation). Derive `direction` and `rightLabel` from
   `(rightChain, stellarIsSource)`.
 - Render `<DestinationPanel>` in the top-right instead of `<EvmPanel>`.
 - `send()` branches on `rightChain`:
-    - Solana: require `solana`; call `start({ direction, stellarAddress,
+  - Solana: require `solana`; call `start({ direction, stellarAddress,
 solanaWallet: solana, amount, speed: 'standard' })`, no `evmWallet`, no
-      `evmChainId`.
-    - EVM: unchanged.
+    `evmChainId`.
+  - EVM: unchanged.
 - **Resume (review B3):** hide `<ResumeForm>` when `rightChain === 'solana'`, and
   `resume()` returns early for Solana. Resume stays EVM/Stellar-only this pass.
 - `bothConnected` and other gates branch on `rightChain` (Stellar + the active

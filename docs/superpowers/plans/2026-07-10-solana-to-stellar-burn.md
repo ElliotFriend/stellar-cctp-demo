@@ -53,24 +53,24 @@ import { StrKey } from '@stellar/stellar-sdk';
 // Getting any byte of this wrong will permanently lose funds. Validate
 // the strkey first.
 export function encodeStellarForwarderHookData(stellarStrkey: string): Hex {
-    if (!StrKey.isValidEd25519PublicKey(stellarStrkey)) {
-        throw new Error(`Invalid Stellar account: ${stellarStrkey}`);
-    }
-    const magic = pad('0x', { size: 24 });
-    const version = pad(toHex(0), { size: 4 });
-    const recipientHex = stringToHex(stellarStrkey);
-    const recipientLen = (recipientHex.length - 2) / 2;
-    const lengthField = pad(toHex(recipientLen), { size: 4 });
-    return concatHex([magic, version, lengthField, recipientHex]);
+  if (!StrKey.isValidEd25519PublicKey(stellarStrkey)) {
+    throw new Error(`Invalid Stellar account: ${stellarStrkey}`);
+  }
+  const magic = pad('0x', { size: 24 });
+  const version = pad(toHex(0), { size: 4 });
+  const recipientHex = stringToHex(stellarStrkey);
+  const recipientLen = (recipientHex.length - 2) / 2;
+  const lengthField = pad(toHex(recipientLen), { size: 4 });
+  return concatHex([magic, version, lengthField, recipientHex]);
 }
 
 // Convert a Stellar strkey contract or account into a 32-byte bytes32 for
 // CCTP message fields. Both `mintRecipient` and `destinationCaller` need
 // to be the *raw 32-byte Ed25519 pubkey*, NOT the strkey string itself.
 export function strkeyToBytes32(strkey: string): Hex {
-    const isContract = StrKey.isValidContract(strkey);
-    const raw = isContract ? StrKey.decodeContract(strkey) : StrKey.decodeEd25519PublicKey(strkey);
-    return toHex(raw);
+  const isContract = StrKey.isValidContract(strkey);
+  const raw = isContract ? StrKey.decodeContract(strkey) : StrKey.decodeEd25519PublicKey(strkey);
+  return toHex(raw);
 }
 ```
 
@@ -219,10 +219,10 @@ Extend the type:
 
 ```ts
 export type SolanaWallet = {
-    name: string;
-    icon: string;
-    address: string;
-    account: WalletAccount;
+  name: string;
+  icon: string;
+  address: string;
+  account: WalletAccount;
 };
 ```
 
@@ -242,7 +242,7 @@ The local `ConnectableAccount` type is no longer precise enough (we now keep the
 
 ```ts
 type ConnectFeature = {
-    connect: (input?: { silent?: boolean }) => Promise<{ accounts: readonly WalletAccount[] }>;
+  connect: (input?: { silent?: boolean }) => Promise<{ accounts: readonly WalletAccount[] }>;
 };
 ```
 
@@ -281,17 +281,17 @@ Create `src/lib/solana/signer.ts`:
 
 ```ts
 import {
-    appendTransactionMessageInstruction,
-    assertIsTransactionMessageWithSingleSendingSigner,
-    createTransactionMessage,
-    getBase64EncodedWireTransaction,
-    partiallySignTransactionMessageWithSigners,
-    pipe,
-    setTransactionMessageFeePayer,
-    setTransactionMessageLifetimeUsingBlockhash,
-    type IInstruction,
-    type KeyPairSigner,
-    type Address,
+  appendTransactionMessageInstruction,
+  assertIsTransactionMessageWithSingleSendingSigner,
+  createTransactionMessage,
+  getBase64EncodedWireTransaction,
+  partiallySignTransactionMessageWithSigners,
+  pipe,
+  setTransactionMessageFeePayer,
+  setTransactionMessageLifetimeUsingBlockhash,
+  type IInstruction,
+  type KeyPairSigner,
+  type Address,
 } from '@solana/kit';
 import { getBase64Decoder } from '@solana/kit';
 import { solanaRpc } from './client';
@@ -302,57 +302,57 @@ const SOLANA_DEVNET_CHAIN = 'solana:devnet';
 // Minimal shape of the Wallet Standard solana:signTransaction feature.
 // Kept local (mirrors evm/wallet.ts keeping EIP-6963 types local).
 type SignTransactionFeature = {
-    signTransaction: (input: {
-        account: SolanaWallet['account'];
-        transaction: Uint8Array;
-        chain: string;
-    }) => Promise<
-        { signedTransaction: Uint8Array } | ReadonlyArray<{ signedTransaction: Uint8Array }>
-    >;
+  signTransaction: (input: {
+    account: SolanaWallet['account'];
+    transaction: Uint8Array;
+    chain: string;
+  }) => Promise<
+    { signedTransaction: Uint8Array } | ReadonlyArray<{ signedTransaction: Uint8Array }>
+  >;
 };
 
 export async function signAndSendBurnTx(args: {
-    wallet: SolanaWallet;
-    instruction: IInstruction;
-    extraSigners: KeyPairSigner[];
+  wallet: SolanaWallet;
+  instruction: IInstruction;
+  extraSigners: KeyPairSigner[];
 }): Promise<string> {
-    const { wallet, instruction, extraSigners } = args;
+  const { wallet, instruction, extraSigners } = args;
 
-    const { value: blockhash } = await solanaRpc.getLatestBlockhash().send();
+  const { value: blockhash } = await solanaRpc.getLatestBlockhash().send();
 
-    const message = pipe(
-        createTransactionMessage({ version: 0 }),
-        (m) => setTransactionMessageFeePayer(wallet.address as Address, m),
-        (m) => setTransactionMessageLifetimeUsingBlockhash(blockhash, m),
-        (m) => appendTransactionMessageInstruction(instruction, m),
-    );
+  const message = pipe(
+    createTransactionMessage({ version: 0 }),
+    (m) => setTransactionMessageFeePayer(wallet.address as Address, m),
+    (m) => setTransactionMessageLifetimeUsingBlockhash(blockhash, m),
+    (m) => appendTransactionMessageInstruction(instruction, m),
+  );
 
-    // Ephemeral signers (the message_sent_event_data keypair) sign locally;
-    // the fee-payer (wallet) slot is left for Phantom to fill.
-    const partiallySigned = await partiallySignTransactionMessageWithSigners(message, {
-        // extraSigners are attached to the message via the instruction's
-        // account signers; partiallySign collects whatever KeyPairSigners it finds.
-    });
+  // Ephemeral signers (the message_sent_event_data keypair) sign locally;
+  // the fee-payer (wallet) slot is left for Phantom to fill.
+  const partiallySigned = await partiallySignTransactionMessageWithSigners(message, {
+    // extraSigners are attached to the message via the instruction's
+    // account signers; partiallySign collects whatever KeyPairSigners it finds.
+  });
 
-    // Hand the wire bytes to Phantom for the fee-payer signature.
-    const feature = wallet.account.features as unknown as Record<string, unknown>;
-    const signFeature = feature['solana:signTransaction'] as SignTransactionFeature;
-    const wireUnsigned = new Uint8Array(
-        Buffer.from(getBase64EncodedWireTransaction(partiallySigned), 'base64'),
-    );
-    const res = await signFeature.signTransaction({
-        account: wallet.account,
-        transaction: wireUnsigned,
-        chain: SOLANA_DEVNET_CHAIN,
-    });
-    const signed = Array.isArray(res) ? res[0] : (res as { signedTransaction: Uint8Array });
+  // Hand the wire bytes to Phantom for the fee-payer signature.
+  const feature = wallet.account.features as unknown as Record<string, unknown>;
+  const signFeature = feature['solana:signTransaction'] as SignTransactionFeature;
+  const wireUnsigned = new Uint8Array(
+    Buffer.from(getBase64EncodedWireTransaction(partiallySigned), 'base64'),
+  );
+  const res = await signFeature.signTransaction({
+    account: wallet.account,
+    transaction: wireUnsigned,
+    chain: SOLANA_DEVNET_CHAIN,
+  });
+  const signed = Array.isArray(res) ? res[0] : (res as { signedTransaction: Uint8Array });
 
-    const wireBase64 = getBase64Decoder().decode(signed.signedTransaction);
-    const signature = await solanaRpc
-        .sendTransaction(wireBase64, { encoding: 'base64', preflightCommitment: 'confirmed' })
-        .send();
+  const wireBase64 = getBase64Decoder().decode(signed.signedTransaction);
+  const signature = await solanaRpc
+    .sendTransaction(wireBase64, { encoding: 'base64', preflightCommitment: 'confirmed' })
+    .send();
 
-    return signature;
+  return signature;
 }
 ```
 
@@ -389,9 +389,9 @@ git commit -m "feat: Solana tx signer via Wallet Standard + ephemeral keypair"
 
 - Consumes: generated builder from `$lib/solana/generated` (name from Task 2 Step 5); `strkeyToBytes32`, `encodeStellarForwarderHookData` from `$lib/stellar/recipient`; `findAssociatedTokenPda`, `TOKEN_PROGRAM_ADDRESS` from `@solana-program/token`; `signAndSendBurnTx` from `$lib/solana/signer`; `solanaRpc`; `SOLANA`, `STELLAR`, `STANDARD_THRESHOLD` from config; `generateKeyPairSigner`, `address`, `getBytesEncoder` from `@solana/kit`.
 - Produces:
-    - `parseUsdcSolana(amount: string): bigint` (in `usdc.ts`)
-    - `burnUsdcToStellar(args: { wallet: SolanaWallet; amount: bigint; stellarRecipient: string; maxFee: bigint; minFinalityThreshold: number }): Promise<{ signature: string }>` (in `cctp.ts`)
-    - config: `Direction` includes `'solana-to-stellar'`; `export const SOLANA_MAX_FEE = 500n`
+  - `parseUsdcSolana(amount: string): bigint` (in `usdc.ts`)
+  - `burnUsdcToStellar(args: { wallet: SolanaWallet; amount: bigint; stellarRecipient: string; maxFee: bigint; minFinalityThreshold: number }): Promise<{ signature: string }>` (in `cctp.ts`)
+  - config: `Direction` includes `'solana-to-stellar'`; `export const SOLANA_MAX_FEE = 500n`
 
 - [ ] **Step 1: Add `parseUsdcSolana`**
 
@@ -400,9 +400,9 @@ Append to `src/lib/solana/usdc.ts`:
 ```ts
 // "5" / "5.25" → 6-dp USDC subunits (5_000000n / 5_250000n).
 export function parseUsdcSolana(amount: string): bigint {
-    const [whole, frac = ''] = amount.trim().split('.');
-    const fracPadded = (frac + '000000').slice(0, 6);
-    return BigInt(whole || '0') * 1_000_000n + BigInt(fracPadded || '0');
+  const [whole, frac = ''] = amount.trim().split('.');
+  const fracPadded = (frac + '000000').slice(0, 6);
+  return BigInt(whole || '0') * 1_000_000n + BigInt(fracPadded || '0');
 }
 ```
 
@@ -439,57 +439,57 @@ import type { SolanaWallet } from './wallet';
 // mintRecipient and destinationCaller. Getting this wrong bricks funds, so
 // derive it once from config via the shared strkey decoder.
 function forwarderBytes32(): Uint8Array {
-    const hex = strkeyToBytes32(STELLAR.contracts.cctpForwarder) as Hex; // 0x + 64 hex
-    const bytes = hexToBytes(hex);
-    if (bytes.length !== 32) throw new Error('Forwarder did not decode to 32 bytes');
-    return bytes;
+  const hex = strkeyToBytes32(STELLAR.contracts.cctpForwarder) as Hex; // 0x + 64 hex
+  const bytes = hexToBytes(hex);
+  if (bytes.length !== 32) throw new Error('Forwarder did not decode to 32 bytes');
+  return bytes;
 }
 
 export async function burnUsdcToStellar(args: {
-    wallet: SolanaWallet;
-    amount: bigint;
-    stellarRecipient: string;
-    maxFee: bigint;
-    minFinalityThreshold: number;
+  wallet: SolanaWallet;
+  amount: bigint;
+  stellarRecipient: string;
+  maxFee: bigint;
+  minFinalityThreshold: number;
 }): Promise<{ signature: string }> {
-    const owner = address(args.wallet.address);
-    const mint = address(SOLANA.usdc.mint);
+  const owner = address(args.wallet.address);
+  const mint = address(SOLANA.usdc.mint);
 
-    const [burnTokenAccount] = await findAssociatedTokenPda({
-        owner,
-        tokenProgram: TOKEN_PROGRAM_ADDRESS,
-        mint,
-    });
+  const [burnTokenAccount] = await findAssociatedTokenPda({
+    owner,
+    tokenProgram: TOKEN_PROGRAM_ADDRESS,
+    mint,
+  });
 
-    const recipient = forwarderBytes32(); // mintRecipient === destinationCaller
-    const hookData = hexToBytes(encodeStellarForwarderHookData(args.stellarRecipient) as Hex);
+  const recipient = forwarderBytes32(); // mintRecipient === destinationCaller
+  const hookData = hexToBytes(encodeStellarForwarderHookData(args.stellarRecipient) as Hex);
 
-    // Ephemeral account that stores the MessageSent event data (a signer).
-    const messageSentEventData = await generateKeyPairSigner();
+  // Ephemeral account that stores the MessageSent event data (a signer).
+  const messageSentEventData = await generateKeyPairSigner();
 
-    const instruction = await getDepositForBurnWithHookInstructionAsync({
-        // accounts we must supply (PDAs auto-resolve from IDL seeds):
-        owner: { address: owner } as never, // see note: owner is the wallet signer
-        eventRentPayer: { address: owner } as never,
-        burnTokenAccount,
-        burnTokenMint: mint,
-        messageSentEventData,
-        // args:
-        amount: args.amount,
-        destinationDomain: STELLAR.domain,
-        mintRecipient: recipient,
-        destinationCaller: recipient,
-        maxFee: args.maxFee,
-        minFinalityThreshold: args.minFinalityThreshold,
-        hookData,
-    });
+  const instruction = await getDepositForBurnWithHookInstructionAsync({
+    // accounts we must supply (PDAs auto-resolve from IDL seeds):
+    owner: { address: owner } as never, // see note: owner is the wallet signer
+    eventRentPayer: { address: owner } as never,
+    burnTokenAccount,
+    burnTokenMint: mint,
+    messageSentEventData,
+    // args:
+    amount: args.amount,
+    destinationDomain: STELLAR.domain,
+    mintRecipient: recipient,
+    destinationCaller: recipient,
+    maxFee: args.maxFee,
+    minFinalityThreshold: args.minFinalityThreshold,
+    hookData,
+  });
 
-    const signature = await signAndSendBurnTx({
-        wallet: args.wallet,
-        instruction,
-        extraSigners: [messageSentEventData],
-    });
-    return { signature };
+  const signature = await signAndSendBurnTx({
+    wallet: args.wallet,
+    instruction,
+    extraSigners: [messageSentEventData],
+  });
+  return { signature };
 }
 ```
 
@@ -536,57 +536,57 @@ Add this function next to `runEvmToStellar` (mirrors it, no approve step). `stel
 
 ```ts
 async function runSolanaToStellar(args: {
-    stellarAddress: string;
-    stellarRecipient: string;
-    solanaWallet: SolanaWallet;
-    amount: string;
-    speed: TransferSpeed;
+  stellarAddress: string;
+  stellarRecipient: string;
+  solanaWallet: SolanaWallet;
+  amount: string;
+  speed: TransferSpeed;
 }) {
-    state.amount = args.amount;
-    const solAmount = parseUsdcSolana(args.amount);
+  state.amount = args.amount;
+  const solAmount = parseUsdcSolana(args.amount);
 
-    const burnHash = await performStep('burning', 'burn', async () => {
-        const feeRows = await fetchBurnFee(SOLANA.domain, STELLAR.domain);
-        const maxFee = computeMaxFee(solAmount, feeBpsFor(feeRows, args.speed), SOLANA_MAX_FEE);
-        const { signature } = await burnUsdcToStellar({
-            wallet: args.solanaWallet,
-            amount: solAmount,
-            stellarRecipient: args.stellarRecipient,
-            maxFee,
-            minFinalityThreshold: thresholdFor(args.speed),
-        });
-        return {
-            result: signature,
-            patch: {
-                hash: signature,
-                hashUrl: `${SOLANA.explorer}/tx/${signature}?cluster=devnet`,
-            },
-        };
+  const burnHash = await performStep('burning', 'burn', async () => {
+    const feeRows = await fetchBurnFee(SOLANA.domain, STELLAR.domain);
+    const maxFee = computeMaxFee(solAmount, feeBpsFor(feeRows, args.speed), SOLANA_MAX_FEE);
+    const { signature } = await burnUsdcToStellar({
+      wallet: args.solanaWallet,
+      amount: solAmount,
+      stellarRecipient: args.stellarRecipient,
+      maxFee,
+      minFinalityThreshold: thresholdFor(args.speed),
     });
-    if (burnHash === null) return;
+    return {
+      result: signature,
+      patch: {
+        hash: signature,
+        hashUrl: `${SOLANA.explorer}/tx/${signature}?cluster=devnet`,
+      },
+    };
+  });
+  if (burnHash === null) return;
 
-    const attest = await performStep<IrisMessage>('attesting', 'attest', async () => {
-        const msg = await pollAttestation(SOLANA.domain, burnHash, {
-            onProgress: ({ elapsedMs, status }) => {
-                patchStep('attest', { detail: `${Math.round(elapsedMs / 1000)}s, ${status}` });
-            },
-        });
-        return { result: msg };
+  const attest = await performStep<IrisMessage>('attesting', 'attest', async () => {
+    const msg = await pollAttestation(SOLANA.domain, burnHash, {
+      onProgress: ({ elapsedMs, status }) => {
+        patchStep('attest', { detail: `${Math.round(elapsedMs / 1000)}s, ${status}` });
+      },
     });
-    if (attest === null) return;
-    state.attestation = attest;
+    return { result: msg };
+  });
+  if (attest === null) return;
+  state.attestation = attest;
 
-    const mintHash = await performStep('minting', 'mint', async () => {
-        const { hash } = await mintAndForward({
-            caller: args.stellarAddress,
-            message: hexToBytes(attest.message as Hex),
-            attestation: hexToBytes(attest.attestation as Hex),
-        });
-        return { result: hash, patch: { hash, hashUrl: stellarTxUrl(hash) } };
+  const mintHash = await performStep('minting', 'mint', async () => {
+    const { hash } = await mintAndForward({
+      caller: args.stellarAddress,
+      message: hexToBytes(attest.message as Hex),
+      attestation: hexToBytes(attest.attestation as Hex),
     });
-    if (mintHash === null) return;
+    return { result: hash, patch: { hash, hashUrl: stellarTxUrl(hash) } };
+  });
+  if (mintHash === null) return;
 
-    state.phase = 'done';
+  state.phase = 'done';
 }
 ```
 
@@ -603,22 +603,22 @@ and change the dispatch block:
 
 ```ts
 try {
-    if (args.direction === 'stellar-to-evm') {
-        await runStellarToEvm(args);
-    } else if (args.direction === 'solana-to-stellar') {
-        if (!args.solanaWallet) throw new Error('Solana wallet not connected.');
-        await runSolanaToStellar({
-            stellarAddress: args.stellarAddress,
-            stellarRecipient: args.stellarRecipient ?? args.stellarAddress,
-            solanaWallet: args.solanaWallet,
-            amount: args.amount,
-            speed: args.speed,
-        });
-    } else {
-        await runEvmToStellar(args);
-    }
+  if (args.direction === 'stellar-to-evm') {
+    await runStellarToEvm(args);
+  } else if (args.direction === 'solana-to-stellar') {
+    if (!args.solanaWallet) throw new Error('Solana wallet not connected.');
+    await runSolanaToStellar({
+      stellarAddress: args.stellarAddress,
+      stellarRecipient: args.stellarRecipient ?? args.stellarAddress,
+      solanaWallet: args.solanaWallet,
+      amount: args.amount,
+      speed: args.speed,
+    });
+  } else {
+    await runEvmToStellar(args);
+  }
 } catch (err) {
-    fail(errMsg(err));
+  fail(errMsg(err));
 }
 ```
 
@@ -629,11 +629,11 @@ try {
 ```ts
 // inside stepsFor, add a branch:
 if (direction === 'solana-to-stellar') {
-    return [
-        { key: 'burn', label: 'Burn USDC on Solana', status: 'pending' },
-        { key: 'attest', label: 'Circle attestation', status: 'pending' },
-        { key: 'mint', label: 'Mint USDC on Stellar', status: 'pending' },
-    ];
+  return [
+    { key: 'burn', label: 'Burn USDC on Solana', status: 'pending' },
+    { key: 'attest', label: 'Circle attestation', status: 'pending' },
+    { key: 'mint', label: 'Mint USDC on Stellar', status: 'pending' },
+  ];
 }
 ```
 
@@ -670,17 +670,17 @@ Add to the `<script>` new `$bindable` props for the burn form and delegate the a
 
 ```ts
 let {
-    wallet = $bindable<SolanaWallet | null>(null),
-    amount = $bindable<string>('5'),
-    recipient = $bindable<string>(''),
-    onBurn,
-    steps = [],
+  wallet = $bindable<SolanaWallet | null>(null),
+  amount = $bindable<string>('5'),
+  recipient = $bindable<string>(''),
+  onBurn,
+  steps = [],
 }: {
-    wallet?: SolanaWallet | null;
-    amount?: string;
-    recipient?: string;
-    onBurn?: () => void;
-    steps?: { key: string; label: string; status: string; hashUrl?: string; detail?: string }[];
+  wallet?: SolanaWallet | null;
+  amount?: string;
+  recipient?: string;
+  onBurn?: () => void;
+  steps?: { key: string; label: string; status: string; hashUrl?: string; detail?: string }[];
 } = $props();
 ```
 
@@ -688,18 +688,18 @@ Add to the connected-wallet block of the markup:
 
 ```svelte
 {#if wallet}
-    <label>Amount USDC <input bind:value={amount} /></label>
-    <label>Stellar recipient (G…) <input bind:value={recipient} /></label>
-    <button onclick={() => onBurn?.()}>Burn → Stellar</button>
-    <ul class="steps">
-        {#each steps as s (s.key)}
-            <li>
-                {s.label}: {s.status}
-                {#if s.detail}<span class="detail"> ({s.detail})</span>{/if}
-                {#if s.hashUrl}<a href={s.hashUrl} target="_blank" rel="noreferrer">tx</a>{/if}
-            </li>
-        {/each}
-    </ul>
+  <label>Amount USDC <input bind:value={amount} /></label>
+  <label>Stellar recipient (G…) <input bind:value={recipient} /></label>
+  <button onclick={() => onBurn?.()}>Burn → Stellar</button>
+  <ul class="steps">
+    {#each steps as s (s.key)}
+      <li>
+        {s.label}: {s.status}
+        {#if s.detail}<span class="detail"> ({s.detail})</span>{/if}
+        {#if s.hashUrl}<a href={s.hashUrl} target="_blank" rel="noreferrer">tx</a>{/if}
+      </li>
+    {/each}
+  </ul>
 {/if}
 ```
 
@@ -713,67 +713,67 @@ Rewrite `src/routes/solana-spike/+page.svelte`:
 
 ```svelte
 <script lang="ts">
-    import { onMount } from 'svelte';
-    import { browser } from '$app/environment';
-    import SolanaPanel from '$lib/components/SolanaPanel.svelte';
-    import type { SolanaWallet } from '$lib/solana/wallet';
-    import { connectFreighter, detectFreighter, type FreighterState } from '$lib/stellar/freighter';
-    import { createTransferStore } from '$lib/stores/transfer.svelte';
-    import { DEFAULT_SPEED, DEFAULT_EVM_CHAIN } from '$lib/config';
+  import { onMount } from 'svelte';
+  import { browser } from '$app/environment';
+  import SolanaPanel from '$lib/components/SolanaPanel.svelte';
+  import type { SolanaWallet } from '$lib/solana/wallet';
+  import { connectFreighter, detectFreighter, type FreighterState } from '$lib/stellar/freighter';
+  import { createTransferStore } from '$lib/stores/transfer.svelte';
+  import { DEFAULT_SPEED, DEFAULT_EVM_CHAIN } from '$lib/config';
 
-    let wallet = $state<SolanaWallet | null>(null);
-    let amount = $state('5');
-    let recipient = $state('');
-    let stellar = $state<FreighterState>({
-        installed: false,
-        address: null,
-        networkPassphrase: null,
+  let wallet = $state<SolanaWallet | null>(null);
+  let amount = $state('5');
+  let recipient = $state('');
+  let stellar = $state<FreighterState>({
+    installed: false,
+    address: null,
+    networkPassphrase: null,
+  });
+
+  const store = createTransferStore(
+    'solana-to-stellar',
+    DEFAULT_EVM_CHAIN,
+    'two-tx',
+    false,
+    'two-tx',
+  );
+
+  onMount(async () => {
+    if (!browser) return;
+    stellar = await detectFreighter();
+    if (stellar.address) recipient = stellar.address;
+  });
+
+  async function connectStellar() {
+    stellar = await connectFreighter();
+    if (stellar.address && !recipient) recipient = stellar.address;
+  }
+
+  async function burn() {
+    if (!wallet || !stellar.address) return;
+    await store.start({
+      direction: 'solana-to-stellar',
+      stellarAddress: stellar.address,
+      stellarRecipient: recipient || stellar.address,
+      solanaWallet: wallet,
+      amount,
+      // unused by this direction but required by the start() arg shape:
+      evmWallet: undefined as never,
+      evmChainId: DEFAULT_EVM_CHAIN,
+      outboundFlow: 'two-tx',
+      forwarding: false,
+      inboundFlow: 'two-tx',
+      speed: DEFAULT_SPEED,
     });
-
-    const store = createTransferStore(
-        'solana-to-stellar',
-        DEFAULT_EVM_CHAIN,
-        'two-tx',
-        false,
-        'two-tx',
-    );
-
-    onMount(async () => {
-        if (!browser) return;
-        stellar = await detectFreighter();
-        if (stellar.address) recipient = stellar.address;
-    });
-
-    async function connectStellar() {
-        stellar = await connectFreighter();
-        if (stellar.address && !recipient) recipient = stellar.address;
-    }
-
-    async function burn() {
-        if (!wallet || !stellar.address) return;
-        await store.start({
-            direction: 'solana-to-stellar',
-            stellarAddress: stellar.address,
-            stellarRecipient: recipient || stellar.address,
-            solanaWallet: wallet,
-            amount,
-            // unused by this direction but required by the start() arg shape:
-            evmWallet: undefined as never,
-            evmChainId: DEFAULT_EVM_CHAIN,
-            outboundFlow: 'two-tx',
-            forwarding: false,
-            inboundFlow: 'two-tx',
-            speed: DEFAULT_SPEED,
-        });
-    }
+  }
 </script>
 
 <h1>Solana → Stellar burn spike</h1>
 
 {#if !stellar.address}
-    <button onclick={connectStellar}>Connect Freighter (destination)</button>
+  <button onclick={connectStellar}>Connect Freighter (destination)</button>
 {:else}
-    <p>Stellar: <code>{stellar.address}</code></p>
+  <p>Stellar: <code>{stellar.address}</code></p>
 {/if}
 
 <SolanaPanel bind:wallet bind:amount bind:recipient steps={store.state.steps} onBurn={burn} />

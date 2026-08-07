@@ -126,9 +126,9 @@ Standard speed only for this spec; fast (threshold 1000 + fast fee) is deferred.
 
 - `Direction` gains `'solana-to-stellar'`.
 - `runSolanaToStellar(args)` mirrors `runEvmToStellar` without the approve step:
-    1. **burn**, `performStep('burning','burn', … burnUsdcToStellar(...))` → signature.
-    2. **attest**, `performStep('attesting','attest', … pollAttestation(SOLANA.domain, signature, { onProgress }))`.
-    3. **mint**, `performStep('minting','mint', … mintAndForward({ caller: stellarAddress, message: hexToBytes(attest.message), attestation: hexToBytes(attest.attestation) }))`, then phase `'done'`.
+  1. **burn**, `performStep('burning','burn', … burnUsdcToStellar(...))` → signature.
+  2. **attest**, `performStep('attesting','attest', … pollAttestation(SOLANA.domain, signature, { onProgress }))`.
+  3. **mint**, `performStep('minting','mint', … mintAndForward({ caller: stellarAddress, message: hexToBytes(attest.message), attestation: hexToBytes(attest.attestation) }))`, then phase `'done'`.
 - `start` accepts a `SolanaWallet` and the destination G-address; dispatches to
   `runSolanaToStellar` when `direction === 'solana-to-stellar'`.
 - Fee route: `fetchBurnFee(SOLANA.domain, STELLAR.domain)`; `maxFee` via

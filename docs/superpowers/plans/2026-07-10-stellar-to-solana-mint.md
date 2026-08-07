@@ -51,36 +51,36 @@ import { createFromRoot } from 'codama';
 //   anchor idl fetch CCTPV2vPZJS2u2BBsUoscuikbYjnpFmbFsvVuJdgUMQe --provider.cluster devnet > idl/token_messenger_minter_v2.json
 //   anchor idl fetch CCTPV2Sm4AdWt5296sk4P66VBZ7bEhcARwFaaS9YPbeC --provider.cluster devnet > idl/message_transmitter_v2.json
 const PROGRAMS = [
-    {
-        idl: 'idl/token_messenger_minter_v2.json',
-        out: 'src/lib/solana/generated/token-messenger-minter',
-    },
-    { idl: 'idl/message_transmitter_v2.json', out: 'src/lib/solana/generated/message-transmitter' },
+  {
+    idl: 'idl/token_messenger_minter_v2.json',
+    out: 'src/lib/solana/generated/token-messenger-minter',
+  },
+  { idl: 'idl/message_transmitter_v2.json', out: 'src/lib/solana/generated/message-transmitter' },
 ];
 
 function patchGenerated(dir) {
-    for (const entry of readdirSync(dir, { withFileTypes: true })) {
-        const p = join(dir, entry.name);
-        if (entry.isDirectory()) patchGenerated(p);
-        else if (entry.name.endsWith('.ts')) {
-            const src = readFileSync(p, 'utf8');
-            const fixed = src
-                .replaceAll("'@solana/program-client-core'", "'@solana/kit/program-client-core'")
-                .replaceAll("process.env['NODE_ENV'] !== 'production'", 'true');
-            if (fixed !== src) writeFileSync(p, fixed);
-        }
+  for (const entry of readdirSync(dir, { withFileTypes: true })) {
+    const p = join(dir, entry.name);
+    if (entry.isDirectory()) patchGenerated(p);
+    else if (entry.name.endsWith('.ts')) {
+      const src = readFileSync(p, 'utf8');
+      const fixed = src
+        .replaceAll("'@solana/program-client-core'", "'@solana/kit/program-client-core'")
+        .replaceAll("process.env['NODE_ENV'] !== 'production'", 'true');
+      if (fixed !== src) writeFileSync(p, fixed);
     }
+  }
 }
 
 for (const { idl, out } of PROGRAMS) {
-    const tmp = `${out}-tmp`;
-    const codama = createFromRoot(rootNodeFromAnchor(JSON.parse(readFileSync(idl, 'utf8'))));
-    await codama.accept(renderVisitor(tmp, { formatCode: false }));
-    if (existsSync(out)) rmSync(out, { recursive: true, force: true });
-    renameSync(`${tmp}/src/generated`, out);
-    rmSync(tmp, { recursive: true, force: true });
-    patchGenerated(out);
-    console.log(`Generated → ${out}`);
+  const tmp = `${out}-tmp`;
+  const codama = createFromRoot(rootNodeFromAnchor(JSON.parse(readFileSync(idl, 'utf8'))));
+  await codama.accept(renderVisitor(tmp, { formatCode: false }));
+  if (existsSync(out)) rmSync(out, { recursive: true, force: true });
+  renameSync(`${tmp}/src/generated`, out);
+  rmSync(tmp, { recursive: true, force: true });
+  patchGenerated(out);
+  console.log(`Generated → ${out}`);
 }
 ```
 
@@ -140,9 +140,9 @@ git commit -m "feat: generate MessageTransmitterV2 client; split generated/ by p
 
 - Consumes: `findAssociatedTokenPda`, `TOKEN_PROGRAM_ADDRESS` (`@solana-program/token`); `address`, `getAddressEncoder` (`@solana/kit`); `SOLANA` config.
 - Produces:
-    - `solanaAtaToBytes32(ownerAddress: string): Promise<Uint8Array>` (32 bytes)
-    - `depositForBurnToSolana(args: { caller: string; amount: bigint; mintRecipient: Uint8Array; maxFee: bigint; finalityThreshold: number }): Promise<{ hash: string; sourceDomain: number }>`
-    - `Direction` includes `'stellar-to-solana'`
+  - `solanaAtaToBytes32(ownerAddress: string): Promise<Uint8Array>` (32 bytes)
+  - `depositForBurnToSolana(args: { caller: string; amount: bigint; mintRecipient: Uint8Array; maxFee: bigint; finalityThreshold: number }): Promise<{ hash: string; sourceDomain: number }>`
+  - `Direction` includes `'stellar-to-solana'`
 
 - [ ] **Step 1: Add `solanaAtaToBytes32`**
 
@@ -157,12 +157,12 @@ import { SOLANA } from '$lib/config';
 // mintRecipient when the destination is Solana. Solana pubkeys already fill
 // all 32 bytes (left-aligned), do NOT right-pad like the EVM helper.
 export async function solanaAtaToBytes32(ownerAddress: string): Promise<Uint8Array> {
-    const [ata] = await findAssociatedTokenPda({
-        owner: address(ownerAddress),
-        tokenProgram: TOKEN_PROGRAM_ADDRESS,
-        mint: address(SOLANA.usdc.mint),
-    });
-    return new Uint8Array(getAddressEncoder().encode(ata));
+  const [ata] = await findAssociatedTokenPda({
+    owner: address(ownerAddress),
+    tokenProgram: TOKEN_PROGRAM_ADDRESS,
+    mint: address(SOLANA.usdc.mint),
+  });
+  return new Uint8Array(getAddressEncoder().encode(ata));
 }
 ```
 
@@ -175,36 +175,36 @@ In `src/lib/stellar/cctp.ts`, after `depositForBurnToEvm` (mirrors it; recipient
 // recipient's Solana USDC ATA as raw 32 bytes (see solanaAtaToBytes32).
 // destinationCaller stays zero, the Solana mint is permissionless. No hook.
 export async function depositForBurnToSolana(args: {
-    caller: string;
-    amount: bigint; // Stellar 7-decimal subunits
-    mintRecipient: Uint8Array; // 32 bytes, recipient's Solana USDC ATA
-    maxFee: bigint;
-    finalityThreshold: number;
+  caller: string;
+  amount: bigint; // Stellar 7-decimal subunits
+  mintRecipient: Uint8Array; // 32 bytes, recipient's Solana USDC ATA
+  maxFee: bigint;
+  finalityThreshold: number;
 }): Promise<{ hash: string; sourceDomain: number }> {
-    const account = await stellarRpc.getAccount(args.caller);
+  const account = await stellarRpc.getAccount(args.caller);
 
-    const tx = new TransactionBuilder(account, {
-        fee: BASE_FEE,
-        networkPassphrase: STELLAR.networkPassphrase,
-    })
-        .addOperation(
-            tmm.call(
-                'deposit_for_burn',
-                Address.fromString(args.caller).toScVal(),
-                nativeToScVal(args.amount, { type: 'i128' }),
-                nativeToScVal(SOLANA.domain, { type: 'u32' }),
-                bytesN32(args.mintRecipient),
-                Address.fromString(STELLAR.contracts.usdc).toScVal(),
-                bytesN32(ZERO_BYTES_32),
-                nativeToScVal(args.maxFee, { type: 'i128' }),
-                nativeToScVal(args.finalityThreshold, { type: 'u32' }),
-            ),
-        )
-        .setTimeout(60)
-        .build();
+  const tx = new TransactionBuilder(account, {
+    fee: BASE_FEE,
+    networkPassphrase: STELLAR.networkPassphrase,
+  })
+    .addOperation(
+      tmm.call(
+        'deposit_for_burn',
+        Address.fromString(args.caller).toScVal(),
+        nativeToScVal(args.amount, { type: 'i128' }),
+        nativeToScVal(SOLANA.domain, { type: 'u32' }),
+        bytesN32(args.mintRecipient),
+        Address.fromString(STELLAR.contracts.usdc).toScVal(),
+        bytesN32(ZERO_BYTES_32),
+        nativeToScVal(args.maxFee, { type: 'i128' }),
+        nativeToScVal(args.finalityThreshold, { type: 'u32' }),
+      ),
+    )
+    .setTimeout(60)
+    .build();
 
-    const hash = await simulateSignAndSubmit(tx);
-    return { hash, sourceDomain: STELLAR.domain };
+  const hash = await simulateSignAndSubmit(tx);
+  return { hash, sourceDomain: STELLAR.domain };
 }
 ```
 
@@ -216,7 +216,7 @@ In `src/lib/config.ts`:
 
 ```ts
 export type Direction =
-    'stellar-to-evm' | 'evm-to-stellar' | 'solana-to-stellar' | 'stellar-to-solana';
+  'stellar-to-evm' | 'evm-to-stellar' | 'solana-to-stellar' | 'stellar-to-solana';
 ```
 
 - [ ] **Step 4: Typecheck + commit**
@@ -250,35 +250,35 @@ In `src/lib/solana/signer.ts`, rename `signAndSendBurnTx` → `signAndSendSolana
 
 ```ts
 export async function signAndSendSolanaTx(args: {
-    wallet: SolanaWallet;
-    instructions: Instruction[];
-    feePayerSigner: TransactionSigner;
+  wallet: SolanaWallet;
+  instructions: Instruction[];
+  feePayerSigner: TransactionSigner;
 }): Promise<string> {
-    const { wallet, instructions, feePayerSigner } = args;
-    const { value: blockhash } = await solanaRpc.getLatestBlockhash().send();
-    const message = pipe(
-        createTransactionMessage({ version: 0 }),
-        (m) => setTransactionMessageFeePayerSigner(feePayerSigner, m),
-        (m) => setTransactionMessageLifetimeUsingBlockhash(blockhash, m),
-        (m) => instructions.reduce((acc, ix) => appendTransactionMessageInstruction(ix, acc), m),
-    );
-    const partiallySigned = await partiallySignTransactionMessageWithSigners(message);
-    const wireUnsigned = new Uint8Array(getTransactionEncoder().encode(partiallySigned));
-    const features = wallet.standardWallet.features as unknown as Record<string, unknown>;
-    const signFeature = features['solana:signTransaction'] as SignTransactionFeature | undefined;
-    if (!signFeature) throw new Error('Wallet does not support solana:signTransaction.');
-    const res = await signFeature.signTransaction({
-        account: wallet.account,
-        transaction: wireUnsigned,
-        chain: SOLANA_DEVNET_CHAIN,
-    });
-    const signed = Array.isArray(res) ? res[0] : (res as SignTransactionOutput);
-    const wireBase64 = getBase64Decoder().decode(
-        signed.signedTransaction,
-    ) as Base64EncodedWireTransaction;
-    return solanaRpc
-        .sendTransaction(wireBase64, { encoding: 'base64', preflightCommitment: 'confirmed' })
-        .send();
+  const { wallet, instructions, feePayerSigner } = args;
+  const { value: blockhash } = await solanaRpc.getLatestBlockhash().send();
+  const message = pipe(
+    createTransactionMessage({ version: 0 }),
+    (m) => setTransactionMessageFeePayerSigner(feePayerSigner, m),
+    (m) => setTransactionMessageLifetimeUsingBlockhash(blockhash, m),
+    (m) => instructions.reduce((acc, ix) => appendTransactionMessageInstruction(ix, acc), m),
+  );
+  const partiallySigned = await partiallySignTransactionMessageWithSigners(message);
+  const wireUnsigned = new Uint8Array(getTransactionEncoder().encode(partiallySigned));
+  const features = wallet.standardWallet.features as unknown as Record<string, unknown>;
+  const signFeature = features['solana:signTransaction'] as SignTransactionFeature | undefined;
+  if (!signFeature) throw new Error('Wallet does not support solana:signTransaction.');
+  const res = await signFeature.signTransaction({
+    account: wallet.account,
+    transaction: wireUnsigned,
+    chain: SOLANA_DEVNET_CHAIN,
+  });
+  const signed = Array.isArray(res) ? res[0] : (res as SignTransactionOutput);
+  const wireBase64 = getBase64Decoder().decode(
+    signed.signedTransaction,
+  ) as Base64EncodedWireTransaction;
+  return solanaRpc
+    .sendTransaction(wireBase64, { encoding: 'base64', preflightCommitment: 'confirmed' })
+    .send();
 }
 ```
 
@@ -290,25 +290,25 @@ Create `src/lib/solana/mint.ts`. Account order and PDA seeds are from Circle's t
 
 ```ts
 import {
-    AccountRole,
-    address,
-    createNoopSigner,
-    fetchEncodedAccount,
-    getAddressEncoder,
-    getProgramDerivedAddress,
-    type Address,
-    type Instruction,
+  AccountRole,
+  address,
+  createNoopSigner,
+  fetchEncodedAccount,
+  getAddressEncoder,
+  getProgramDerivedAddress,
+  type Address,
+  type Instruction,
 } from '@solana/kit';
 import {
-    findAssociatedTokenPda,
-    getCreateAssociatedTokenIdempotentInstructionAsync,
-    TOKEN_PROGRAM_ADDRESS,
+  findAssociatedTokenPda,
+  getCreateAssociatedTokenIdempotentInstructionAsync,
+  TOKEN_PROGRAM_ADDRESS,
 } from '@solana-program/token';
 import { hexToBytes, type Hex } from 'viem';
 import { getReceiveMessageInstructionAsync } from './generated/message-transmitter';
 import {
-    TOKEN_MESSENGER_MINTER_V2_PROGRAM_ADDRESS,
-    fetchTokenMessenger,
+  TOKEN_MESSENGER_MINTER_V2_PROGRAM_ADDRESS,
+  fetchTokenMessenger,
 } from './generated/token-messenger-minter';
 import { signAndSendSolanaTx } from './signer';
 import { solanaRpc } from './client';
@@ -320,102 +320,102 @@ const TMM = TOKEN_MESSENGER_MINTER_V2_PROGRAM_ADDRESS;
 const enc = getAddressEncoder();
 
 const pda = (programAddress: Address, seeds: (string | Uint8Array)[]) =>
-    getProgramDerivedAddress({ programAddress, seeds }).then(([a]) => a);
+  getProgramDerivedAddress({ programAddress, seeds }).then(([a]) => a);
 
 export async function receiveMessageOnSolana(args: {
-    wallet: SolanaWallet;
-    recipientOwner: string;
-    message: Hex;
-    attestation: Hex;
+  wallet: SolanaWallet;
+  recipientOwner: string;
+  message: Hex;
+  attestation: Hex;
 }): Promise<{ signature: string }> {
-    const message = new Uint8Array(hexToBytes(args.message));
-    const attestation = new Uint8Array(hexToBytes(args.attestation));
+  const message = new Uint8Array(hexToBytes(args.message));
+  const attestation = new Uint8Array(hexToBytes(args.attestation));
 
-    // CCTP V2 message fields (see plan header for offsets).
-    const nonce = message.slice(12, 44); //            used_nonce seed
-    const remoteDomain = String(STELLAR.domain); //    source = Stellar (27), ASCII seed
-    const burnToken = message.slice(152, 184); //      token_pair remote-token seed
-    const mint = address(SOLANA.usdc.mint);
+  // CCTP V2 message fields (see plan header for offsets).
+  const nonce = message.slice(12, 44); //            used_nonce seed
+  const remoteDomain = String(STELLAR.domain); //    source = Stellar (27), ASCII seed
+  const burnToken = message.slice(152, 184); //      token_pair remote-token seed
+  const mint = address(SOLANA.usdc.mint);
 
-    const owner = address(args.recipientOwner);
-    const [recipientAta] = await findAssociatedTokenPda({
-        owner,
-        tokenProgram: TOKEN_PROGRAM_ADDRESS,
-        mint,
-    });
+  const owner = address(args.recipientOwner);
+  const [recipientAta] = await findAssociatedTokenPda({
+    owner,
+    tokenProgram: TOKEN_PROGRAM_ADDRESS,
+    mint,
+  });
 
-    // MessageTransmitter direct PDAs.
-    const messageTransmitter = await pda(MT, ['message_transmitter']);
-    const authorityPda = await pda(MT, [
-        'message_transmitter_authority',
-        new Uint8Array(enc.encode(TMM)),
-    ]);
-    const usedNonce = await pda(MT, ['used_nonce', nonce]);
+  // MessageTransmitter direct PDAs.
+  const messageTransmitter = await pda(MT, ['message_transmitter']);
+  const authorityPda = await pda(MT, [
+    'message_transmitter_authority',
+    new Uint8Array(enc.encode(TMM)),
+  ]);
+  const usedNonce = await pda(MT, ['used_nonce', nonce]);
 
-    // TMM CPI PDAs.
-    const tokenMessenger = await pda(TMM, ['token_messenger']);
-    const tokenMinter = await pda(TMM, ['token_minter']);
-    const remoteTokenMessenger = await pda(TMM, ['remote_token_messenger', remoteDomain]);
-    const localToken = await pda(TMM, ['local_token', new Uint8Array(enc.encode(mint))]);
-    const tokenPair = await pda(TMM, ['token_pair', remoteDomain, burnToken]);
-    const custody = await pda(TMM, ['custody', new Uint8Array(enc.encode(mint))]);
-    const tmmEventAuthority = await pda(TMM, ['__event_authority']);
+  // TMM CPI PDAs.
+  const tokenMessenger = await pda(TMM, ['token_messenger']);
+  const tokenMinter = await pda(TMM, ['token_minter']);
+  const remoteTokenMessenger = await pda(TMM, ['remote_token_messenger', remoteDomain]);
+  const localToken = await pda(TMM, ['local_token', new Uint8Array(enc.encode(mint))]);
+  const tokenPair = await pda(TMM, ['token_pair', remoteDomain, burnToken]);
+  const custody = await pda(TMM, ['custody', new Uint8Array(enc.encode(mint))]);
+  const tmmEventAuthority = await pda(TMM, ['__event_authority']);
 
-    // fee_recipient ATA, read TokenMessenger.feeRecipient from chain, derive its ATA.
-    const tmAcct = await fetchTokenMessenger(solanaRpc, tokenMessenger);
-    const [feeRecipientAta] = await findAssociatedTokenPda({
-        owner: tmAcct.data.feeRecipient,
-        tokenProgram: TOKEN_PROGRAM_ADDRESS,
-        mint,
-    });
+  // fee_recipient ATA, read TokenMessenger.feeRecipient from chain, derive its ATA.
+  const tmAcct = await fetchTokenMessenger(solanaRpc, tokenMessenger);
+  const [feeRecipientAta] = await findAssociatedTokenPda({
+    owner: tmAcct.data.feeRecipient,
+    tokenProgram: TOKEN_PROGRAM_ADDRESS,
+    mint,
+  });
 
-    const ownerSigner = createNoopSigner(owner); // Phantom pays + is caller
+  const ownerSigner = createNoopSigner(owner); // Phantom pays + is caller
 
-    // Idempotent ATA create so the recipient token account exists for the mint.
-    const createAta = await getCreateAssociatedTokenIdempotentInstructionAsync({
-        payer: ownerSigner,
-        owner,
-        mint,
-    });
+  // Idempotent ATA create so the recipient token account exists for the mint.
+  const createAta = await getCreateAssociatedTokenIdempotentInstructionAsync({
+    payer: ownerSigner,
+    owner,
+    mint,
+  });
 
-    const base = await getReceiveMessageInstructionAsync({
-        payer: ownerSigner,
-        caller: ownerSigner,
-        messageTransmitter,
-        authorityPda,
-        usedNonce,
-        receiver: TMM,
-        message,
-        attestation,
-    });
+  const base = await getReceiveMessageInstructionAsync({
+    payer: ownerSigner,
+    caller: ownerSigner,
+    messageTransmitter,
+    authorityPda,
+    usedNonce,
+    receiver: TMM,
+    message,
+    attestation,
+  });
 
-    // Append the CPI remaining accounts (order + roles from Circle's client).
-    const ro = (a: Address) => ({ address: a, role: AccountRole.READONLY });
-    const w = (a: Address) => ({ address: a, role: AccountRole.WRITABLE });
-    const receive: Instruction = {
-        ...base,
-        accounts: [
-            ...(base.accounts ?? []),
-            ro(tokenMessenger),
-            ro(remoteTokenMessenger),
-            w(tokenMinter),
-            w(localToken),
-            ro(tokenPair),
-            w(feeRecipientAta),
-            w(recipientAta),
-            w(custody),
-            ro(TOKEN_PROGRAM_ADDRESS),
-            ro(tmmEventAuthority),
-            ro(TMM),
-        ],
-    };
+  // Append the CPI remaining accounts (order + roles from Circle's client).
+  const ro = (a: Address) => ({ address: a, role: AccountRole.READONLY });
+  const w = (a: Address) => ({ address: a, role: AccountRole.WRITABLE });
+  const receive: Instruction = {
+    ...base,
+    accounts: [
+      ...(base.accounts ?? []),
+      ro(tokenMessenger),
+      ro(remoteTokenMessenger),
+      w(tokenMinter),
+      w(localToken),
+      ro(tokenPair),
+      w(feeRecipientAta),
+      w(recipientAta),
+      w(custody),
+      ro(TOKEN_PROGRAM_ADDRESS),
+      ro(tmmEventAuthority),
+      ro(TMM),
+    ],
+  };
 
-    const signature = await signAndSendSolanaTx({
-        wallet: args.wallet,
-        instructions: [createAta, receive],
-        feePayerSigner: ownerSigner,
-    });
-    return { signature };
+  const signature = await signAndSendSolanaTx({
+    wallet: args.wallet,
+    instructions: [createAta, receive],
+    feePayerSigner: ownerSigner,
+  });
+  return { signature };
 }
 ```
 
@@ -461,80 +461,76 @@ Next to `runStellarToEvm` (approve → burn → attest → mint). `solanaWallet`
 
 ```ts
 async function runStellarToSolana(args: {
-    stellarAddress: string;
-    solanaWallet: SolanaWallet;
-    amount: string;
-    speed: TransferSpeed;
+  stellarAddress: string;
+  solanaWallet: SolanaWallet;
+  amount: string;
+  speed: TransferSpeed;
 }) {
-    state.amount = args.amount;
-    const stellarAmount = parseUsdcStellar(args.amount);
+  state.amount = args.amount;
+  const stellarAmount = parseUsdcStellar(args.amount);
 
-    const approved = await performStep('approving', 'approve', async () => {
-        // Signatures per stellar/usdc.ts: {from, spender} objects; spender = the
-        // TMM (it pulls via transfer_from). Copied from runStellarToEvm two-tx path.
-        const existing = await getUsdcAllowance({
-            from: args.stellarAddress,
-            spender: STELLAR.contracts.tokenMessengerMinter,
-        });
-        if (existing < stellarAmount) {
-            await approveUsdc({
-                from: args.stellarAddress,
-                spender: STELLAR.contracts.tokenMessengerMinter,
-                amount: stellarAmount,
-            });
-        }
-        return { result: true };
+  const approved = await performStep('approving', 'approve', async () => {
+    // Signatures per stellar/usdc.ts: {from, spender} objects; spender = the
+    // TMM (it pulls via transfer_from). Copied from runStellarToEvm two-tx path.
+    const existing = await getUsdcAllowance({
+      from: args.stellarAddress,
+      spender: STELLAR.contracts.tokenMessengerMinter,
     });
-    if (approved === null) return;
+    if (existing < stellarAmount) {
+      await approveUsdc({
+        from: args.stellarAddress,
+        spender: STELLAR.contracts.tokenMessengerMinter,
+        amount: stellarAmount,
+      });
+    }
+    return { result: true };
+  });
+  if (approved === null) return;
 
-    const burnHash = await performStep('burning', 'burn', async () => {
-        const feeRows = await fetchBurnFee(STELLAR.domain, SOLANA.domain);
-        const maxFee = computeMaxFee(
-            stellarAmount,
-            feeBpsFor(feeRows, args.speed),
-            STELLAR_MAX_FEE,
-        );
-        const mintRecipient = await solanaAtaToBytes32(args.solanaWallet.address);
-        const { hash } = await depositForBurnToSolana({
-            caller: args.stellarAddress,
-            amount: stellarAmount,
-            mintRecipient,
-            maxFee,
-            finalityThreshold: thresholdFor(args.speed),
-        });
-        return { result: hash, patch: { hash, hashUrl: stellarTxUrl(hash) } };
+  const burnHash = await performStep('burning', 'burn', async () => {
+    const feeRows = await fetchBurnFee(STELLAR.domain, SOLANA.domain);
+    const maxFee = computeMaxFee(stellarAmount, feeBpsFor(feeRows, args.speed), STELLAR_MAX_FEE);
+    const mintRecipient = await solanaAtaToBytes32(args.solanaWallet.address);
+    const { hash } = await depositForBurnToSolana({
+      caller: args.stellarAddress,
+      amount: stellarAmount,
+      mintRecipient,
+      maxFee,
+      finalityThreshold: thresholdFor(args.speed),
     });
-    if (burnHash === null) return;
+    return { result: hash, patch: { hash, hashUrl: stellarTxUrl(hash) } };
+  });
+  if (burnHash === null) return;
 
-    const attest = await performStep<IrisMessage>('attesting', 'attest', async () => {
-        const msg = await pollAttestation(STELLAR.domain, burnHash, {
-            onProgress: ({ elapsedMs, status }) => {
-                patchStep('attest', { detail: `${Math.round(elapsedMs / 1000)}s, ${status}` });
-            },
-        });
-        return { result: msg };
+  const attest = await performStep<IrisMessage>('attesting', 'attest', async () => {
+    const msg = await pollAttestation(STELLAR.domain, burnHash, {
+      onProgress: ({ elapsedMs, status }) => {
+        patchStep('attest', { detail: `${Math.round(elapsedMs / 1000)}s, ${status}` });
+      },
     });
-    if (attest === null) return;
-    state.attestation = attest;
+    return { result: msg };
+  });
+  if (attest === null) return;
+  state.attestation = attest;
 
-    const mintSig = await performStep('minting', 'mint', async () => {
-        const { signature } = await receiveMessageOnSolana({
-            wallet: args.solanaWallet,
-            recipientOwner: args.solanaWallet.address,
-            message: attest.message as Hex,
-            attestation: attest.attestation as Hex,
-        });
-        return {
-            result: signature,
-            patch: {
-                hash: signature,
-                hashUrl: `${SOLANA.explorer}/tx/${signature}?cluster=devnet`,
-            },
-        };
+  const mintSig = await performStep('minting', 'mint', async () => {
+    const { signature } = await receiveMessageOnSolana({
+      wallet: args.solanaWallet,
+      recipientOwner: args.solanaWallet.address,
+      message: attest.message as Hex,
+      attestation: attest.attestation as Hex,
     });
-    if (mintSig === null) return;
+    return {
+      result: signature,
+      patch: {
+        hash: signature,
+        hashUrl: `${SOLANA.explorer}/tx/${signature}?cluster=devnet`,
+      },
+    };
+  });
+  if (mintSig === null) return;
 
-    state.phase = 'done';
+  state.phase = 'done';
 }
 ```
 
@@ -546,12 +542,12 @@ In `stepsFor`, add before the EVM fallthrough:
 
 ```ts
 if (direction === 'stellar-to-solana') {
-    return [
-        { key: 'approve', label: 'Approve TokenMessenger on Stellar', status: 'pending' },
-        { key: 'burn', label: 'Burn USDC on Stellar', status: 'pending' },
-        { key: 'attest', label: 'Wait for Circle attestation', status: 'pending' },
-        { key: 'mint', label: 'Mint USDC on Solana', status: 'pending' },
-    ];
+  return [
+    { key: 'approve', label: 'Approve TokenMessenger on Stellar', status: 'pending' },
+    { key: 'burn', label: 'Burn USDC on Stellar', status: 'pending' },
+    { key: 'attest', label: 'Wait for Circle attestation', status: 'pending' },
+    { key: 'mint', label: 'Mint USDC on Solana', status: 'pending' },
+  ];
 }
 ```
 
@@ -621,11 +617,11 @@ Add the toggle markup near the top:
 
 ```svelte
 <label>
-    Direction
-    <select bind:value={direction}>
-        <option value="solana-to-stellar">Solana → Stellar</option>
-        <option value="stellar-to-solana">Stellar → Solana</option>
-    </select>
+  Direction
+  <select bind:value={direction}>
+    <option value="solana-to-stellar">Solana → Stellar</option>
+    <option value="stellar-to-solana">Stellar → Solana</option>
+  </select>
 </label>
 ```
 

@@ -95,17 +95,17 @@ Hex; attestation: Hex }): Promise<{ signature: string }>`.
 
 1. Decode `message`/`attestation` hex → bytes.
 2. Derive accounts/PDAs:
-    - `used_nonce`, PDA `["used_nonce", <nonce slice of the message bytes>]`. Parse the
-      CCTP V2 message at the nonce offset.
-    - `message_transmitter`, PDA `["message_transmitter"]` under MessageTransmitterV2.
-    - `authority_pda`, `["message_transmitter_authority", tokenMessengerMinterProgram]`.
-    - `event_authority` / program accounts as required.
-    - CPI (`remaining_accounts`): `token_messenger` `["token_messenger"]`,
-      `remote_token_messenger` `["remote_token_messenger","27"]`, `token_minter`
-      `["token_minter"]`, `local_token` `["local_token", mint]`, `token_pair`
-      `["token_pair","27", <Stellar USDC remote-token bytes32>]`, `custody`
-      `["custody", mint]`, `fee_recipient` ATA, `recipient` ATA (= burn `mintRecipient`),
-      `token_program`.
+   - `used_nonce`, PDA `["used_nonce", <nonce slice of the message bytes>]`. Parse the
+     CCTP V2 message at the nonce offset.
+   - `message_transmitter`, PDA `["message_transmitter"]` under MessageTransmitterV2.
+   - `authority_pda`, `["message_transmitter_authority", tokenMessengerMinterProgram]`.
+   - `event_authority` / program accounts as required.
+   - CPI (`remaining_accounts`): `token_messenger` `["token_messenger"]`,
+     `remote_token_messenger` `["remote_token_messenger","27"]`, `token_minter`
+     `["token_minter"]`, `local_token` `["local_token", mint]`, `token_pair`
+     `["token_pair","27", <Stellar USDC remote-token bytes32>]`, `custody`
+     `["custody", mint]`, `fee_recipient` ATA, `recipient` ATA (= burn `mintRecipient`),
+     `token_program`.
 3. Build `[createAssociatedTokenAccountIdempotent(recipientOwner, mint),
 receiveMessage(...)]` in one transaction so the recipient ATA is guaranteed to
    exist before the mint CPI.
@@ -117,13 +117,13 @@ receiveMessage(...)]` in one transaction so the recipient ATA is guaranteed to
 - `Direction += 'stellar-to-solana'`.
 - `runStellarToSolana(args: { stellarAddress: string; solanaWallet: SolanaWallet;
 amount: string; speed: TransferSpeed })` mirrors `runStellarToEvm`:
-    1. **approve**, `approveUsdc` against `tokenMessengerMinter` (reused).
-    2. **burn**, `depositForBurnToSolana({ caller: stellarAddress, amount, mintRecipient:
+  1. **approve**, `approveUsdc` against `tokenMessengerMinter` (reused).
+  2. **burn**, `depositForBurnToSolana({ caller: stellarAddress, amount, mintRecipient:
 solanaAtaToBytes32(solanaWallet.address), maxFee, finalityThreshold })`. Fees:
-       `fetchBurnFee(STELLAR.domain, SOLANA.domain)`, `computeMaxFee(amount, bps,
+     `fetchBurnFee(STELLAR.domain, SOLANA.domain)`, `computeMaxFee(amount, bps,
 STELLAR_MAX_FEE)`, `thresholdFor('standard')`.
-    3. **attest**, `pollAttestation(STELLAR.domain, burnHash)`.
-    4. **mint**, `receiveMessageOnSolana({ wallet: solanaWallet, recipientOwner:
+  3. **attest**, `pollAttestation(STELLAR.domain, burnHash)`.
+  4. **mint**, `receiveMessageOnSolana({ wallet: solanaWallet, recipientOwner:
 solanaWallet.address, message, attestation })`.
 - `start` branch for `'stellar-to-solana'`; `stepsFor` case (approve → burn → attest
   → mint).

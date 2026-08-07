@@ -61,17 +61,17 @@ expression itself, not in functions it calls, and it needs
 // WRONG: `speed` and `amount` are read after the await, so changing either
 // leaves the displayed value stale.
 let arg = $derived.by(async () => {
-    const rows = await feePromise;
-    return { value: computeMaxFee(amount, feeBpsFor(rows, speed), floor).toString() };
+  const rows = await feePromise;
+  return { value: computeMaxFee(amount, feeBpsFor(rows, speed), floor).toString() };
 });
 
 // RIGHT: every dependency is read up front.
 let arg = $derived.by(async () => {
-    const currentSpeed = speed;
-    const currentAmount = amount;
-    const quote = feePromise;
-    const rows = await quote;
-    return { value: computeMaxFee(currentAmount, feeBpsFor(rows, currentSpeed), floor).toString() };
+  const currentSpeed = speed;
+  const currentAmount = amount;
+  const quote = feePromise;
+  const rows = await quote;
+  return { value: computeMaxFee(currentAmount, feeBpsFor(rows, currentSpeed), floor).toString() };
 });
 ```
 

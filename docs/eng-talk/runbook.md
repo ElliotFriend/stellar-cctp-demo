@@ -1,23 +1,33 @@
-# CCTP Eng-Talk: Demo Runbook
+# CCTP Eng-Talk: Demo Runbook <!-- omit in toc -->
 
 The script says what to _say_. This says what to _click_, and what to do when it
 breaks. Keep this open on the second screen next to `script.md`.
 
-- [CCTP Eng-Talk: Demo Runbook](#cctp-eng-talk-demo-runbook)
-  - [Pre-flight (do this before you present)](#pre-flight-do-this-before-you-present)
-  - [The UI, in the order you touch it](#the-ui-in-the-order-you-touch-it)
-  - [Demo A: Stellar to Arc, raw then wrapper (script §5)](#demo-a-stellar-to-arc-raw-then-wrapper-script-5)
-  - [Demo B: Arc to Stellar, three burn flows (script §6)](#demo-b-arc-to-stellar-three-burn-flows-script-6)
-  - [Demo C: Solana both ways (script §7)](#demo-c-solana-both-ways-script-7)
-  - [Demo D: forwarding live (script §8)](#demo-d-forwarding-live-script-8)
-  - [Fallbacks](#fallbacks)
-  - [Timing cues](#timing-cues)
+## Table of Contents <!-- omit in toc -->
+
+- [Pre-flight (do this before you present)](#pre-flight-do-this-before-you-present)
+  - [Wallets](#wallets)
+  - [Faucets, if any of the above is short](#faucets-if-any-of-the-above-is-short)
+  - [Smoke tests (\*)](#smoke-tests-)
+  - [Screen and screenshare](#screen-and-screenshare)
+- [The UI, in the order you touch it](#the-ui-in-the-order-you-touch-it)
+- [Demo A: Stellar to Arc, raw then wrapper (script §5)](#demo-a-stellar-to-arc-raw-then-wrapper-script-5)
+  - [5a, the raw path (~4 min)](#5a-the-raw-path-4-min)
+  - [5b, the contract walkthrough (~4 min)](#5b-the-contract-walkthrough-4-min)
+  - [5c, the wrapper path (~4 min)](#5c-the-wrapper-path-4-min)
+- [Demo B: Arc to Stellar, three burn flows (script §6)](#demo-b-arc-to-stellar-three-burn-flows-script-6)
+- [Demo C: Solana both ways (script §7)](#demo-c-solana-both-ways-script-7)
+  - [7a, Solana to Stellar](#7a-solana-to-stellar)
+  - [7b, Stellar to Solana](#7b-stellar-to-solana)
+- [Demo D: forwarding live (script §8)](#demo-d-forwarding-live-script-8)
+- [Fallbacks](#fallbacks)
+- [Timing cues](#timing-cues)
 
 ## Pre-flight (do this before you present)
 
 Tick these in order. The starred ones have bitten this demo before.
 
-**Wallets**
+### Wallets
 
 - [x] **Freighter** on **Stellar Testnet**. Funded with XLM _and_ USDC, and the
       **USDC trustline is added**.
@@ -28,13 +38,13 @@ Tick these in order. The starred ones have bitten this demo before.
 - [x] **Phantom** (or another Wallet-Standard Solana wallet) on **devnet**, funded
       with devnet SOL and USDC, and the recipient **USDC ATA already exists**.
 
-**Faucets, if any of the above is short**
+### Faucets, if any of the above is short
 
 - XLM: `lab.stellar.org/account/fund`
 - USDC (Stellar Testnet / Arc Testnet / Base Sepolia): `faucet.circle.com`
 - Base Sepolia ETH: `alchemy.com/faucets/base-sepolia`
 
-**Smoke tests (\*)**
+### Smoke tests (\*)
 
 - [x] **\* Wrapper burn.** The Soroban wrapper was redeployed this morning
       (`CCR6VA3W3R3O23MEKY64J5ABIKB5MUTQYN5NVY4VE7FIZT7OTOELS5AE`, commit
@@ -56,7 +66,7 @@ Tick these in order. The starred ones have bitten this demo before.
 - [x] Save the **burn hashes** from these smoke tests. They're your resume-flow
       safety net (see [Fallbacks](#fallbacks)).
 
-**Screen and screenshare**
+### Screen and screenshare
 
 - [ ] Share **the tab**, with the window near 16:9, so the deck's fixed stage
       fills the frame without double letterboxing.
@@ -78,11 +88,11 @@ Same controls every demo, so learn them once:
   Sepolia, Ethereum Sepolia) or Solana.
 - **Flow chips.** Live on the source chain's panel, and the labels differ by
   chain:
-    - Stellar source: `2 tx (direct)` and `1 tx (wrapper)`.
-    - EVM source: `2 tx (direct)`, `1 tx (permit)`, and `1 click (atomic)` or
-      `1 click (batched)` depending on what the wallet advertises. The chip
-      auto-disables when the wallet doesn't support EIP-5792, which is expected
-      behavior and not a bug.
+  - Stellar source: `2 tx (direct)` and `1 tx (wrapper)`.
+  - EVM source: `2 tx (direct)`, `1 tx (permit)`, and `1 click (atomic)` or
+    `1 click (batched)` depending on what the wallet advertises. The chip
+    auto-disables when the wallet doesn't support EIP-5792, which is expected
+    behavior and not a bug.
 - **Speed toggle.** `Standard` / `Fast`. Auto-disabled with an explanatory
   tooltip on routes where Fast doesn't apply, which is every outbound route.
 - **Forwarding toggle.** Turns on the `cctp-forward` hook. Demo D only.
@@ -95,7 +105,7 @@ Same controls every demo, so learn them once:
 
 Budget 12 min. This is the longest demo and the one carrying the most content.
 
-**5a, the raw path (~4 min)**
+### 5a, the raw path (~4 min)
 
 1. Direction reads **Stellar → Arc Testnet**. Flip if needed, and pick Arc in the
    chain selector.
@@ -113,12 +123,12 @@ Budget 12 min. This is the longest demo and the one carrying the most content.
    `/v2/messages/26?transactionHash=...`, keyed by source domain plus burn hash.
 7. `receiveMessage` on Arc. USDC lands. On Arc this is seconds.
 
-**5b, the contract walkthrough (~4 min)**
+### 5b, the contract walkthrough (~4 min)
 
 No app interaction. Deck slide with `approve_and_deposit`, walked line by line.
 This is **safe cut #1** if you're running long.
 
-**5c, the wrapper path (~4 min)**
+### 5c, the wrapper path (~4 min)
 
 1. Same direction, same amount. Flip the flow chip to **`1 tx (wrapper)`**.
 2. Say **"watch the prompt count" before you click.** The payoff only lands if
@@ -157,7 +167,7 @@ the pair that carries the story.
 Budget 5 min. Pre-flight starred item #2 decides whether the second half runs
 live.
 
-**7a, Solana to Stellar**
+### 7a, Solana to Stellar
 
 1. Chain selector to **Solana**, direction so Solana is the source.
 2. Call out: **no approve step.** Solana burns directly under the owner's
@@ -168,7 +178,7 @@ live.
 4. Stellar side is the same `mint_and_forward` from Demo B. Zero new Stellar
    code, which is the payoff of routing everything through the Forwarder.
 
-**7b, Stellar to Solana**
+### 7b, Stellar to Solana
 
 1. Flip direction. `mint_recipient` is the recipient's **USDC ATA**, not the
    wallet, as raw left-aligned 32 bytes.
