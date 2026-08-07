@@ -212,20 +212,7 @@
 
     <h5 class="section-title">Arguments</h5>
     <ul class="rows">
-        <ContractArg name="caller" type="Address" value={stellarAddress} truncate>
-            {#snippet note()}
-                Your address, and the one the USDC is burned from. The contract calls
-                <code>require_auth()</code> on it, which is what Freighter prompts you to sign.
-            {/snippet}
-        </ContractArg>
-
         {#if isWrapper}
-            <ContractArg name="usdc" type="Address" value={STELLAR.contracts.usdc} truncate>
-                {#snippet note()}
-                    Stellar USDC SAC. The wrapper hands this same address to the inner
-                    <code>approve</code> and to the burn as its <code>burn_token</code>.
-                {/snippet}
-            </ContractArg>
             <ContractArg
                 name="tmm"
                 type="Address"
@@ -237,6 +224,13 @@
                 {/snippet}
             </ContractArg>
         {/if}
+
+        <ContractArg name="caller" type="Address" value={stellarAddress} truncate>
+            {#snippet note()}
+                Your address, and the one the USDC is burned from. The contract calls
+                <code>require_auth()</code> on it, which is what Freighter prompts you to sign.
+            {/snippet}
+        </ContractArg>
 
         <ContractArg name="amount" type="i128" {...amountArg} />
 
@@ -269,15 +263,13 @@
             />
         {/await}
 
-        {#if !isWrapper}
-            <ContractArg
-                name="burn_token"
-                type="Address"
-                value={STELLAR.contracts.usdc}
-                note="Stellar USDC SAC."
-                truncate
-            />
-        {/if}
+        <ContractArg name="burn_token" type="Address" value={STELLAR.contracts.usdc} truncate>
+            {#snippet note()}
+                Stellar USDC SAC.{#if isWrapper}
+                    The wrapper hands this same address to the inner <code>approve</code> and to the burn.
+                {/if}
+            {/snippet}
+        </ContractArg>
 
         <ContractArg name="destination_caller" type="BytesN<32>" value={ZERO_BYTES_32_HEX} hex>
             {#snippet note()}
