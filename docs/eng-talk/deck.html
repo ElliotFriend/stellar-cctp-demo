@@ -1577,7 +1577,7 @@
           <li><code>require_auth</code>: both inner calls act on behalf of <code>caller</code>, so Soroban's auth framework needs one signature covering the tree, and Freighter collects it in one prompt. On EVM there is no equivalent.</li>
           <li><code>live_until_ledger</code> rounded to the next multiple of 50 to avoid simulate-vs-submit ledger mismatches. The allowance is fully consumed by the burn anyway.</li>
           <li><code>TmmClient</code> is a typed Rust-to-Rust interface, generated with <code>stellar contract bindings rust</code>.</li>
-          <li><code>burn_token</code> is an arg because the TMM itself takes it that way &mdash; everything from <code>caller</code> onward is <code>deposit_for_burn</code>'s own parameter list, in its own order. <code>tmm</code> is an arg because I don't know how permanent Circle's addresses are. Flip side: the frontend must supply trusted addresses, so for mainnet you'd pin or govern these.</li>
+          <li><code>burn_token</code> is an arg because the TMM itself takes it that way. Everything from <code>caller</code> onward is <code>deposit_for_burn</code>'s own parameter list, in its own order. <code>tmm</code> is an arg because I don't know how permanent Circle's addresses are. Flip side: the frontend must supply trusted addresses, so for mainnet you'd pin or govern these.</li>
           <li>There's a twin, <code>approve_and_deposit_with_hook</code>, identical plus a trailing <code>hook_data: Bytes</code>, and that's what Demo D uses.</li>
         </aside>
       </section>
