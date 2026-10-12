@@ -6,7 +6,7 @@ import {
     nativeToScVal,
     xdr,
 } from '@stellar/stellar-sdk';
-import { SOLANA, STELLAR } from '$lib/config';
+import { SOLANA, STELLAR } from '#lib/config.js';
 import { stellarRpc } from './client';
 import { simulateSignAndSubmit } from './tx';
 

@@ -1,6 +1,6 @@
 import { address } from '@solana/kit';
 import { findAssociatedTokenPda, TOKEN_PROGRAM_ADDRESS } from '@solana-program/token';
-import { SOLANA } from '$lib/config';
+import { SOLANA } from '#lib/config.js';
 import { solanaRpc } from './client';
 
 // "5" / "5.25" → 6-dp USDC subunits (5_000000n / 5_250000n).

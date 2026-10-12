@@ -1,6 +1,6 @@
 <script lang="ts">
     import type { Snippet } from 'svelte';
-    import { shortAddr } from '$lib/utils';
+    import { shortAddr } from '#lib/utils.js';
 
     interface Props {
         name: string;

@@ -1,6 +1,6 @@
 import { encodeFunctionData, erc20Abi, type Hex } from 'viem';
-import { EVM_CCTP_CONTRACTS, EVM_CHAINS, STELLAR, type EvmChainId } from '$lib/config';
-import { encodeStellarForwarderHookData, strkeyToBytes32 } from '$lib/stellar/recipient';
+import { EVM_CCTP_CONTRACTS, EVM_CHAINS, STELLAR, type EvmChainId } from '#lib/config.js';
+import { encodeStellarForwarderHookData, strkeyToBytes32 } from '#lib/stellar/recipient.js';
 import { getPublicClient } from './client';
 import { signEvmUsdcPermit } from './usdc';
 import type { EvmWallet } from './wallet';

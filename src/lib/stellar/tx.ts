@@ -1,6 +1,6 @@
 import { TransactionBuilder, rpc } from '@stellar/stellar-sdk';
-import { STELLAR } from '$lib/config';
-import { sleep } from '$lib/utils';
+import { STELLAR } from '#lib/config.js';
+import { sleep } from '#lib/utils.js';
 import { stellarRpc } from './client';
 import { signXdr } from './freighter';
 

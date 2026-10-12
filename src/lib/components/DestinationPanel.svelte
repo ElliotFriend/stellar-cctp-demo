@@ -8,10 +8,10 @@
         type EvmChainId,
         type InboundFlow,
         type RightChain,
-    } from '$lib/config';
-    import type { EvmWallet } from '$lib/evm/wallet';
-    import type { SendCallsCapability } from '$lib/evm/capabilities';
-    import type { SolanaWallet } from '$lib/solana/wallet';
+    } from '#lib/config.js';
+    import type { EvmWallet } from '#lib/evm/wallet.js';
+    import type { SendCallsCapability } from '#lib/evm/capabilities.js';
+    import type { SolanaWallet } from '#lib/solana/wallet.js';
 
     let {
         chain = $bindable<RightChain>('arc'),

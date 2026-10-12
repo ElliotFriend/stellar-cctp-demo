@@ -1,10 +1,10 @@
 <script lang="ts">
-    import { SOLANA, STELLAR, SOLANA_MAX_FEE, type TransferSpeed } from '$lib/config';
-    import { fetchBurnFee, feeBpsFor, computeMaxFee, thresholdFor } from '$lib/circle/fees';
-    import { parseUsdcSolana } from '$lib/solana/usdc';
-    import { strkeyToBytes32, encodeStellarForwarderHookData } from '$lib/stellar/recipient';
-    import { shortAddr } from '$lib/utils';
-    import ContractArg from '$lib/components/ui/ContractArg.svelte';
+    import { SOLANA, STELLAR, SOLANA_MAX_FEE, type TransferSpeed } from '#lib/config.js';
+    import { fetchBurnFee, feeBpsFor, computeMaxFee, thresholdFor } from '#lib/circle/fees.js';
+    import { parseUsdcSolana } from '#lib/solana/usdc.js';
+    import { strkeyToBytes32, encodeStellarForwarderHookData } from '#lib/stellar/recipient.js';
+    import { shortAddr } from '#lib/utils.js';
+    import ContractArg from '#lib/components/ui/ContractArg.svelte';
 
     let {
         solanaAddress,

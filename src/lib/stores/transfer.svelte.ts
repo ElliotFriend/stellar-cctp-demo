@@ -13,10 +13,10 @@ import {
     type InboundFlow,
     type OutboundFlow,
     type TransferSpeed,
-} from '$lib/config';
-import { burnUsdcToStellar } from '$lib/solana/cctp';
-import { getUsdcBalance as getSolanaUsdcBalance, parseUsdcSolana } from '$lib/solana/usdc';
-import type { SolanaWallet } from '$lib/solana/wallet';
+} from '#lib/config.js';
+import { burnUsdcToStellar } from '#lib/solana/cctp.js';
+import { getUsdcBalance as getSolanaUsdcBalance, parseUsdcSolana } from '#lib/solana/usdc.js';
+import type { SolanaWallet } from '#lib/solana/wallet.js';
 import {
     fetchBurnFee,
     feeBpsFor,
@@ -24,7 +24,7 @@ import {
     computeMaxFee,
     fetchForwardFee,
     forwardedMaxFeeStellar,
-} from '$lib/circle/fees';
+} from '#lib/circle/fees.js';
 import {
     bridgeUsdcToEvm,
     bridgeUsdcToEvmWithHook,
@@ -33,25 +33,25 @@ import {
     depositForBurnWithHookForwarded,
     leftPad32FromHex,
     mintAndForward,
-} from '$lib/stellar/cctp';
-import { solanaAtaToBytes32 } from '$lib/stellar/recipient';
-import { receiveMessageOnSolana } from '$lib/solana/mint';
-import { approveUsdc, getUsdcAllowance, parseUsdcStellar } from '$lib/stellar/usdc';
+} from '#lib/stellar/cctp.js';
+import { solanaAtaToBytes32 } from '#lib/stellar/recipient.js';
+import { receiveMessageOnSolana } from '#lib/solana/mint.js';
+import { approveUsdc, getUsdcAllowance, parseUsdcStellar } from '#lib/stellar/usdc.js';
 import {
     approveEvmUsdc,
     getEvmUsdcAllowance,
     getEvmUsdcBalance,
     parseEvmUsdc,
-} from '$lib/evm/usdc';
-import { sleep } from '$lib/utils';
+} from '#lib/evm/usdc.js';
+import { sleep } from '#lib/utils.js';
 import {
     bridgeWithPermitToStellar,
     depositForBurnWithHookToStellar,
     receiveMessageOnEvm,
     sendCallsBridgeToStellar,
-} from '$lib/evm/cctp';
-import { pollAttestation, fetchAttestation, type IrisMessage } from '$lib/circle/iris';
-import type { EvmWallet } from '$lib/evm/wallet';
+} from '#lib/evm/cctp.js';
+import { pollAttestation, fetchAttestation, type IrisMessage } from '#lib/circle/iris.js';
+import type { EvmWallet } from '#lib/evm/wallet.js';
 
 export type Phase = 'idle' | 'approving' | 'burning' | 'attesting' | 'minting' | 'done' | 'error';
 

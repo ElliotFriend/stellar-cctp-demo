@@ -141,7 +141,7 @@ side.
 ## Third trial: flat $0.20 service fee added to maxFee, still NOT forwarded
 
 Hypothesis: the quoted `forwardFee` is destination gas only, and Circle's docs
-cite a flat ~$0.20 forwarding *service* fee on all chains that the quote might
+cite a flat ~$0.20 forwarding _service_ fee on all chains that the quote might
 omit, leaving the relayer silently underpaid. Folded a flat $0.20
 (`2_000_000` in 7-dp Stellar subunits) into `forwardedMaxFeeStellar` and re-ran.
 
@@ -198,8 +198,8 @@ wrap-up from a different angle. Circle's own contract says the fee was fine and
 no forward was ever created:
 
 1. **The $0.20 service-fee add was double-counting.** `forwardFee` is documented
-   as *"Gas **and forwarding fees** for using the Circle Forwarder in USDC minor
-   units"*, with `high` = *"the high gas estimate **plus forwarding fee**"*. The
+   as _"Gas **and forwarding fees** for using the Circle Forwarder in USDC minor
+   units"_, with `high` = _"the high gas estimate **plus forwarding fee**"_. The
    quoted fee already includes the service fee, our flat $0.20 add sat on top of
    a number that already had it. (Harmless, since the relayer never ran; reverted
    regardless.)

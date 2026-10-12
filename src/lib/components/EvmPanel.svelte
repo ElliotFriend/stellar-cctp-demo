@@ -8,11 +8,11 @@
         ensureChain,
         type EvmProviderInfo,
         type EvmWallet,
-    } from '$lib/evm/wallet';
-    import { formatEvmUsdc, getEvmUsdcBalance } from '$lib/evm/usdc';
-    import { fetchSendCallsCapability, type SendCallsCapability } from '$lib/evm/capabilities';
-    import { EVM_CHAINS, type Direction, type EvmChainId, type InboundFlow } from '$lib/config';
-    import { shortAddr } from '$lib/utils';
+    } from '#lib/evm/wallet.js';
+    import { formatEvmUsdc, getEvmUsdcBalance } from '#lib/evm/usdc.js';
+    import { fetchSendCallsCapability, type SendCallsCapability } from '#lib/evm/capabilities.js';
+    import { EVM_CHAINS, type Direction, type EvmChainId, type InboundFlow } from '#lib/config.js';
+    import { shortAddr } from '#lib/utils.js';
 
     let {
         wallet = $bindable<EvmWallet | null>(null),

@@ -2,7 +2,7 @@ import { concatHex, pad, stringToHex, toHex, type Hex } from 'viem';
 import { StrKey } from '@stellar/stellar-sdk';
 import { address, getAddressEncoder } from '@solana/kit';
 import { findAssociatedTokenPda, TOKEN_PROGRAM_ADDRESS } from '@solana-program/token';
-import { SOLANA } from '$lib/config';
+import { SOLANA } from '#lib/config.js';
 
 // A Solana owner's USDC ATA as raw 32 bytes, for use as the CCTP burn
 // mintRecipient when the destination is Solana. Solana pubkeys already fill

@@ -1,5 +1,5 @@
 <script lang="ts">
-    import type { Direction } from '$lib/config';
+    import type { Direction } from '#lib/config.js';
 
     let {
         direction,

@@ -12,7 +12,7 @@ import {
     type TransactionSigner,
 } from '@solana/kit';
 import { solanaRpc } from './client';
-import { sleep } from '$lib/utils';
+import { sleep } from '#lib/utils.js';
 import type { SolanaWallet } from './wallet';
 
 // Poll until the tx confirms; sendTransaction only submits. Without this the

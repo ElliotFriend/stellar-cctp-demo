@@ -1,7 +1,7 @@
-import { browser } from '$app/environment';
+import { browser } from '$app/env';
 import { getWallets } from '@wallet-standard/app';
 import type { Wallet, WalletAccount } from '@wallet-standard/base';
-import { sleep } from '$lib/utils';
+import { sleep } from '#lib/utils.js';
 
 const NAME_STORAGE_KEY = 'cctp-demo:solana-wallet';
 

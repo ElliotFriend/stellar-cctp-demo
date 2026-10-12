@@ -1,8 +1,8 @@
 <script lang="ts">
     import { onDestroy } from 'svelte';
-    import { EVM_CHAINS } from '$lib/config';
-    import { shortAddr } from '$lib/utils';
-    import type { TransferState } from '$lib/stores/transfer.svelte';
+    import { EVM_CHAINS } from '#lib/config.js';
+    import { shortAddr } from '#lib/utils.js';
+    import type { TransferState } from '#lib/stores/transfer.svelte.js';
 
     let { transfer }: { transfer: TransferState } = $props();
 

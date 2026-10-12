@@ -8,7 +8,7 @@
         type EvmChainId,
         type OutboundFlow,
         type TransferSpeed,
-    } from '$lib/config';
+    } from '#lib/config.js';
     import {
         fetchBurnFee,
         feeBpsFor,
@@ -16,13 +16,13 @@
         computeMaxFee,
         fetchForwardFee,
         forwardedMaxFeeStellar,
-    } from '$lib/circle/fees';
-    import { CCTP_FORWARD_MAGIC, encodeCctpForwardHookData } from '$lib/stellar/cctp';
-    import { solanaAtaToBytes32 } from '$lib/stellar/recipient';
-    import { parseUsdcStellar, formatUsdc } from '$lib/stellar/usdc';
-    import { shortAddr } from '$lib/utils';
+    } from '#lib/circle/fees.js';
+    import { CCTP_FORWARD_MAGIC, encodeCctpForwardHookData } from '#lib/stellar/cctp.js';
+    import { solanaAtaToBytes32 } from '#lib/stellar/recipient.js';
+    import { parseUsdcStellar, formatUsdc } from '#lib/stellar/usdc.js';
+    import { shortAddr } from '#lib/utils.js';
 
-    import ContractArg from '$lib/components/ui/ContractArg.svelte';
+    import ContractArg from '#lib/components/ui/ContractArg.svelte';
 
     // The outbound burn preview, reused for either destination. Pass EVM
     // fields for a Stellar→EVM burn, or `solanaRecipient` (a Solana owner

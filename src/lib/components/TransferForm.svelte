@@ -1,5 +1,5 @@
 <script lang="ts">
-    import type { TransferSpeed } from '$lib/config';
+    import type { TransferSpeed } from '#lib/config.js';
 
     let {
         otherLabel = 'EVM',

@@ -1,4 +1,4 @@
-import { browser } from '$app/environment';
+import { browser } from '$app/env';
 import {
     createWalletClient,
     custom,
@@ -6,8 +6,8 @@ import {
     type EIP1193Provider,
     type WalletClient,
 } from 'viem';
-import { EVM_CHAINS, type EvmChainId } from '$lib/config';
-import { sleep } from '$lib/utils';
+import { EVM_CHAINS, type EvmChainId } from '#lib/config.js';
+import { sleep } from '#lib/utils.js';
 
 export type EvmWallet = {
     address: `0x${string}`;
@@ -88,9 +88,8 @@ export async function discoverEvmProviders(): Promise<EvmProviderInfo[]> {
 
 export async function connectEvm(info?: EvmProviderInfo): Promise<EvmWallet> {
     const provider = info?.provider ?? getLegacyProvider();
-    const accounts = (await provider.request({
-        method: 'eth_requestAccounts',
-    })) as `0x${string}`[];
+    const accounts = (await provider.request({ method: 'eth_requestAccounts' })) as `0x${string}`[];
+
     if (!accounts || accounts.length === 0) throw new Error('Wallet returned no accounts');
     const chainHex = (await provider.request({ method: 'eth_chainId' })) as `0x${string}`;
     if (info) {
@@ -122,10 +121,13 @@ export async function detectExistingEvm(): Promise<EvmWallet | null> {
             const accounts = (await match.provider.request({
                 method: 'eth_accounts',
             })) as `0x${string}`[];
+
             if (!accounts || accounts.length === 0) return null;
+
             const chainHex = (await match.provider.request({
                 method: 'eth_chainId',
             })) as `0x${string}`;
+
             return adapt(match.provider, accounts[0], parseInt(chainHex, 16));
         } catch {
             return null;
@@ -136,9 +138,8 @@ export async function detectExistingEvm(): Promise<EvmWallet | null> {
     if (!window.ethereum) return null;
     const provider = window.ethereum;
     try {
-        const accounts = (await provider.request({
-            method: 'eth_accounts',
-        })) as `0x${string}`[];
+        const accounts = (await provider.request({ method: 'eth_accounts' })) as `0x${string}`[];
+
         if (!accounts || accounts.length === 0) return null;
         const chainHex = (await provider.request({ method: 'eth_chainId' })) as `0x${string}`;
         return adapt(provider, accounts[0], parseInt(chainHex, 16));

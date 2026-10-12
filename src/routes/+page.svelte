@@ -1,19 +1,19 @@
 <script lang="ts">
-    import StellarPanel from '$lib/components/StellarPanel.svelte';
-    import DestinationPanel from '$lib/components/DestinationPanel.svelte';
-    import DirectionSwitcher from '$lib/components/DirectionSwitcher.svelte';
-    import TransferForm from '$lib/components/TransferForm.svelte';
-    import TransferProgress from '$lib/components/TransferProgress.svelte';
-    import HookDataPreview from '$lib/components/HookDataPreview.svelte';
-    import StellarBurnPreview from '$lib/components/StellarBurnPreview.svelte';
-    import EvmBurnPreview from '$lib/components/EvmBurnPreview.svelte';
-    import SolanaBurnPreview from '$lib/components/SolanaBurnPreview.svelte';
-    import ResumeForm from '$lib/components/ResumeForm.svelte';
-    import { createTransferStore } from '$lib/stores/transfer.svelte';
-    import type { FreighterState } from '$lib/stellar/freighter';
-    import type { EvmWallet } from '$lib/evm/wallet';
-    import type { SolanaWallet } from '$lib/solana/wallet';
-    import type { SendCallsCapability } from '$lib/evm/capabilities';
+    import StellarPanel from '#lib/components/StellarPanel.svelte';
+    import DestinationPanel from '#lib/components/DestinationPanel.svelte';
+    import DirectionSwitcher from '#lib/components/DirectionSwitcher.svelte';
+    import TransferForm from '#lib/components/TransferForm.svelte';
+    import TransferProgress from '#lib/components/TransferProgress.svelte';
+    import HookDataPreview from '#lib/components/HookDataPreview.svelte';
+    import StellarBurnPreview from '#lib/components/StellarBurnPreview.svelte';
+    import EvmBurnPreview from '#lib/components/EvmBurnPreview.svelte';
+    import SolanaBurnPreview from '#lib/components/SolanaBurnPreview.svelte';
+    import ResumeForm from '#lib/components/ResumeForm.svelte';
+    import { createTransferStore } from '#lib/stores/transfer.svelte.js';
+    import type { FreighterState } from '#lib/stellar/freighter.js';
+    import type { EvmWallet } from '#lib/evm/wallet.js';
+    import type { SolanaWallet } from '#lib/solana/wallet.js';
+    import type { SendCallsCapability } from '#lib/evm/capabilities.js';
     import {
         DEFAULT_EVM_CHAIN,
         DEFAULT_FORWARDING,
@@ -27,7 +27,7 @@
         type OutboundFlow,
         type RightChain,
         type TransferSpeed,
-    } from '$lib/config';
+    } from '#lib/config.js';
 
     let stellar = $state<FreighterState>({
         installed: false,

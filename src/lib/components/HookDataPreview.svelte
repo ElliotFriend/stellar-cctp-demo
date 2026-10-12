@@ -1,7 +1,7 @@
 <script lang="ts">
     import { toHex } from 'viem';
-    import { encodeStellarForwarderHookData } from '$lib/stellar/recipient';
-    import { CCTP_FORWARD_MAGIC, encodeCctpForwardHookData } from '$lib/stellar/cctp';
+    import { encodeStellarForwarderHookData } from '#lib/stellar/recipient.js';
+    import { CCTP_FORWARD_MAGIC, encodeCctpForwardHookData } from '#lib/stellar/cctp.js';
 
     // Two hookData shapes ship in this demo, so the component takes a mode:
     //  - 'forwarder': Stellar is the destination, and the payload carries the

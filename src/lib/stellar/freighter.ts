@@ -5,7 +5,7 @@ import {
     getNetwork,
     signTransaction,
 } from '@stellar/freighter-api';
-import { STELLAR } from '$lib/config';
+import { STELLAR } from '#lib/config.js';
 
 export type FreighterState = {
     installed: boolean;

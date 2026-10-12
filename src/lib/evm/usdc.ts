@@ -1,5 +1,5 @@
 import { erc20Abi, formatUnits, hexToNumber, parseUnits, slice, type Hex } from 'viem';
-import { EVM_CHAINS, type EvmChainId } from '$lib/config';
+import { EVM_CHAINS, type EvmChainId } from '#lib/config.js';
 import { getPublicClient } from './client';
 import type { EvmWallet } from './wallet';
 

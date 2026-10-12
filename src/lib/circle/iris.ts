@@ -1,5 +1,5 @@
-import { IRIS_API } from '$lib/config';
-import { sleep } from '$lib/utils';
+import { IRIS_API } from '#lib/config.js';
+import { sleep } from '#lib/utils.js';
 import type { Hex } from 'viem';
 
 export type IrisMessage = {

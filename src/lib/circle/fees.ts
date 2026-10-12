@@ -1,4 +1,4 @@
-import { IRIS_API, FAST_THRESHOLD, STANDARD_THRESHOLD, type TransferSpeed } from '$lib/config';
+import { IRIS_API, FAST_THRESHOLD, STANDARD_THRESHOLD, type TransferSpeed } from '#lib/config.js';
 
 export type BurnFeeRow = { finalityThreshold: number; minimumFee: number };
 

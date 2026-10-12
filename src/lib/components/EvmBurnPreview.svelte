@@ -7,18 +7,18 @@
         type EvmChainId,
         type InboundFlow,
         type TransferSpeed,
-    } from '$lib/config';
-    import { fetchBurnFee, feeBpsFor, thresholdFor, computeMaxFee } from '$lib/circle/fees';
-    import { encodeStellarForwarderHookData, strkeyToBytes32 } from '$lib/stellar/recipient';
+    } from '#lib/config.js';
+    import { fetchBurnFee, feeBpsFor, thresholdFor, computeMaxFee } from '#lib/circle/fees.js';
+    import { encodeStellarForwarderHookData, strkeyToBytes32 } from '#lib/stellar/recipient.js';
     import {
         fetchUsdcEip712Domain,
         formatEvmUsdc,
         parseEvmUsdc,
         type EvmUsdcEip712Domain,
-    } from '$lib/evm/usdc';
-    import type { SendCallsCapability } from '$lib/evm/capabilities';
-    import { shortAddr } from '$lib/utils';
-    import ContractArg from '$lib/components/ui/ContractArg.svelte';
+    } from '#lib/evm/usdc.js';
+    import type { SendCallsCapability } from '#lib/evm/capabilities.js';
+    import { shortAddr } from '#lib/utils.js';
+    import ContractArg from '#lib/components/ui/ContractArg.svelte';
 
     let {
         evmAddress,

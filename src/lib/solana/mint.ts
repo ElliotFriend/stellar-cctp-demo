@@ -24,7 +24,7 @@ import {
 } from './generated/token-messenger-minter';
 import { signAndSendSolanaTx } from './signer';
 import { solanaRpc } from './client';
-import { SOLANA, STELLAR } from '$lib/config';
+import { SOLANA, STELLAR } from '#lib/config.js';
 import type { SolanaWallet } from './wallet';
 
 const MT = MESSAGE_TRANSMITTER_V2_PROGRAM_ADDRESS;

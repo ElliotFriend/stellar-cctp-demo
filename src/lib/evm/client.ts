@@ -1,5 +1,5 @@
 import { createPublicClient, http, type PublicClient } from 'viem';
-import { EVM_CHAINS, type EvmChainId } from '$lib/config';
+import { EVM_CHAINS, type EvmChainId } from '#lib/config.js';
 
 const cache = new Map<EvmChainId, PublicClient>();
 

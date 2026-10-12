@@ -1,4 +1,4 @@
-import { EVM_CHAINS, type EvmChainId } from '$lib/config';
+import { EVM_CHAINS, type EvmChainId } from '#lib/config.js';
 import type { EvmWallet } from './wallet';
 
 // What we ask about per chain: whether the wallet does EIP-5792 at all, and

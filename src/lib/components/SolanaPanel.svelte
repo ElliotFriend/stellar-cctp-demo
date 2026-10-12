@@ -1,16 +1,16 @@
 <script lang="ts">
     import { onMount } from 'svelte';
-    import { browser } from '$app/environment';
+    import { browser } from '$app/env';
     import {
         connectSolana,
         detectExistingSolana,
         disconnectSolana,
         discoverSolanaWallets,
         type SolanaWallet,
-    } from '$lib/solana/wallet';
-    import { getUsdcBalance } from '$lib/solana/usdc';
-    import { SOLANA } from '$lib/config';
-    import { shortAddr } from '$lib/utils';
+    } from '#lib/solana/wallet.js';
+    import { getUsdcBalance } from '#lib/solana/usdc.js';
+    import { SOLANA } from '#lib/config.js';
+    import { shortAddr } from '#lib/utils.js';
 
     let {
         wallet = $bindable<SolanaWallet | null>(null),

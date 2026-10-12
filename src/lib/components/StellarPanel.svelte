@@ -1,9 +1,13 @@
 <script lang="ts">
     import { onMount } from 'svelte';
-    import { connectFreighter, detectFreighter, type FreighterState } from '$lib/stellar/freighter';
-    import { formatUsdc, getUsdcBalance } from '$lib/stellar/usdc';
-    import type { Direction, OutboundFlow } from '$lib/config';
-    import { shortAddr } from '$lib/utils';
+    import {
+        connectFreighter,
+        detectFreighter,
+        type FreighterState,
+    } from '#lib/stellar/freighter.js';
+    import { formatUsdc, getUsdcBalance } from '#lib/stellar/usdc.js';
+    import type { Direction, OutboundFlow } from '#lib/config.js';
+    import { shortAddr } from '#lib/utils.js';
 
     let {
         freighter = $bindable<FreighterState>({
