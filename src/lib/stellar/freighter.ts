@@ -13,6 +13,18 @@ export type FreighterState = {
     networkPassphrase: string | null;
 };
 
+// Freighter reports failures as a `{ code, message }` object, not a string, so
+// passing it straight to `new Error()` renders as "[object Object]". (Its type
+// declarations import from a path that doesn't resolve, so `error` is `any` and
+// TypeScript can't catch that.)
+function freighterError(error: unknown, fallback: string): Error {
+    if (typeof error === 'string' && error) return new Error(error);
+    if (error && typeof error === 'object' && 'message' in error && error.message) {
+        return new Error(String(error.message));
+    }
+    return new Error(fallback);
+}
+
 export async function detectFreighter(): Promise<FreighterState> {
     const result = await isConnected();
     if (!result.isConnected) {
@@ -37,7 +49,7 @@ export async function connectFreighter(): Promise<FreighterState> {
     }
     const access = await requestAccess();
     if (access.error || !access.address) {
-        throw new Error(access.error ?? 'User declined to share their Stellar account.');
+        throw freighterError(access.error, 'User declined to share their Stellar account.');
     }
     const net = await getNetwork();
     if (net.networkPassphrase && net.networkPassphrase !== STELLAR.networkPassphrase) {
@@ -57,7 +69,7 @@ export async function signXdr(xdr: string): Promise<string> {
         networkPassphrase: STELLAR.networkPassphrase,
     });
     if (signed.error || !signed.signedTxXdr) {
-        throw new Error(signed.error ?? 'Freighter did not return a signed transaction.');
+        throw freighterError(signed.error, 'Freighter did not return a signed transaction.');
     }
     return signed.signedTxXdr;
 }
