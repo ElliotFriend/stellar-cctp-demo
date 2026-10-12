@@ -42,7 +42,7 @@ export async function connectFreighter(): Promise<FreighterState> {
     const net = await getNetwork();
     if (net.networkPassphrase && net.networkPassphrase !== STELLAR.networkPassphrase) {
         throw new Error(
-            `Freighter is on the wrong network. Switch to Testnet (currently: ${net.network}).`,
+            `Freighter is on the wrong network. Switch to ${STELLAR.label} (currently: ${net.network}).`,
         );
     }
     return {

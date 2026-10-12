@@ -94,7 +94,7 @@
             <span class="amount">{balance ?? '…'}</span>
             <span class="symbol">USDC</span>
         </div>
-        <p class="gas-note">Devnet · fees paid in SOL.</p>
+        <p class="gas-note">{SOLANA.label} · fees paid in SOL.</p>
     {:else}
         <button class="connect" onclick={connect} disabled={disabled || connecting}>
             {connecting ? 'Connecting…' : 'Connect Phantom'}

@@ -18,6 +18,23 @@ pnpm run dev
 
 Open `http://localhost:5173`.
 
+## Testnet or mainnet
+
+Every value that changes between networks (contract addresses, RPC URLs,
+explorers, USDC addresses, and Circle's attestation API) lives in
+`.env.testnet` and `.env.mainnet`. Vite's `--mode` flag picks one:
+
+```bash
+pnpm dev            # testnet (the default)
+pnpm dev:mainnet    # mainnet: real funds!
+pnpm build          # testnet build
+pnpm build:mainnet  # mainnet build
+```
+
+Diff the two files to see exactly what moving to mainnet changes. Neither
+wrapper contract is deployed on mainnet, so mainnet uses the plain two-tx
+flows.
+
 ## Why Arc by default
 
 Arc is Circle's own EVM-compatible L1, designed for stablecoin payments. Two
@@ -36,8 +53,8 @@ You can flip to Base Sepolia at any time via the picker in the EVM panel.
 - **MetaMask** (or any injected EVM wallet). Arc Testnet is added on first connect; for Base Sepolia your wallet probably already has it.
 - Testnet USDC on each side; on Base Sepolia you also need a tiny bit of ETH for gas.
 
-The two wrapper contracts (Soroban + EVM) are already deployed and wired
-into `src/lib/config.ts`, so you don't need to redeploy them to use the
+The two wrapper contracts (Soroban + EVM) are already deployed on testnet and
+wired into `.env.testnet`, so you don't need to redeploy them to use the
 "1 tx" flows. See `contracts/stellar/cctp-wrapper/` and
 `contracts/evm/cctp-wrapper/` if you want to inspect or redeploy.
 
@@ -155,7 +172,7 @@ This is a demo, not a bridge UX:
 
 - USDC only (EURC isn't confirmed on Stellar CCTP yet).
 - Standard (finalized) transfers only, so no Fast Burn.
-- Testnet only.
+- The wrapper contracts are unaudited and testnet only.
 - Transfer history is in-memory; refresh wipes it.
 - No mobile wallet flow beyond what the injected wallet provides.
 
@@ -165,8 +182,10 @@ This is a demo, not a bridge UX:
 contracts/
   stellar/cctp-wrapper/        # Soroban wrapper (Rust), approve_and_deposit
   evm/cctp-wrapper/            # EVM wrapper (Solidity), bridgeWithPermit
+.env.testnet, .env.mainnet      # every per-network value, picked with --mode
+src/env.ts                     # declares and validates those variables
 src/lib/
-  config.ts                    # EVM_CHAINS map, addresses, domains, RPC URLs, constants
+  config.ts                    # STELLAR, SOLANA, EVM_CHAINS built from the env files, plus constants
   stellar/                     # Freighter, USDC SAC, deposit_for_burn, mint_and_forward
   evm/
     cctp.ts                    # depositForBurnWithHook + permit + sendCalls flows; receiveMessage

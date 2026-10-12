@@ -11,7 +11,12 @@ import { stellarRpc } from './client';
 import { simulateSignAndSubmit } from './tx';
 
 const tmm = new Contract(STELLAR.contracts.tokenMessengerMinter);
-const bridgeWrapper = new Contract(STELLAR.contracts.bridgeWrapper);
+function bridgeWrapperContract(): Contract {
+    if (!STELLAR.contracts.bridgeWrapper) {
+        throw new Error(`No bridge wrapper is deployed on ${STELLAR.label}. Use the two-tx flow.`);
+    }
+    return new Contract(STELLAR.contracts.bridgeWrapper);
+}
 const forwarder = new Contract(STELLAR.contracts.cctpForwarder);
 
 // Direct call to the TMM's `deposit_for_burn`. Caller must `approveUsdc` for
@@ -113,7 +118,7 @@ export async function bridgeUsdcToEvm(args: {
         networkPassphrase: STELLAR.networkPassphrase,
     })
         .addOperation(
-            bridgeWrapper.call(
+            bridgeWrapperContract().call(
                 'approve_and_deposit',
                 Address.fromString(STELLAR.contracts.tokenMessengerMinter).toScVal(),
                 Address.fromString(args.caller).toScVal(),
@@ -157,7 +162,7 @@ export async function bridgeUsdcToEvmWithHook(args: {
         networkPassphrase: STELLAR.networkPassphrase,
     })
         .addOperation(
-            bridgeWrapper.call(
+            bridgeWrapperContract().call(
                 'approve_and_deposit_with_hook',
                 Address.fromString(STELLAR.contracts.tokenMessengerMinter).toScVal(),
                 Address.fromString(args.caller).toScVal(),

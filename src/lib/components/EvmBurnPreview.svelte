@@ -362,7 +362,7 @@
             name="destinationDomain"
             type="uint32"
             value={STELLAR.domain.toString()}
-            note="Stellar Testnet"
+            note={STELLAR.label}
         />
 
         <ContractArg

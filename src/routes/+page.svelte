@@ -22,6 +22,7 @@
         DEFAULT_SPEED,
         EVM_CHAINS,
         type Direction,
+        IS_MAINNET,
         type EvmChainId,
         type InboundFlow,
         type OutboundFlow,
@@ -271,8 +272,10 @@
             rel="noreferrer">Circle Docs</a
         >
         ·
-        <a href="https://faucet.circle.com" target="_blank" rel="noreferrer">USDC faucet</a>
-        ·
+        {#if !IS_MAINNET}
+            <a href="https://faucet.circle.com" target="_blank" rel="noreferrer">USDC faucet</a>
+            ·
+        {/if}
         <a href="https://github.com/ElliotFriend/stellar-cctp-demo" target="_blank" rel="noreferrer"
             >Project Source Code</a
         >

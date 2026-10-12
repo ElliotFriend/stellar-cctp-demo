@@ -4,6 +4,7 @@ import {
     EVM_CHAINS,
     SOLANA,
     SOLANA_MAX_FEE,
+    solanaTxUrl,
     STELLAR,
     STELLAR_MAX_FEE,
     EVM_MAX_FEE,
@@ -697,7 +698,7 @@ export function createTransferStore(
                 result: signature,
                 patch: {
                     hash: signature,
-                    hashUrl: `${SOLANA.explorer}/tx/${signature}?cluster=devnet`,
+                    hashUrl: solanaTxUrl(signature),
                 },
             };
         });
@@ -850,7 +851,7 @@ export function createTransferStore(
                 result: signature,
                 patch: {
                     hash: signature,
-                    hashUrl: `${SOLANA.explorer}/tx/${signature}?cluster=devnet`,
+                    hashUrl: solanaTxUrl(signature),
                 },
             };
         });
@@ -1071,7 +1072,7 @@ export function createTransferStore(
             source === 'stellar'
                 ? stellarTxUrl(args.burnHash)
                 : source === 'solana'
-                  ? `${SOLANA.explorer}/tx/${args.burnHash}?cluster=devnet`
+                  ? solanaTxUrl(args.burnHash)
                   : evmTxUrl(args.evmChainId!, args.burnHash);
 
         state.steps = stepsFor(args.direction, args.evmChainId, 'two-tx', false, 'two-tx').map(
@@ -1136,7 +1137,7 @@ export function createTransferStore(
                     result: signature,
                     patch: {
                         hash: signature,
-                        hashUrl: `${SOLANA.explorer}/tx/${signature}?cluster=devnet`,
+                        hashUrl: solanaTxUrl(signature),
                     },
                 };
             }

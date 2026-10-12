@@ -6,7 +6,7 @@
         type FreighterState,
     } from '#lib/stellar/freighter.js';
     import { formatUsdc, getUsdcBalance } from '#lib/stellar/usdc.js';
-    import type { Direction, OutboundFlow } from '#lib/config.js';
+    import { STELLAR, type Direction, type OutboundFlow } from '#lib/config.js';
     import { shortAddr } from '#lib/utils.js';
 
     let {
@@ -26,6 +26,9 @@
         direction: Direction;
         disabled?: boolean;
     } = $props();
+
+    // The wrapper is unaudited, so it's only deployed on testnet.
+    const wrapperDeployed = !!STELLAR.contracts.bridgeWrapper;
 
     let balance = $state<bigint | null>(null);
     let balanceError = $state<string | null>(null);
@@ -72,8 +75,8 @@
 
 <section class="panel">
     <header class="head">
-        <span class="badge stellar">Stellar Testnet</span>
-        <span class="muted">domain 27</span>
+        <span class="badge stellar">{STELLAR.label}</span>
+        <span class="muted">domain {STELLAR.domain}</span>
     </header>
 
     {#if !freighter.address}
@@ -115,11 +118,14 @@
                     type="button"
                     class="chip"
                     class:active={outboundFlow === 'wrapper'}
-                    {disabled}
+                    class:unavailable={!wrapperDeployed}
+                    disabled={disabled || !wrapperDeployed}
                     onclick={() => (outboundFlow = 'wrapper')}
                     role="tab"
                     aria-selected={outboundFlow === 'wrapper'}
-                    title="One Soroban tx via a wrapper contract, so you get a single Freighter prompt"
+                    title={wrapperDeployed
+                        ? 'One Soroban tx via a wrapper contract, so you get a single Freighter prompt'
+                        : `Disabled on ${STELLAR.label}: the wrapper contract hasn't been audited, so it isn't deployed here.`}
                 >
                     1 tx (wrapper)
                 </button>
@@ -288,6 +294,11 @@
     .chip:hover:not(:disabled) {
         color: var(--text);
         border-color: var(--border-strong);
+    }
+
+    .chip.unavailable {
+        opacity: 0.5;
+        cursor: not-allowed;
     }
 
     .chip.active {

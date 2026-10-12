@@ -17,6 +17,9 @@ Thumbs.db
 .env.*
 !.env.example
 !.env.test
+# Per-network public config, selected with --mode
+!.env.testnet
+!.env.mainnet
 
 # Vite
 vite.config.js.timestamp-*

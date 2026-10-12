@@ -12,6 +12,7 @@ import {
     type TransactionSigner,
 } from '@solana/kit';
 import { solanaRpc } from './client';
+import { SOLANA } from '#lib/config.js';
 import { sleep } from '#lib/utils.js';
 import type { SolanaWallet } from './wallet';
 
@@ -42,8 +43,9 @@ async function confirmSignature(signature: string): Promise<void> {
 }
 
 // Wallet Standard chain id for Phantom's signing feature. Reads go through our
-// pinned devnet RPC regardless, but signTransaction wants the chain named.
-const SOLANA_DEVNET_CHAIN = 'solana:devnet';
+// pinned RPC regardless, but signTransaction wants the chain named. Wallet
+// Standard calls mainnet-beta plain `mainnet`.
+const SOLANA_CHAIN = `solana:${SOLANA.cluster === 'mainnet-beta' ? 'mainnet' : SOLANA.cluster}`;
 
 // Minimal shape of the Wallet Standard solana:signTransaction feature, kept
 // local rather than pulling @wallet-standard/features (mirrors evm/wallet.ts).
@@ -60,7 +62,7 @@ type SignTransactionFeature = {
 // burn's ephemeral message_sent_event_data keypair signs locally here); the
 // fee-payer is a noop signer whose slot Phantom fills. We serialize the
 // partially-signed tx, hand it to Phantom for the fee-payer signature, then
-// submit through our own devnet RPC so the network stays pinned no matter
+// submit through our own pinned RPC so the network stays pinned no matter
 // Phantom's cluster.
 export async function signAndSendSolanaTx(args: {
     wallet: SolanaWallet;
@@ -89,7 +91,7 @@ export async function signAndSendSolanaTx(args: {
     const res = await signFeature.signTransaction({
         account: wallet.account,
         transaction: wireUnsigned,
-        chain: SOLANA_DEVNET_CHAIN,
+        chain: SOLANA_CHAIN,
     });
     const signed = Array.isArray(res) ? res[0] : (res as SignTransactionOutput);
 

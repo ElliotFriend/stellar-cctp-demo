@@ -82,7 +82,7 @@
     let isForwarding = $derived(forwarding);
 
     let contractAddress = $derived(
-        isWrapper ? STELLAR.contracts.bridgeWrapper : STELLAR.contracts.tokenMessengerMinter,
+        (isWrapper && STELLAR.contracts.bridgeWrapper) || STELLAR.contracts.tokenMessengerMinter,
     );
     let contractLabel = $derived(
         isWrapper ? 'CctpWrapper (user-deployed)' : 'TokenMessengerMinter',
